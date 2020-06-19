@@ -12,4 +12,6 @@ Start local server
 ```
 ./gradlew bootRun
 ```
-And then check http://127.0.0.1:8080/status for service status
+And then check http://127.0.0.1:8080/status for service status.
+
+Swagger in local server: http://127.0.0.1:8080/swagger-ui.html

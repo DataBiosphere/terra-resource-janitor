@@ -25,6 +25,7 @@ dependencies {
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jdbc'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
+    implementation group: 'org.webjars', name: 'swagger-ui', version: '3.25.4' // if updating, change path in ApiResourceConfig.java
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework:spring-jdbc:5.1.9.RELEASE'
 
