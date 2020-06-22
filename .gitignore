@@ -42,7 +42,6 @@ out/
 pom.xml
 
 # Package Files #
-*.jar
 *.war
 *.nar
 *.ear
