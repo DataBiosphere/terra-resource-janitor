@@ -2,8 +2,8 @@ name: Tag, Build, and Push Image
 
 on:
   push:
-    branches:
-      - master
+#    branches:
+#      - master
     paths-ignore:
       - 'README.md'
       - '.github/**'
