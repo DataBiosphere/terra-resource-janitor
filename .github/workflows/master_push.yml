@@ -2,8 +2,8 @@ name: Tag, Build, and Push Image
 
 on:
   push:
-#    branches:
-#      - master
+    branches:
+      - yyu-CA-871
     paths-ignore:
       - 'README.md'
       - '.github/**'
