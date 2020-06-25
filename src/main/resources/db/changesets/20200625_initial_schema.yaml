@@ -1,0 +1,149 @@
+# NOTE: this is still changing because nothing uses Janitor. Expect
+# DBs to keep blowing up for now.
+databaseChangeLog:
+- changeSet:
+    id: init_janitor_table
+    author: yonghao
+    changes:
+    - createTable:
+        tableName: tracked_resource
+        columns:
+          - column:
+              name: tracked_id
+              type: uuid
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: resource_type_id
+              type: uuid
+              constraints:
+                references: resource_type(type_id)
+                foreignKeyName: fk_type_id
+                nullable: true
+          - column:
+              name: resource_uid
+              type: json
+              constraints:
+                nullable: true
+                unique: false
+          - column:
+              name: creation
+              type: timestamp
+              constraints:
+                nullable: true
+                unique: false
+          - column:
+              name: expireation
+              type: timestamp
+              constraints:
+                nullable: true
+                unique: false
+          - column:
+              name: state
+              type: text
+              constraints:
+                nullable: true
+                unique: false
+          - column:
+              name: wait_until
+              type: timestamp
+              constraints:
+                nullable: true
+                unique: false
+    - createTable:
+        tableName: resource_type
+        columns:
+          - column:
+              name: type_id
+              type: text
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: name
+              type: text
+              constraints:
+                nullable: true
+                unique: false
+    - createTable:
+        tableName: label
+        columns:
+          - column:
+              name: tracked_id
+              type: uuid
+              constraints:
+                references: tracked_resource(tracked_id)
+                foreignKeyName: fk_tracked_id
+                primaryKey: true
+                nullable: false
+          - column:
+              name: key
+              type: text
+              constraints:
+                nullable: true
+                unique: false
+          - column:
+              name: value
+              type: text
+              constraints:
+                nullable: true
+                unique: false
+    - createTable:
+        tableName: cleanup_log
+        columns:
+          - column:
+              name: tracked_id
+              type: uuid
+              constraints:
+                references: tracked_resource(tracked_id)
+                foreignKeyName: fk_tracked_id
+                primaryKey: true
+                nullable: false
+          - column:
+              name: logtime
+              type: timestamp
+              constraints:
+                nullable: true
+                unique: false
+          - column:
+              name: status
+              type: text
+              constraints:
+                nullable: true
+                unique: false
+          - column:
+              name: status
+              type: text
+              constraints:
+                nullable: true
+                unique: false
+          - column:
+              name: description
+              type: text
+              constraints:
+                nullable: true
+                unique: false
+    - createTable:
+        tableName: gcp_bucket
+        columns:
+          - column:
+              name: tracked_id
+              type: uuid
+              constraints:
+                references: tracked_resource(tracked_id)
+                foreignKeyName: fk_tracked_id
+                primaryKey: true
+                nullable: false
+          - column:
+              name: project_id
+              type: text
+              constraints:
+                nullable: true
+                unique: false
+          - column:
+              name: bucket_name
+              type: text
+              constraints:
+                nullable: true
+                unique: false
