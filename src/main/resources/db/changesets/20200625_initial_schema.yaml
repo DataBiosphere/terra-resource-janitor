@@ -6,6 +6,21 @@ databaseChangeLog:
     author: yonghao
     changes:
     - createTable:
+        tableName: resource_type
+        columns:
+          - column:
+              name: type_id
+              type: text
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: name
+              type: text
+              constraints:
+                nullable: true
+                unique: false
+    - createTable:
         tableName: tracked_resource
         columns:
           - column:
@@ -48,21 +63,6 @@ databaseChangeLog:
           - column:
               name: wait_until
               type: timestamp
-              constraints:
-                nullable: true
-                unique: false
-    - createTable:
-        tableName: resource_type
-        columns:
-          - column:
-              name: type_id
-              type: text
-              constraints:
-                primaryKey: true
-                nullable: false
-          - column:
-              name: name
-              type: text
               constraints:
                 nullable: true
                 unique: false
