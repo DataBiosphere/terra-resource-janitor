@@ -10,7 +10,7 @@ databaseChangeLog:
         columns:
           - column:
               name: type_id
-              type: text
+              type: uuid
               constraints:
                 primaryKey: true
                 nullable: false
