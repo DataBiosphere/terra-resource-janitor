@@ -113,12 +113,6 @@ databaseChangeLog:
                 nullable: true
                 unique: false
           - column:
-              name: status
-              type: text
-              constraints:
-                nullable: true
-                unique: false
-          - column:
               name: description
               type: text
               constraints:
