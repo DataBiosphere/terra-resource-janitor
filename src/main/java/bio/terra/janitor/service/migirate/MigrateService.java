@@ -73,7 +73,7 @@ public class MigrateService {
         liquibase.dropAll();
       }
 
-      logger.info("Upgrading the database schema");
+      logger.info("Updating the database schema");
       liquibase.update(new Contexts()); // Run all migrations - no context filtering
     } catch (LiquibaseException | SQLException ex) {
       // TODO(yonghao): Change this to Janitor internal exception once we have the interface
