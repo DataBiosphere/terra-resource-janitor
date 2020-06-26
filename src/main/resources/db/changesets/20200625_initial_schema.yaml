@@ -139,5 +139,5 @@ databaseChangeLog:
               name: bucket_name
               type: text
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
