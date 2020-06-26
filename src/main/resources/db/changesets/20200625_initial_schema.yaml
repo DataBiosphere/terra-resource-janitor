@@ -133,7 +133,7 @@ databaseChangeLog:
               name: project_id
               type: text
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
           - column:
               name: bucket_name
