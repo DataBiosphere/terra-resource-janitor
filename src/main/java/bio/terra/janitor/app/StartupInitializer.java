@@ -16,9 +16,9 @@ public final class StartupInitializer {
     JanitorJdbcConfiguration janitorJdbcConfiguration =
         (JanitorJdbcConfiguration) applicationContext.getBean("janitorJdbcConfiguration");
 
-    if (janitorJdbcConfiguration.isInitializeOnStart()) {
+    if (janitorJdbcConfiguration.isRecreateDbOnStart()) {
       migrateService.initialize(changelogPath, janitorJdbcConfiguration.getDataSource());
-    } else if (janitorJdbcConfiguration.isUpgradeOnStart()) {
+    } else if (janitorJdbcConfiguration.isUpdateDbOnStart()) {
       migrateService.upgrade(changelogPath, janitorJdbcConfiguration.getDataSource());
     }
   }

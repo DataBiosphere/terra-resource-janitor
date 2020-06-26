@@ -3,8 +3,10 @@ name: Tag, Build, and Push Image
 on:
   push:
     branches:
-      - yyu-CA-871
+      - master
     paths-ignore:
+      - 'README.md'
+      - '.github/**'
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
   GOOGLE_PROJECT: terra-kernel-k8s

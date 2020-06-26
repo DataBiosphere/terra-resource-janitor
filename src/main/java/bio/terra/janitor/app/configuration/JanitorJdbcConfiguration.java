@@ -18,23 +18,23 @@ public class JanitorJdbcConfiguration extends JdbcConfiguration {
   // 1. initialize is true; upgrade is irrelevant - initialize and recreate an empty database
   // 2. initialize is false; upgrade is true - apply changesets to an existing database
   // 3. initialize is false; upgrade is false - do nothing to the database
-  private boolean initializeOnStart;
-  private boolean upgradeOnStart;
+  private boolean recreateDbOnStart;
+  private boolean updateDbOnStart;
 
-  public boolean isInitializeOnStart() {
-    return initializeOnStart;
+  public boolean isRecreateDbOnStart() {
+    return recreateDbOnStart;
   }
 
-  public void setInitializeOnStart(boolean initializeOnStart) {
-    this.initializeOnStart = initializeOnStart;
+  public void setRecreateDbOnStart(boolean recreateDbOnStart) {
+    this.recreateDbOnStart = recreateDbOnStart;
   }
 
-  public boolean isUpgradeOnStart() {
-    return upgradeOnStart;
+  public boolean isUpdateDbOnStart() {
+    return updateDbOnStart;
   }
 
-  public void setUpgradeOnStart(boolean upgradeOnStart) {
-    this.upgradeOnStart = upgradeOnStart;
+  public void setUpdateDbOnStart(boolean updateDbOnStart) {
+    this.updateDbOnStart = updateDbOnStart;
   }
 
   // This bean plus the @EnableTransactionManagement annotation above enables the use of the

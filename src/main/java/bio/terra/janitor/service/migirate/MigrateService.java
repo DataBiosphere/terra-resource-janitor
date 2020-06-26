@@ -48,7 +48,7 @@ public class MigrateService {
     migrateWorker(changesetFile, dataSource, false);
   }
 
-  private void migrateWorker(String changesetFile, DataSource dataSource, boolean initialize) {
+  private void migrateWorker(String changesetFile, DataSource dataSource, boolean destroyAll) {
     try (Connection connection = dataSource.getConnection()) {
       Liquibase liquibase =
           new Liquibase(
@@ -68,7 +68,7 @@ public class MigrateService {
         liquibase.forceReleaseLocks();
       }
 
-      if (initialize) {
+      if (destroyAll) {
         logger.info("Initializing all tables in the database");
         liquibase.dropAll();
       }

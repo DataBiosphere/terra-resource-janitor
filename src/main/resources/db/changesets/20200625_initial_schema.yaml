@@ -3,13 +3,13 @@
 databaseChangeLog:
 - changeSet:
     id: init_janitor_table
-    author: yonghao
+    author: yonghaoy
     changes:
     - createTable:
         tableName: resource_type
         columns:
           - column:
-              name: type_id
+              name: id
               type: uuid
               constraints:
                 primaryKey: true
@@ -18,13 +18,13 @@ databaseChangeLog:
               name: name
               type: text
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
     - createTable:
         tableName: tracked_resource
         columns:
           - column:
-              name: tracked_id
+              name: id
               type: uuid
               constraints:
                 primaryKey: true
@@ -33,38 +33,38 @@ databaseChangeLog:
               name: resource_type_id
               type: uuid
               constraints:
-                references: resource_type(type_id)
+                references: resource_type(id)
                 foreignKeyName: fk_type_id
-                nullable: true
+                nullable: false
           - column:
               name: resource_uid
               type: json
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
           - column:
               name: creation
               type: timestamp
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
           - column:
               name: expireation
               type: timestamp
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
           - column:
               name: state
               type: text
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
           - column:
               name: wait_until
               type: timestamp
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
     - createTable:
         tableName: label
@@ -73,7 +73,7 @@ databaseChangeLog:
               name: tracked_id
               type: uuid
               constraints:
-                references: tracked_resource(tracked_id)
+                references: tracked_resource(id)
                 foreignKeyName: fk_tracked_id
                 primaryKey: true
                 nullable: false
@@ -81,13 +81,13 @@ databaseChangeLog:
               name: key
               type: text
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
           - column:
               name: value
               type: text
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
     - createTable:
         tableName: cleanup_log
@@ -96,7 +96,7 @@ databaseChangeLog:
               name: tracked_id
               type: uuid
               constraints:
-                references: tracked_resource(tracked_id)
+                references: tracked_resource(id)
                 foreignKeyName: fk_tracked_id
                 primaryKey: true
                 nullable: false
@@ -104,13 +104,13 @@ databaseChangeLog:
               name: logtime
               type: timestamp
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
           - column:
               name: status
               type: text
               constraints:
-                nullable: true
+                nullable: false
                 unique: false
           - column:
               name: description
@@ -119,13 +119,13 @@ databaseChangeLog:
                 nullable: true
                 unique: false
     - createTable:
-        tableName: gcp_bucket
+        tableName: bucket
         columns:
           - column:
               name: tracked_id
               type: uuid
               constraints:
-                references: tracked_resource(tracked_id)
+                references: tracked_resource(id)
                 foreignKeyName: fk_tracked_id
                 primaryKey: true
                 nullable: false
