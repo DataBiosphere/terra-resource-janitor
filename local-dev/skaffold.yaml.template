@@ -9,7 +9,7 @@ build:
 deploy:
   helm:
     releases:
-      - name: janitor-ENV
+      - name: crljanitor-ENV
         namespace: terra-ENV
         chartPath: terra-helm/charts/crljanitor
         skipBuildDependencies: true
