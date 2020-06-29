@@ -6,8 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
+/**
+ * Initializes the application after the application is setup, but before the port is opened for business.
+ * The purpose for this class is for database initialization and migration.
+ */
 public final class StartupInitializer {
-  private static final Logger logger = LoggerFactory.getLogger(StartupInitializer.class);
   private static final String changelogPath = "db/changelog.xml";
 
   public static void initialize(ApplicationContext applicationContext) {

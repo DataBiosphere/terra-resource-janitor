@@ -38,7 +38,7 @@ databaseChangeLog:
                 nullable: false
           - column:
               name: resource_uid
-              type: json
+              type: jsonb
               constraints:
                 nullable: false
                 unique: false
@@ -49,7 +49,7 @@ databaseChangeLog:
                 nullable: false
                 unique: false
           - column:
-              name: expireation
+              name: expiration
               type: timestamp
               constraints:
                 nullable: false
@@ -70,7 +70,7 @@ databaseChangeLog:
         tableName: label
         columns:
           - column:
-              name: tracked_id
+              name: tracked_resource_id
               type: uuid
               constraints:
                 references: tracked_resource(id)
@@ -93,7 +93,7 @@ databaseChangeLog:
         tableName: cleanup_log
         columns:
           - column:
-              name: tracked_id
+              name: tracked_resource_id
               type: uuid
               constraints:
                 references: tracked_resource(id)
@@ -117,27 +117,4 @@ databaseChangeLog:
               type: text
               constraints:
                 nullable: true
-                unique: false
-    - createTable:
-        tableName: bucket
-        columns:
-          - column:
-              name: tracked_id
-              type: uuid
-              constraints:
-                references: tracked_resource(id)
-                foreignKeyName: fk_tracked_id
-                primaryKey: true
-                nullable: false
-          - column:
-              name: project_id
-              type: text
-              constraints:
-                nullable: false
-                unique: false
-          - column:
-              name: bucket_name
-              type: text
-              constraints:
-                nullable: false
                 unique: false
