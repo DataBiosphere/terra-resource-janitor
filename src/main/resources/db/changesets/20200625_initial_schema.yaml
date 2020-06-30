@@ -1,0 +1,120 @@
+# NOTE: this is still changing because nothing uses Janitor. Expect
+# DBs to keep blowing up for now.
+databaseChangeLog:
+- changeSet:
+    id: init_janitor_table
+    author: yonghaoy
+    changes:
+    - createTable:
+        tableName: resource_type
+        columns:
+          - column:
+              name: id
+              type: uuid
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: name
+              type: text
+              constraints:
+                nullable: false
+                unique: false
+    - createTable:
+        tableName: tracked_resource
+        columns:
+          - column:
+              name: id
+              type: uuid
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: resource_type_id
+              type: uuid
+              constraints:
+                references: resource_type(id)
+                foreignKeyName: fk_type_id
+                nullable: false
+          - column:
+              name: resource_uid
+              type: jsonb
+              constraints:
+                nullable: false
+                unique: false
+          - column:
+              name: creation
+              type: timestamp
+              constraints:
+                nullable: false
+                unique: false
+          - column:
+              name: expiration
+              type: timestamp
+              constraints:
+                nullable: false
+                unique: false
+          - column:
+              name: state
+              type: text
+              constraints:
+                nullable: false
+                unique: false
+          - column:
+              name: wait_until
+              type: timestamp
+              constraints:
+                nullable: false
+                unique: false
+    - createTable:
+        tableName: label
+        columns:
+          - column:
+              name: tracked_resource_id
+              type: uuid
+              constraints:
+                references: tracked_resource(id)
+                foreignKeyName: fk_tracked_id
+                primaryKey: true
+                nullable: false
+          - column:
+              name: key
+              type: text
+              constraints:
+                nullable: false
+                unique: false
+          - column:
+              name: value
+              type: text
+              constraints:
+                nullable: false
+                unique: false
+    - createTable:
+        tableName: cleanup_log
+        columns:
+          - column:
+              name: tracked_resource_id
+              type: uuid
+              constraints:
+                references: tracked_resource(id)
+                foreignKeyName: fk_tracked_id
+                primaryKey: true
+                nullable: false
+          - column:
+              name: logtime
+              type: timestamp
+              constraints:
+                nullable: false
+                unique: false
+          - column:
+              name: status
+              type: text
+              constraints:
+                nullable: false
+                unique: false
+          - column:
+              name: description
+              type: text
+              constraints:
+                nullable: true
+                unique: false
