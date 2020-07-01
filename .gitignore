@@ -3,7 +3,6 @@ HELP.md
 build/
 local-dev/terra-helm/
 local-dev/terra-helmfile/
-local-dev/*.yaml
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**
 !**/src/test/**
