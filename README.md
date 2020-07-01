@@ -8,6 +8,11 @@ Set executable permissions:
 ```
 chmod +x gradlew
 ```
+
+To spin up the local postgres, run:
+```
+local-dev/run_postgres.sh start
+```
 Start local server
 ```
 local-dev/run_local.sh
