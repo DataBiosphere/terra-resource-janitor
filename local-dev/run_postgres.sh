@@ -45,4 +45,3 @@ elif [ $COMMAND = "stop" ]; then
     stop
 else
     exit 1
-fi
