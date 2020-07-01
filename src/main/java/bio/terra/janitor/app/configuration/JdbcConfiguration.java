@@ -56,6 +56,11 @@ public class JdbcConfiguration {
   }
 
   private void configureDataSource() {
+    System.out.println("~~~~~~~~~~~~~~~~~!!!!!");
+    System.out.println(uri);
+    System.out.println(username);
+    System.out.println(password);
+    System.out.println("~~~~~~~~~~~~~~~~~!!!!!");
     Properties props = new Properties();
     props.setProperty("user", getUsername());
     props.setProperty("password", getPassword());
