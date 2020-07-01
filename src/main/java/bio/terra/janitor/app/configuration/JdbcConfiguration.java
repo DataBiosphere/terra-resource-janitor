@@ -64,7 +64,11 @@ public class JdbcConfiguration {
     Properties props = new Properties();
     props.setProperty("user", getUsername());
     props.setProperty("password", getPassword());
-
+    System.out.println(props);
+    System.out.println(getUri());
+    System.out.println(getUsername());
+    System.out.println(getPassword());
+    System.out.println("~~~~~~~~~~~~~~~~~!!!!!");
     ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(getUri(), props);
 
     PoolableConnectionFactory poolableConnectionFactory =
