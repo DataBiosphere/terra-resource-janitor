@@ -59,3 +59,7 @@ Then run unit tests:
 ```
 ./gradlew test
 ```
+Stop the local postgres:
+```
+local-dev/run_postgres.sh stop
+```
