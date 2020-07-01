@@ -16,6 +16,11 @@ And then check http://127.0.0.1:8080/status for service status.
 
 Swagger in local server: http://127.0.0.1:8080/swagger-ui.html
 
+You can connect to local postgres by running: 
+```
+psql postgresql://127.0.0.1:5432/testdb -U janitor-test
+```
+
 ## Deploy to GKE cluster:
 The provided setup script clones the terra-helm and terra-helmfile git repos,
 and templates in the desired Terra environment/k8s namespace to target.
