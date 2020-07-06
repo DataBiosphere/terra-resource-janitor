@@ -45,5 +45,3 @@ jobs:
         run: chmod +x gradlew
       - name: Run unit tests
         run: ./gradlew unitTest --scan
-      - name: Stop Postgres DB
-        run:  ./local-dev/run_postgres.sh stop
