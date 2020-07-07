@@ -24,6 +24,22 @@ paths:
           description: Service is broken
           $ref: '#/components/responses/StatusResponse'
 
+
+  '/api/janitor/v1/resource':
+    post:
+      description: |
+        Get the resource by id.
+      operationId: getResource
+      tags:
+        - janitor
+      responses:
+        200:
+          description: OK
+          $ref: '#/components/responses/GetResponse'
+        500:
+          description: Get request error
+          $ref: '#/components/responses/ErrorResponse'
+
   '/api/janitor/v1/resource/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'

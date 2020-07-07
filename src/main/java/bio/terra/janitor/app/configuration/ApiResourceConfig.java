@@ -13,5 +13,6 @@ public class ApiResourceConfig implements WebMvcConfigurer {
         .addResourceHandler("/swagger-webjar/**")
         .addResourceLocations("classpath:/META-INF/resources/webjars/swagger-ui/3.25.4/");
     registry.addResourceHandler("/**").addResourceLocations("classpath:/api/");
+    // GoogleBigQueryTableUid u = null;
   }
 }
