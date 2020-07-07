@@ -9,7 +9,7 @@ start() {
 
     # start up postgres
     echo "starting up postgres container..."
-    docker run --name $CONTAINER -e POSTGRES_USER=janitor-test -e POSTGRES_PASSWORD=janitor-test -e POSTGRES_DB=testdb -d -p "$POSTGRES_PORT:5432" postgres:$POSTGRES_VERSION
+    docker run --name $CONTAINER -e POSTGRES_USER=dbuser -e POSTGRES_PASSWORD=dbpwd -e POSTGRES_DB=testdb -d -p "$POSTGRES_PORT:5432" postgres:$POSTGRES_VERSION
 
     # validate postgres
     echo "running postgres validation..."

@@ -105,9 +105,16 @@ ideaModule.dependsOn tasks.openApiGenerate
 
 // end of OpenAPI Server Generation
 
-
 test {
+    useJUnitPlatform()
+}
+
+task unitTest(type: Test) {
     useJUnitPlatform {
         includeTags 'unit'
     }
+    testLogging {
+        events = ["passed", "failed", "skipped", "started"]
+    }
+    outputs.upToDateWhen { false }
 }

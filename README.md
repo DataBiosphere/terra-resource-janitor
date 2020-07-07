@@ -45,3 +45,21 @@ You may need to use gcloud to provide GCR
 ```
 local-dev/setup_local_env.sh <environment>
 ```
+
+## Testing
+
+### Unit tests
+
+Spin up the local postgres:
+```
+local-dev/run_postgres.sh start
+```
+
+Then run unit tests:
+```
+./gradlew test
+```
+Stop the local postgres:
+```
+local-dev/run_postgres.sh stop
+```
