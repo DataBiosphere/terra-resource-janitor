@@ -3,7 +3,7 @@ apiVersion: skaffold/v2alpha4
 kind: Config
 build:
   artifacts:
-  - image: gcr.io/terra-kernel-k8s/crl-janitor
+  - image: gcr.io/terra-kernel-k8s/terra-resource-janitor
     context: ../
     jib: {}
 deploy:
@@ -14,7 +14,7 @@ deploy:
         chartPath: terra-helm/charts/crljanitor
         skipBuildDependencies: true
         values:
-          image: gcr.io/terra-kernel-k8s/crl-janitor
+          image: gcr.io/terra-kernel-k8s/terra-resource-janitor
         valuesFiles:
           - terra-helmfile/terra/values/crljanitor.yaml
           - terra-helmfile/terra/values/crljanitor/personal.yaml
