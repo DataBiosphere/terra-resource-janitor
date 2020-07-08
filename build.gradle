@@ -68,14 +68,31 @@ spotless {
     }
 }
 
+
 // OpenAPI Server Generation
+// - Unzip external dependency on Cloud Resource Schema
 // - specify the source and target
 // - define the generation
 // - define the validation
 // - define dependencies to include the generated code
-
 def openapiSourceFile = "${projectDir}/src/main/resources/api/service_openapi.yaml"
 def openapiTargetDir = "${buildDir}/generated"
+
+// The directory to copy cloud resource schema file.
+def cloudResourceSchemaDir = "${projectDir}/src/main/resources/api"
+
+configurations {
+    cloudResourceSchema { transitive = false }
+}
+dependencies {
+    cloudResourceSchema group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema', version: '0.0.0-SNAPSHOT'
+}
+task unzipCloudResourceSchema(type: Copy) {
+    from zipTree(configurations.cloudResourceSchema.singleFile).matching {
+        include 'cloud_resources_uid.yaml'
+    }
+    into "$cloudResourceSchemaDir"
+}
 
 openApiGenerate {
     generatorName = "spring"
@@ -99,6 +116,14 @@ openApiGenerate {
 openApiValidate {
     inputSpec = "${openapiSourceFile}".toString()
 }
+task deleteCloudResourceSchema(type: Delete) {
+    delete "${cloudResourceSchemaDir}/cloud_resources_uid.yaml"
+}
+
+// Note The Open API schema depends on an external library - Cloud-Resource-Schema, so need to unzip it first.
+tasks.openApiGenerate.dependsOn tasks.unzipCloudResourceSchema
+// Delete the generated file after.
+deleteCloudResourceSchema.mustRunAfter(openApiGenerate)
 
 // Note: Spotless deletes the classes OpenApi generates.
 // The order needs to be spotlessApply -> openApiGenerate -> build/test/run
