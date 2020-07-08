@@ -5,6 +5,7 @@ info:
     Janitor service to cleanup cloud resources created by Terra CRL.
   version: 0.0.1
 
+# This file has extra dependencies from: https://github.com/DataBiosphere/terra-cloud-resource-lib/blob/master/cloud-resource-schema/src/main/resources/cloud_resources_uid.yaml
 servers:
 - url: /
 
@@ -24,6 +25,36 @@ paths:
           description: Service is broken
           $ref: '#/components/responses/StatusResponse'
 
+
+  '/api/janitor/v1/resource':
+    post:
+      description: |
+        Create a new tracked resource.
+      operationId: createResource
+      tags:
+        - janitor
+      requestBody:
+        description: |
+          Resource UID, time to live, resource labels
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResourceRequestBody'
+      responses:
+        200:
+          description: Ok
+          $ref: '#/components/responses/CreateResponse'
+        400:
+          description: Bad request - invalid id, badly formed
+          $ref: '#/components/responses/ErrorResponse'
+        403:
+          description: Permission denied
+          $ref: '#/components/responses/ErrorResponse'
+        500:
+          description: Creation request error
+          $ref: '#/components/responses/ErrorResponse'
+
+  # TODO(yonghao): remove temporrary placeholder endpoint
   '/api/janitor/v1/resource/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'
@@ -50,6 +81,7 @@ components:
       required: true
       schema:
         type: string
+
   schemas:
     ErrorReport:
       type: object
@@ -62,6 +94,7 @@ components:
           type: array
           items:
             type: string
+
     SystemStatus:
       type: object
       properties:
@@ -79,6 +112,34 @@ components:
                 type: array
                 items:
                   type: string
+
+    CreateResourceRequestBody:
+      type: object
+      required:
+        - resourceUid
+        - timeToLiveInMinutes
+      properties:
+        resourceUid:
+          # CloudResourceUid is referred from CRL's cloud-resource-schema.
+          description: The UID of the resource in CRL format
+          $ref: '../../../../build/generated/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+        labels:
+          description: The labels for the resource
+          type: object
+          additionalProperties:
+            type: string
+        timeToLiveInMinutes:
+          description: How long created resources should live (at least) before being cleaned up in minutes.
+          type: integer
+          format: int32
+
+    CreatedResource:
+      type: object
+      properties:
+        id:
+          type: string
+          description: UUID of a newly-created tracked resource
+
     ResourceDescription:
       type: object
       properties:
@@ -100,6 +161,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/SystemStatus'
+
+    CreateResponse:
+      description: Response to Create calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedResource'
 
     GetResponse:
       description: Response to Get calls
