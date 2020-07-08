@@ -25,19 +25,34 @@ paths:
           $ref: '#/components/responses/StatusResponse'
 
 
-  '/api/janitor/v1/resource':
+  '/api/janitor/v1/resource/{type}':
+    parameters:
+      - $ref: '#/components/parameters/Type'
     post:
       description: |
-        Get the resource by id.
-      operationId: getResource
+        Create a new tracked resource.
+      operationId: createResource
       tags:
         - janitor
+      requestBody:
+        description: |
+          Resource UID, time to live, resource labels
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResourceRequestBody'
       responses:
         200:
-          description: OK
-          $ref: '#/components/responses/GetResponse'
+          description: Ok
+          $ref: '#/components/responses/CreateResponse'
+        400:
+          description: Bad request - invalid id, badly formed
+          $ref: '#/components/responses/ErrorResponse'
+        401:
+          description: Permission denied
+          $ref: '#/components/responses/ErrorResponse'
         500:
-          description: Get request error
+          description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
 
   '/api/janitor/v1/resource/{id}':
@@ -66,6 +81,16 @@ components:
       required: true
       schema:
         type: string
+
+    Type:
+      name: type
+      in: path
+      description: The reousrce type
+      required: true
+      schema:
+        type: string
+        enum: [google-bigquery-dataset, google-bigquery-table, google-blob, google-bucket, google-project]
+
   schemas:
     ErrorReport:
       type: object
@@ -78,6 +103,7 @@ components:
           type: array
           items:
             type: string
+
     SystemStatus:
       type: object
       properties:
@@ -95,6 +121,34 @@ components:
                 type: array
                 items:
                   type: string
+
+    CreateResourceRequestBody:
+      type: object
+      properties:
+        resourceUid:
+          description: The UID of the resource in CRL format
+          type: object
+        labels:
+          description: The labels for the resource
+          type: object
+          additionalProperties:
+            type: string
+        timeToLive:
+          description: How long created resources should live (at least) before being cleaned up.
+          type: integer
+          format: int64
+        creationTime:
+          description: When the resource is created.
+          type: integer
+          format: int64
+
+    CreatedResource:
+      type: object
+      properties:
+        id:
+          type: string
+          description: UUID of a newly-created tracked resource
+
     ResourceDescription:
       type: object
       properties:
@@ -117,9 +171,18 @@ components:
           schema:
             $ref: '#/components/schemas/SystemStatus'
 
+    CreateResponse:
+      description: Response to Create calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedResource'
+
     GetResponse:
       description: Response to Get calls
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ResourceDescription'
+
+

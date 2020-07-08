@@ -42,6 +42,7 @@ out/
 ### OpenAPI CodeGen detritus
 .openapi-generator/
 pom.xml
+src/main/resources/api/cloud_resources_uid
 
 # Package Files #
 *.war
