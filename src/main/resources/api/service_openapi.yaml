@@ -25,9 +25,7 @@ paths:
           $ref: '#/components/responses/StatusResponse'
 
 
-  '/api/janitor/v1/resource/{type}':
-    parameters:
-      - $ref: '#/components/parameters/Type'
+  '/api/janitor/v1/resource':
     post:
       description: |
         Create a new tracked resource.
@@ -82,15 +80,6 @@ components:
       required: true
       schema:
         type: string
-
-    Type:
-      name: type
-      in: path
-      description: The reousrce type
-      required: true
-      schema:
-        type: string
-        enum: [google-bigquery-dataset, google-bigquery-table, google-blob, google-bucket, google-project]
 
   schemas:
     ErrorReport:
