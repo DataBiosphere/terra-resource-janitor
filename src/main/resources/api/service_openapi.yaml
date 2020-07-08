@@ -48,13 +48,14 @@ paths:
         400:
           description: Bad request - invalid id, badly formed
           $ref: '#/components/responses/ErrorResponse'
-        401:
+        403:
           description: Permission denied
           $ref: '#/components/responses/ErrorResponse'
         500:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
 
+  # TODO(yonghao): remove temporrary placeholder endpoint
   '/api/janitor/v1/resource/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'
@@ -133,12 +134,12 @@ components:
           type: object
           additionalProperties:
             type: string
-        timeToLive:
-          description: How long created resources should live (at least) before being cleaned up.
+        timeToLiveInMinutes:
+          description: How long created resources should live (at least) before being cleaned up in minutes.
           type: integer
           format: int64
-        creationTime:
-          description: When the resource is created.
+        creationTimeInMillis:
+          description: The resource creation time in millisenonds
           type: integer
           format: int64
 
