@@ -114,7 +114,7 @@ openApiValidate {
     inputSpec = "${openapiSourceFile}".toString()
 }
 
-// Note The Open API schema depends on an external library - Cloud-Resource-Schema, so need to unzip it first.
+// Note The Open API schema depends on an external library - cloud-resource-schema, so need to unzip it first.
 tasks.openApiGenerate.dependsOn tasks.unzipCloudResourceSchema
 
 // Note: Spotless deletes the classes OpenApi generates.
