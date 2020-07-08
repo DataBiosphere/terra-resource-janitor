@@ -78,9 +78,6 @@ spotless {
 def openapiSourceFile = "${projectDir}/src/main/resources/api/service_openapi.yaml"
 def openapiTargetDir = "${buildDir}/generated"
 
-// The directory to copy cloud resource schema file.
-def cloudResourceSchemaDir = "${projectDir}/src/main/resources/api"
-
 configurations {
     cloudResourceSchema { transitive = false }
 }
@@ -91,7 +88,7 @@ task unzipCloudResourceSchema(type: Copy) {
     from zipTree(configurations.cloudResourceSchema.singleFile).matching {
         include 'cloud_resources_uid.yaml'
     }
-    into "$cloudResourceSchemaDir"
+    into "$openapiTargetDir"
 }
 
 openApiGenerate {
@@ -116,14 +113,9 @@ openApiGenerate {
 openApiValidate {
     inputSpec = "${openapiSourceFile}".toString()
 }
-task deleteCloudResourceSchema(type: Delete) {
-    delete "${cloudResourceSchemaDir}/cloud_resources_uid.yaml"
-}
 
 // Note The Open API schema depends on an external library - Cloud-Resource-Schema, so need to unzip it first.
 tasks.openApiGenerate.dependsOn tasks.unzipCloudResourceSchema
-// Delete the generated file after.
-deleteCloudResourceSchema.mustRunAfter(openApiGenerate)
 
 // Note: Spotless deletes the classes OpenApi generates.
 // The order needs to be spotlessApply -> openApiGenerate -> build/test/run
