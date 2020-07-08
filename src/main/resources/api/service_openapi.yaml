@@ -126,7 +126,7 @@ components:
         timeToLiveInMinutes:
           description: How long created resources should live (at least) before being cleaned up in minutes.
           type: integer
-          format: int64
+          format: int32
         creationTimeInMillis:
           description: The resource creation time in millisenonds
           type: integer
