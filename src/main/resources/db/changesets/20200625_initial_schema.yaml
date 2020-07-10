@@ -18,8 +18,6 @@ databaseChangeLog:
               name: resource_type
               type: ENUM('GOOGLE_BIGQUERY_DATASET', 'GOOGLE_BIGQUERY_TABLE', 'GOOGLE_BLOB', 'GOOGLE_BUCKET', 'GOOGLE_PROJECT')
               constraints:
-                references: resource_type(id)
-                foreignKeyName: fk_type_id
                 nullable: false
           - column:
               name: resource_uid
@@ -55,12 +53,19 @@ databaseChangeLog:
         tableName: label
         columns:
           - column:
+              name: label_id
+              type: uuid
+              constraints:
+                primaryKey: true
+                unique: true
+                nullable: false
+          - column:
               name: tracked_resource_id
               type: uuid
               constraints:
                 references: tracked_resource(id)
                 foreignKeyName: fk_tracked_id
-                primaryKey: true
+                unique: false
                 nullable: false
           - column:
               name: key

@@ -118,16 +118,22 @@ components:
       required:
         - resourceUid
         - timeToLiveInMinutes
+        - creation
       properties:
         resourceUid:
           # CloudResourceUid is referred from CRL's cloud-resource-schema.
-          description: The UID of the resource in CRL format
-          $ref: '../../../../build/generated/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+          # description: The UID of the resource in CRL format
+          oneOf:
+            $ref: '../../../../build/generated/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
         labels:
           description: The labels for the resource
           type: object
           additionalProperties:
             type: string
+        creation:
+          description: The time when the resource is created.
+          type: string
+          format: 'date-time'
         timeToLiveInMinutes:
           description: How long created resources should live (at least) before being cleaned up in minutes.
           type: integer
