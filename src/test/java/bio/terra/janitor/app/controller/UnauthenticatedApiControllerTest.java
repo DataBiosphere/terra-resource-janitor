@@ -26,7 +26,7 @@ public class UnauthenticatedApiControllerTest {
   @Test
   public void testStatusOK() throws Exception {
     assertEquals(
-        "{\"ok\":true,\"systems\":{\"postgres\":{\"ok\":true,\"messages\":null}}}",
+        "{\"ok\":true,\"systems\":{\"postgres\":{\"ok\":true}}}",
         this.mvc
             .perform(get("/status"))
             .andExpect(status().isOk())
