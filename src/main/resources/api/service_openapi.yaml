@@ -34,8 +34,6 @@ paths:
       tags:
         - janitor
       requestBody:
-        description: |
-          Resource UID, time to live, resource labels
         content:
           application/json:
             schema:
@@ -121,8 +119,7 @@ components:
       properties:
         resourceUid:
           # CloudResourceUid is referred from CRL's cloud-resource-schema.
-          description: The UID of the resource in CRL format
-          $ref: '../../../../build/generated/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
         labels:
           description: The labels for the resource
           type: object
