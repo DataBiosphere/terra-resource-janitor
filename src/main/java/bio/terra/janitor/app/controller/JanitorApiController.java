@@ -4,8 +4,15 @@ import bio.terra.generated.controller.JanitorApi;
 import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.generated.model.CreatedResource;
 import bio.terra.generated.model.ResourceDescription;
+<<<<<<< HEAD
 import bio.terra.janitor.service.janitor.JanitorService;
 import org.springframework.beans.factory.annotation.Autowired;
+=======
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -31,5 +38,16 @@ public class JanitorApiController implements JanitorApi {
       @RequestBody CreateResourceRequestBody body) {
     System.out.println("~~~~~~~~~HERE!!!");
     return new ResponseEntity<>(janitorService.createResource(body), HttpStatus.OK);
+
+  /** Required if using Swagger-CodeGen, but actually we don't need this. */
+  @Override
+  public Optional<ObjectMapper> getObjectMapper() {
+    return Optional.empty();
+  }
+
+  /** Required if using Swagger-CodeGen, but actually we don't need this. */
+  @Override
+  public Optional<HttpServletRequest> getRequest() {
+    return Optional.empty();
   }
 }
