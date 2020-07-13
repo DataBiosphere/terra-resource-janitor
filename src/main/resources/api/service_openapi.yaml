@@ -120,7 +120,11 @@ components:
       properties:
         resourceUid:
           # CloudResourceUid is referred from CRL's cloud-resource-schema.
-          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+          # This comment below is how we can use cloud_resources_uid.yaml reference. But now, we can not use until oneof
+          # problem is supported.
+          # $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+          type: string
+          format: json
         labels:
           description: The labels for the resource
           type: object

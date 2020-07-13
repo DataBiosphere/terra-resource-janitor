@@ -1,11 +1,10 @@
 package bio.terra.janitor.common;
 
-import bio.terra.generated.model.*;
 import com.google.common.collect.ImmutableMap;
 
 /**
- * Enums mapped from {@link CloudResourceUid} to our DB schema. The original value can be found at
- * <a
+ * Enums mapped from {@link OneOfCreateResourceRequestBodyResourceUid} to our DB schema. The
+ * original value can be found at <a
  * href="https://github.com/DataBiosphere/terra-cloud-resource-lib/blob/master/cloud-resource-schema/src/main/resources/cloud_resources_uid.yaml">terra-cloud-resource-lib
  * repo</a>
  */
@@ -29,7 +28,8 @@ public class CloudResourceType {
           .put(GoogleProjectUid.class, Enum.GOOGLE_PROJECT)
           .build();
 
-  public static Enum getCloudResourceType(CloudResourceUid cloudResourceUid) {
+  public static Enum getCloudResourceType(
+      OneOfCreateResourceRequestBodyResourceUid cloudResourceUid) {
     return CLOUD_RESOURCE_MAP.getOrDefault(cloudResourceUid.getClass(), Enum.UNKNOWN);
   }
 }

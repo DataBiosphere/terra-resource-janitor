@@ -1,6 +1,6 @@
 package bio.terra.janitor.service.janitor;
 
-import bio.terra.generated.model.CloudResourceUid;
+import bio.terra.cloudres.resources.CloudResourceUid;
 import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.generated.model.CreatedResource;
 import bio.terra.janitor.common.CloudResourceType;
@@ -20,6 +20,7 @@ public class JanitorService {
 
   public CreatedResource createResource(CreateResourceRequestBody body) {
     CloudResourceUid cloudResourceUid = body.getResourceUid();
+    // CloudResourceUid cloudResourceUid = body.getResourceUid();
     System.out.println("~~~~~~~~~HERE!!!22222222");
 
     return new CreatedResource()
