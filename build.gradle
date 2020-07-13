@@ -93,48 +93,6 @@ task unzipCloudResourceSchema(type: Copy) {
     into cloudResourceSchemaTargetDor
 }
 
-<<<<<<< HEAD
-openApiGenerate {
-    generatorName = "spring"
-    inputSpec = "${openapiSourceFile}".toString()
-    outputDir = "${openapiTargetDir}".toString()
-    packageName = "${group}"
-    apiPackage = "${group}.generated.controller"
-    modelPackage = "${group}.generated.model"
-    configOptions = [
-            interfaceOnly : "true",
-            useTags : "true",
-            library : "spring-boot",
-            dateLibrary : "java8",
-            generateApiTests : "false",
-            generateApiDocumentation : "false",
-            generateModelTests : "false",
-            generateModelDocumentation : "false",
-    ]
-}
-
-//openApiGenerate {
-//    generatorName = 'java'
-//    inputSpec = "${openapiSourceFile}".toString()
-//    outputDir = "${openapiTargetDir}".toString()
-//    packageName = "${group}"
-//    apiPackage = "${group}.generated.controller"
-//    modelPackage = "${group}.generated.model"
-//    library = 'jersey2'
-//    configOptions = [
-//            'dateLibrary': 'java8'
-//    ]
-//    systemProperties = [
-//            // Only generate model java classes and not API classes.
-//            models   : '',
-//            modelDocs : 'false',
-//            modelTests: 'false',
-//    ]
-//}
-
-openApiValidate {
-    inputSpec = "${openapiSourceFile}".toString()
-=======
 swaggerSources {
     server {
         inputFile = file("${openapiSourceFile}")
@@ -150,7 +108,6 @@ swaggerSources {
             ]
         }
     }
->>>>>>> yyu-swagger-codegen
 }
 
 // Note The Open API schema depends on an external library - cloud-resource-schema, so need to unzip it first.
