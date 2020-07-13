@@ -7,5 +7,6 @@
   "generateApiTests": false,
   "generateApiDocumentation": false,
   "generateModelTests": false,
-  "generateModelDocumentation": false
+  "generateModelDocumentation": false,
+  "library": "jersey2"
 }
