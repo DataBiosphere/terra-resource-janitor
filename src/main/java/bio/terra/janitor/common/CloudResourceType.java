@@ -1,6 +1,6 @@
 package bio.terra.janitor.common;
 
-import bio.terra.generated.model.CloudResourceUid;
+import bio.terra.generated.model.*;
 import com.google.common.collect.ImmutableMap;
 
 /**
@@ -20,16 +20,16 @@ public class CloudResourceType {
     GOOGLE_PROJECT;
   }
 
-  private static final ImmutableMap<String, Enum> CLOUD_RESOURCE_MAP =
-      new ImmutableMap.Builder<String, Enum>()
-          .put("googleBigQueryTableUid", Enum.GOOGLE_BIG_QUERY_TABLE)
-          .put("googleBigQueryDatasetUid", Enum.GOOGLE_BIG_QUERY_DATASET)
-          .put("googleBucketUid", Enum.GOOGLE_BLOB)
-          .put("googleBlobUid", Enum.GOOGLE_BUCKET)
-          .put("googleProjectUid", Enum.GOOGLE_PROJECT)
+  private static final ImmutableMap<Class<?>, Enum> CLOUD_RESOURCE_MAP =
+      new ImmutableMap.Builder<Class<?>, Enum>()
+          .put(GoogleBigQueryTableUid.class, Enum.GOOGLE_BIG_QUERY_TABLE)
+          .put(GoogleBigQueryDatasetUid.class, Enum.GOOGLE_BIG_QUERY_DATASET)
+          .put(GoogleBlobUid.class, Enum.GOOGLE_BLOB)
+          .put(GoogleBucketUid.class, Enum.GOOGLE_BUCKET)
+          .put(GoogleProjectUid.class, Enum.GOOGLE_PROJECT)
           .build();
 
   public static Enum getCloudResourceType(CloudResourceUid cloudResourceUid) {
-    return CLOUD_RESOURCE_MAP.getOrDefault(cloudResourceUid.getResourceType(), Enum.UNKNOWN);
+    return CLOUD_RESOURCE_MAP.getOrDefault(cloudResourceUid.getClass(), Enum.UNKNOWN);
   }
 }

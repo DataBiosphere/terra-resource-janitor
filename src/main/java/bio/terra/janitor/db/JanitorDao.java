@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -24,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class JanitorDao {
+  private static final Logger logger = LoggerFactory.getLogger(JanitorDao.class);
+
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired

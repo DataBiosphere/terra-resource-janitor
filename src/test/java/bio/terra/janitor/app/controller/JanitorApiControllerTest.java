@@ -38,8 +38,7 @@ public class JanitorApiControllerTest {
             .andDo(MockMvcResultHandlers.print())
             // .andExpect(status().isOk())
             .andReturn()
-            .getResponse()
-            .getErrorMessage());
+            .getResponse());
     // .getContentAsString());
   }
 }
