@@ -1,13 +1,13 @@
 package bio.terra.janitor.app.configuration;
 
 import bio.terra.janitor.app.StartupInitializer;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolingDataSource;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -34,7 +34,7 @@ public class ApplicationConfiguration {
         .registerModule(new ParameterNamesModule())
         .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule())
-        .registerModule(new JsonNullableModule());
+        .setDefaultPropertyInclusion(JsonInclude.Include.NON_ABSENT);
   }
 
   /**
