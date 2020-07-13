@@ -103,7 +103,6 @@ swaggerSources {
             rawOptions = [
                     "--api-package", "${this.group}.generated.controller".toString(),
                     "--model-package", "${this.group}.generated.model".toString(),
-                    "--library", "spring-boot"
             ]
         }
     }
