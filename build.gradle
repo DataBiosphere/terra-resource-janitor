@@ -9,7 +9,6 @@ plugins {
     id 'idea'
     id 'com.google.cloud.tools.jib' version '2.4.0'
     id 'org.springframework.boot' version '2.3.1.RELEASE'
-    id 'org.openapi.generator' version '4.3.1'
     id 'io.spring.dependency-management' version '1.0.9.RELEASE'
     id 'com.diffplug.gradle.spotless' version '3.27.2'
     id 'org.hidetake.swagger.generator' version '2.18.2'
@@ -78,6 +77,7 @@ spotless {
 // - define dependencies to include the generated code
 def openapiSourceFile = "${projectDir}/src/main/resources/api/service_openapi.yaml"
 def openapiTargetDir = "${buildDir}/generated"
+def cloudResourceSchemaTargetDor = "${buildDir}/crlSchema"
 
 configurations {
     cloudResourceSchema { transitive = false }
@@ -89,7 +89,7 @@ task unzipCloudResourceSchema(type: Copy) {
     from zipTree(configurations.cloudResourceSchema.singleFile).matching {
         include 'cloud_resources_uid.yaml'
     }
-    into {buildDir}
+    into cloudResourceSchemaTargetDor
 }
 
 swaggerSources {

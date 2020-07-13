@@ -119,7 +119,7 @@ components:
       properties:
         resourceUid:
           # CloudResourceUid is referred from CRL's cloud-resource-schema.
-          $ref: '../../../../build/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
         labels:
           description: The labels for the resource
           type: object
