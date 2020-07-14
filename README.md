@@ -46,6 +46,12 @@ You may need to use gcloud to provide GCR
 local-dev/setup_gke_deploy.sh <environment>
 ```
 
+You can now push to the specified environment by running
+
+```
+skaffold run
+```
+
 ## Testing
 
 ### Unit tests
