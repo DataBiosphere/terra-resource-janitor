@@ -2,7 +2,6 @@ package bio.terra.janitor.db;
 
 import static bio.terra.janitor.common.DbUtils.getUUIDField;
 
-import bio.terra.generated.model.OneOfCreateResourceRequestBodyResourceUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.CloudResourceType;
 import bio.terra.janitor.common.exception.DuplicateLabelException;
@@ -38,7 +37,7 @@ public class JanitorDao {
   /** Creates the tracked_resource record and adding labels. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public UUID createResource(
-      OneOfCreateResourceRequestBodyResourceUid cloudResourceUid,
+      String cloudResourceUid,
       CloudResourceType.Enum resourceType,
       Map<String, String> labels,
       @NotNull @Valid OffsetDateTime creation,

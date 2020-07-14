@@ -1,9 +1,7 @@
 package bio.terra.janitor.service.janitor;
 
-import bio.terra.cloudres.resources.CloudResourceUid;
 import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.generated.model.CreatedResource;
-import bio.terra.janitor.common.CloudResourceType;
 import bio.terra.janitor.db.JanitorDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,7 +17,7 @@ public class JanitorService {
   }
 
   public CreatedResource createResource(CreateResourceRequestBody body) {
-    CloudResourceUid cloudResourceUid = body.getResourceUid();
+    // String cloudResourceUid = body.getResourceUid();
     // CloudResourceUid cloudResourceUid = body.getResourceUid();
     System.out.println("~~~~~~~~~HERE!!!22222222");
 
@@ -27,8 +25,9 @@ public class JanitorService {
         .id(
             janitorDao
                 .createResource(
-                    cloudResourceUid,
-                    CloudResourceType.getCloudResourceType(cloudResourceUid),
+                    null,
+                    // CloudResourceType.getCloudResourceType(cloudResourceUid),
+                    null,
                     body.getLabels(),
                     body.getCreation(),
                     body.getCreation().plusMinutes(body.getTimeToLiveInMinutes()))
