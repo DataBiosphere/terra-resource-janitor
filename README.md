@@ -43,7 +43,7 @@ You may need to use gcloud to provide GCR
   your target environment as the first argument:
 
 ```
-local-dev/setup_local_env.sh <environment>
+local-dev/setup_gke_deploy.sh <environment>
 ```
 
 ## Testing

@@ -16,7 +16,7 @@ You may need to use gcloud to provide GCR
   your target environment as the first argument:
 
 ```
-./setup_local_env.sh <environment>
+./setup_gke_deploy.sh <environment>
 ```
 
 You can now push to the specified environment by running
