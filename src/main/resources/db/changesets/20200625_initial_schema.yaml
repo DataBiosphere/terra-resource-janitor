@@ -16,9 +16,11 @@ databaseChangeLog:
                 nullable: false
           - column:
               name: resource_type
-              type: ENUM('GOOGLE_BIGQUERY_DATASET', 'GOOGLE_BIGQUERY_TABLE', 'GOOGLE_BLOB', 'GOOGLE_BUCKET', 'GOOGLE_PROJECT')
+              type: text
+              remarks: contains resource type enum('GOOGLE_BIGQUERY_DATASET', 'GOOGLE_BIGQUERY_TABLE', 'GOOGLE_BLOB', 'GOOGLE_BUCKET', 'GOOGLE_PROJECT')
               constraints:
                 nullable: false
+                unique: false
           - column:
               name: resource_uid
               type: jsonb
@@ -39,7 +41,8 @@ databaseChangeLog:
                 unique: false
           - column:
               name: state
-              type: ENUM('READY', 'CLEANDING', 'DONE', 'ERROR', 'ABANDONED')
+              type: text
+              remarks: Contains resource state enum('READY', 'CLEANDING', 'DONE', 'ERROR', 'ABANDONED')
               constraints:
                 nullable: false
                 unique: false
@@ -53,7 +56,7 @@ databaseChangeLog:
         tableName: label
         columns:
           - column:
-              name: label_id
+              name: id
               type: uuid
               constraints:
                 primaryKey: true

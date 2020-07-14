@@ -6,6 +6,7 @@ import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.CloudResourceType;
 import bio.terra.janitor.common.exception.DuplicateLabelException;
 import bio.terra.janitor.common.exception.DuplicateTrackedResourceException;
+import com.google.gson.Gson;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -44,20 +45,22 @@ public class JanitorDao {
       OffsetDateTime expiration) {
     // TODO(yonghao): Solution for handling duplicate CloudResourceUid.
     String sql =
-        "INSERT INTO tracked_resource (resource_uid, resource_type, creation, expirationTimeMills) values "
-            + "(:resource_uid, :resource_type, :creation, :expirationTimeMills)";
-
-    GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
+        "INSERT INTO tracked_resource (resource_uid, resource_type, creation, expiration) values "
+            + "(:resource_uid::jsonb, :resource_type, :creation, :expiration)";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("resource_uid", cloudResourceUid)
-            .addValue("resource_type", resourceType)
+            .addValue("resource_uid", new Gson().toJson("cloudResourceUid"))
+            .addValue("resource_type", "resourceType")
             .addValue("creation", creation)
-            .addValue("expirationTimeMills", expiration);
+            .addValue("expiration", expiration);
+    GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
 
     try {
+      System.out.println("~~~~~~~~~~~1111111");
+      System.out.println(keyHolder.getKey());
       jdbcTemplate.update(sql, params, keyHolder);
+
     } catch (DuplicateKeyException e) {
       throw new DuplicateTrackedResourceException(
           "tracked_resource " + cloudResourceUid + " already exists.", e);
