@@ -37,6 +37,6 @@ public class UnauthenticatedApiControllerTest {
         new ObjectMapper().readValue(response.getContentAsString(), SystemStatus.class);
     assertTrue(status.isOk());
     assertThat(status.getSystems(), Matchers.hasKey("postgres"));
-    assertThat(status.getSystems(), Matchers.hasKey("stairway-test"));
+    assertThat(status.getSystems(), Matchers.hasKey("stairway"));
   }
 }
