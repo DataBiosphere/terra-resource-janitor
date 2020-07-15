@@ -51,7 +51,7 @@ jobs:
         id: unit-test
         run: ./gradlew unitTest --scan
       - name: Upload Test Reports
-        if: ${{ steps.unit-test.outcome.status == 'failure' }}
+        if: ${{ steps.unit-test.outcome == 'failure' }}
         uses: actions/upload-artifact@v1
         with:
           name: Test Reports
