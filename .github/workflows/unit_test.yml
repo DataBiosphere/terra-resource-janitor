@@ -3,7 +3,11 @@
 
 name: Run Unit Tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ '**' ]
 
 jobs:
   unit-test:
@@ -47,7 +51,7 @@ jobs:
         id: unit-test
         run: ./gradlew unitTest --scan
       - name: Upload Test Reports
-        if: steps.unit-test.outputs.status == 'failure'
+        if: ${{ steps.unit-test.outcome.status == 'failure' }}
         uses: actions/upload-artifact@v1
         with:
           name: Test Reports
