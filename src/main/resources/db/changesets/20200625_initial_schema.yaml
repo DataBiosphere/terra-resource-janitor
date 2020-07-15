@@ -50,7 +50,7 @@ databaseChangeLog:
               name: wait_until
               type: timestamp
               constraints:
-                nullable: false
+                nullable: true
                 unique: false
     - createTable:
         tableName: label

@@ -2,6 +2,7 @@ package bio.terra.janitor.service.janitor;
 
 import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.generated.model.CreatedResource;
+import bio.terra.generated.model.OneOfCloudResourceUid;
 import bio.terra.janitor.db.JanitorDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,7 @@ public class JanitorService {
   }
 
   public CreatedResource createResource(CreateResourceRequestBody body) {
-    // String cloudResourceUid = body.getResourceUid();
+    OneOfCloudResourceUid cloudResourceUid = body.getResourceUid();
     // CloudResourceUid cloudResourceUid = body.getResourceUid();
     System.out.println("~~~~~~~~~HERE!!!22222222");
 

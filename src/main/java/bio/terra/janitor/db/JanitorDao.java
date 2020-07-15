@@ -1,7 +1,5 @@
 package bio.terra.janitor.db;
 
-import static bio.terra.janitor.common.DbUtils.getUUIDField;
-
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.CloudResourceType;
 import bio.terra.janitor.common.exception.DuplicateLabelException;
@@ -18,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -45,48 +42,47 @@ public class JanitorDao {
       OffsetDateTime expiration) {
     // TODO(yonghao): Solution for handling duplicate CloudResourceUid.
     String sql =
-        "INSERT INTO tracked_resource (resource_uid, resource_type, creation, expiration) values "
-            + "(:resource_uid::jsonb, :resource_type, :creation, :expiration)";
+        "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
+            + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state)";
 
+    UUID trackedResourceId = UUID.randomUUID();
     MapSqlParameterSource params =
         new MapSqlParameterSource()
+            .addValue("id", trackedResourceId)
             .addValue("resource_uid", new Gson().toJson("cloudResourceUid"))
             .addValue("resource_type", "resourceType")
             .addValue("creation", creation)
+            .addValue("state", "READY")
             .addValue("expiration", expiration);
-    GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
 
     try {
-      System.out.println("~~~~~~~~~~~1111111");
-      System.out.println(keyHolder.getKey());
-      jdbcTemplate.update(sql, params, keyHolder);
+      jdbcTemplate.update(sql, params);
 
     } catch (DuplicateKeyException e) {
       throw new DuplicateTrackedResourceException(
           "tracked_resource " + cloudResourceUid + " already exists.", e);
     }
 
-    UUID uuid = getUUIDField(keyHolder);
-
     String insertLabelSql =
-        "INSERT INTO label (tracked_resource_id, key, value) values "
-            + "(:tracked_resource_id, :key, :value)";
+        "INSERT INTO label (id, tracked_resource_id, key, value) values "
+            + "(:id, :tracked_resource_id, :key, :value)";
 
     for (Map.Entry<String, String> entry : labels.entrySet()) {
-      GeneratedKeyHolder labelKeyHolder = new GeneratedKeyHolder();
+      UUID labelId = UUID.randomUUID();
       MapSqlParameterSource labelSqlParams =
           new MapSqlParameterSource()
-              .addValue("tracked_resource_id", uuid)
+              .addValue("id", labelId)
+              .addValue("tracked_resource_id", trackedResourceId)
               .addValue("key", entry.getKey())
-              .addValue("value", entry.getValue());
+              .addValue("value", entry.getValue())
+              .addValue("state", "READY");
       try {
-        jdbcTemplate.update(insertLabelSql, labelSqlParams, labelKeyHolder);
+        jdbcTemplate.update(insertLabelSql, labelSqlParams);
       } catch (DuplicateKeyException e) {
-        throw new DuplicateLabelException(
-            "Label " + getUUIDField(labelKeyHolder) + " already exists.", e);
+        throw new DuplicateLabelException("Label " + labelId.toString() + " already exists.", e);
       }
     }
 
-    return uuid;
+    return trackedResourceId;
   }
 }
