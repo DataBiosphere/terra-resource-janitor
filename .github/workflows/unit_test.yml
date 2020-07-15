@@ -44,4 +44,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Run unit tests
+        id: unit-test
         run: ./gradlew unitTest --scan
+      - name: Upload Test Reports
+        if: steps.unit-test.outputs.status == 'failure'
+        uses: actions/upload-artifact@v1
+        with:
+          name: Test Reports
+          path: build/reports/tests
