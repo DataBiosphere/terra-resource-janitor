@@ -29,19 +29,23 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
 
   @Override
   public ResponseEntity<SystemStatus> serviceStatus() {
-    // TODO add StairwayComponent to service status.
-    if (jdbcTemplate.getJdbcTemplate().execute((Connection connection) -> connection.isValid(0))) {
-      return new ResponseEntity<>(
-          new SystemStatus()
-              .ok(true)
-              .putSystemsItem("postgres", new SystemStatusSystems().ok(true)),
-          HttpStatus.OK);
+    SystemStatus systemStatus = new SystemStatus();
+
+    final boolean postgresOk =
+        jdbcTemplate.getJdbcTemplate().execute((Connection connection) -> connection.isValid(0));
+    systemStatus.putSystemsItem("postgres", new SystemStatusSystems().ok(postgresOk));
+
+    StairwayComponent.Status stairwayStatus = stairwayComponent.getStatus();
+    final boolean stairwayOk = stairwayStatus.equals(StairwayComponent.Status.OK);
+    systemStatus.putSystemsItem(
+        "stairway",
+        new SystemStatusSystems().ok(stairwayOk).addMessagesItem(stairwayStatus.toString()));
+
+    systemStatus.ok(postgresOk && stairwayOk);
+    if (systemStatus.isOk()) {
+      return new ResponseEntity<>(systemStatus, HttpStatus.OK);
     } else {
-      return new ResponseEntity<>(
-          new SystemStatus()
-              .ok(false)
-              .putSystemsItem("postgres", new SystemStatusSystems().ok(false)),
-          HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(systemStatus, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

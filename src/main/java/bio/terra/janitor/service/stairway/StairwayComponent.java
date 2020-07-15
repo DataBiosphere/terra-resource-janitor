@@ -21,6 +21,14 @@ public class StairwayComponent {
   private final StairwayJdbcConfiguration stairwayJdbcConfiguration;
   private final Stairway stairway;
 
+  public enum Status {
+    INITIALIZING,
+    OK,
+    ERROR
+  };
+
+  private Status status = Status.INITIALIZING;
+
   @Autowired
   public StairwayComponent(
       ApplicationContext applicationContext,
@@ -54,8 +62,10 @@ public class StairwayComponent {
       // TODO(CA-941): Get obsolete Stairway instances from k8s for multi-instance stairway.
       stairway.recoverAndStart(ImmutableList.of());
     } catch (StairwayException | InterruptedException e) {
+      status = Status.ERROR;
       throw new RuntimeException("Error starting Stairway", e);
     }
+    status = Status.OK;
   }
 
   /** Stop accepting jobs and shutdown stairway. Returns true if successful. */
@@ -76,5 +86,9 @@ public class StairwayComponent {
 
   public Stairway get() {
     return stairway;
+  }
+
+  public StairwayComponent.Status getStatus() {
+    return status;
   }
 }
