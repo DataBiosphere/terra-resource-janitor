@@ -52,6 +52,19 @@ You can now push to the specified environment by running
 skaffold run
 ```
 
+## Connecting psql client using the Cloud SQL Proxy:
+Go to cloud console to get the instance name you want to connect, then start the proxy:
+```
+./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:5432
+```
+Start the client session
+```
+psql "host=127.0.0.1 sslmode=disable dbname=<DB_NAME> user=<USER_NAME>"
+```
+
+Note that to stop local postgres to free the 5432 port first.
+See [this document](https://cloud.google.com/sql/docs/postgres/connect-admin-proxy) for more details.
+
 ## Testing
 
 ### Unit tests
