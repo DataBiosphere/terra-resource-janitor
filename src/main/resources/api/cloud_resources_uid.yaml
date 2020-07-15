@@ -11,6 +11,8 @@ paths: {}
 components:
   schemas:
     GoogleBigQueryDatasetUid:
+      allOf:
+        - $ref: '#/components/schemas/CloudResourceUid'
       type: object
       required:
         - resourceType
@@ -26,6 +28,8 @@ components:
           type: string
     GoogleBigQueryTableUid:
       type: object
+      allOf:
+        - $ref: '#/components/schemas/CloudResourceUid'
       required:
         - resourceType
         - projectId
@@ -42,6 +46,8 @@ components:
         tableId:
           type: string
     GoogleBlobUid:
+      allOf:
+        - $ref: '#/components/schemas/CloudResourceUid'
       type: object
       required:
         - resourceType
@@ -56,6 +62,8 @@ components:
         blobName:
           type: string
     GoogleBucketUid:
+      allOf:
+        - $ref: '#/components/schemas/CloudResourceUid'
       type: object
       required:
         - resourceType
@@ -67,6 +75,8 @@ components:
         bucketName:
           type: string
     GoogleProjectUid:
+      allOf:
+        - $ref: '#/components/schemas/CloudResourceUid'
       type: object
       required:
         - resourceType
@@ -81,12 +91,12 @@ components:
       properties:
         resourceType:
           type: string
-      oneOf:
-      - $ref: '#/components/schemas/GoogleBigQueryDatasetUid'
-      - $ref: '#/components/schemas/GoogleBigQueryTableUid'
-      - $ref: '#/components/schemas/GoogleBlobUid'
-      - $ref: '#/components/schemas/GoogleBucketUid'
-      - $ref: '#/components/schemas/GoogleProjectUid'
+#      oneOf:
+#      - $ref: '#/components/schemas/GoogleBigQueryDatasetUid'
+#      - $ref: '#/components/schemas/GoogleBigQueryTableUid'
+#      - $ref: '#/components/schemas/GoogleBlobUid'
+#      - $ref: '#/components/schemas/GoogleBucketUid'
+#      - $ref: '#/components/schemas/GoogleProjectUid'
       discriminator:
         # Use the resourceType property to figure out which schema is represented by the CloudResourceUid.
         propertyName: resourceType
