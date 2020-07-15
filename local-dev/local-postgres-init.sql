@@ -1,8 +1,4 @@
-DROP DATABASE IF EXISTS testdb;
-DROP DATABASE IF EXISTS testdb-stairway;
-DROP ROLE dbuser;
-DROP ROLE dbuser-stairway;
 CREATE DATABASE testdb;
-CREATE DATABASE testdb-stairway;
+CREATE DATABASE testdb_stairway;
 CREATE ROLE dbuser WITH LOGIN ENCRYPTED PASSWORD 'dbpwd';
-CREATE ROLE dbuser-stairway WITH LOGIN ENCRYPTED PASSWORD 'dbpwd-stairway';
+CREATE ROLE dbuser_stairway WITH LOGIN ENCRYPTED PASSWORD 'dbpwd_stairway';
