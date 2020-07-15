@@ -76,7 +76,7 @@ spotless {
 // - define the generation
 // - define the validation
 // - define dependencies to include the generated code
-def openapiSourceFile = "${projectDir}/src/main/resources/api/service_openapi.yaml"
+def openapiSourceFile = "${projectDir}/src/main/resources/api/service_openapi2.yaml"
 def openapiTargetDir = "${buildDir}/generated"
 def cloudResourceSchemaTargetDor = "${buildDir}/crlSchema"
 
