@@ -25,6 +25,19 @@ paths:
           description: Service is broken
           $ref: '#/components/responses/StatusResponse'
 
+  # TODO configure this to only be callable by Kubernetes in production and to be hooked to Pod termination.
+  '/shutdown':
+    get:
+      description: |
+        Signals that this instance will be shutdown soon. Allows graceful termination to leave less
+        recovery work to be done.  In production, this must be configured to only be callable by Kubernetes.
+      operationId: shutdownRequest
+      tags:
+        - unauthenticated
+      responses:
+        204:
+          description: The service was shutdown successfully
+      security: []
 
   '/api/janitor/v1/resource':
     post:

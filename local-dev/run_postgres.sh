@@ -9,11 +9,15 @@ start() {
 
     # start up postgres
     echo "starting up postgres container..."
-    docker run --name $CONTAINER -e POSTGRES_USER=dbuser -e POSTGRES_PASSWORD=dbpwd -e POSTGRES_DB=testdb -d -p "$POSTGRES_PORT:5432" postgres:$POSTGRES_VERSION
+    docker run --rm  --name $CONTAINER -e POSTGRES_PASSWORD=password -p "$POSTGRES_PORT:5432" \
+      -v $PWD/local-dev/local-postgres-init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql \
+      -d postgres:$POSTGRES_VERSION postgres
+
 
     # validate postgres
     echo "running postgres validation..."
-    docker run --rm --link $CONTAINER:postgres -v $PWD/local-dev/sql_validate.sh:/working/sql_validate.sh postgres:$POSTGRES_VERSION /working/sql_validate.sh janitor
+    docker run --rm --link $CONTAINER:postgres \
+      -v $PWD/local-dev/sql_validate.sh:/working/sql_validate.sh postgres:$POSTGRES_VERSION /working/sql_validate.sh
     if [ 0 -eq $? ]; then
         echo "postgres validation succeeded."
     else
