@@ -43,7 +43,9 @@ public class UnauthenticatedApiControllerTest {
   }
 
   @Test
-  public void shutdownOk() throws Exception {
+  public void shutdownMakesStatusNotOk() throws Exception {
+    this.mvc.perform(get("/status")).andExpect(status().isOk());
     this.mvc.perform(get("/shutdown")).andExpect(status().isNoContent());
+    this.mvc.perform(get("/status")).andExpect(status().is5xxServerError());
   }
 }

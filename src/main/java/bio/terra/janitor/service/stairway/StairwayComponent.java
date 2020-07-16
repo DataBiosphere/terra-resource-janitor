@@ -24,7 +24,8 @@ public class StairwayComponent {
   public enum Status {
     INITIALIZING,
     OK,
-    ERROR
+    ERROR,
+    SHUTDOWN,
   };
 
   private Status status = Status.INITIALIZING;
@@ -70,6 +71,7 @@ public class StairwayComponent {
 
   /** Stop accepting jobs and shutdown stairway. Returns true if successful. */
   public boolean shutdown() throws InterruptedException {
+    status = Status.SHUTDOWN;
     logger.info("Request Stairway shutdown");
     boolean shutdownSuccess =
         stairway.quietDown(
