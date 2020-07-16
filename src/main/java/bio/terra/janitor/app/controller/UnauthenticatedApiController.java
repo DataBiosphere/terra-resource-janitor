@@ -49,11 +49,12 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
     }
   }
 
+  /** The service will shutdown soon. Halt anything we'd rather not interrupt. */
   @Override
   public ResponseEntity<Void> shutdownRequest() {
     try {
       if (!stairwayComponent.shutdown()) {
-        // Shutdown did not complete. Return an error so the caller knows that
+        // Stairway shutdown did not complete. Return an error so the caller knows that.
         return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (InterruptedException ex) {
