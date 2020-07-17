@@ -36,16 +36,14 @@ public class TestUtils {
   }
 
   public static String newJsonCreateRequestBody(
-      CloudResourceUid cloudResourceUid, Optional<Map<String, String>> labels)
-      throws JsonProcessingException {
+      CloudResourceUid cloudResourceUid, Optional<Map<String, String>> labels) {
     ObjectMapper mapper = new ObjectMapper();
 
     ObjectNode trackedResourceNode =
         mapper
             .createObjectNode()
             .put("creation", CREATION.toString())
-            .put("timeToLiveInMinutes", TIME_TO_LIVE_MINUTE)
-            .put("resourceUid", mapper.writeValueAsString(cloudResourceUid));
+            .put("timeToLiveInMinutes", TIME_TO_LIVE_MINUTE);
     trackedResourceNode.set("resourceUid", mapper.valueToTree(cloudResourceUid));
     labels.ifPresent(
         l -> {
