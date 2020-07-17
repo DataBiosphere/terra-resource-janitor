@@ -6,11 +6,7 @@ import bio.terra.generated.model.*;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import org.springframework.stereotype.Component;
 
-/**
- * Enums mapped from {@link null} to our DB schema. The original value can be found at <a
- * href="https://github.com/DataBiosphere/terra-cloud-resource-lib/blob/master/cloud-resource-schema/src/main/resources/cloud_resources_uid.yaml">terra-cloud-resource-lib
- * repo</a>
- */
+/** Gets {@link JanitorResourceTypeEnum} by visiting {@link CloudResourceUid}. */
 @Component
 public class JanitorResourceEnumVisitor implements CloudResourceUidVisitor {
   private JanitorResourceTypeEnum janitorResourceTypeEnum;
