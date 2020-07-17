@@ -44,8 +44,6 @@ public class JanitorResourceEnumVisitor implements CloudResourceUidVisitor {
     // Reset the value just incase this method is called multiple times in a request.
     janitorResourceTypeEnum = null;
     CloudResourceUidVisitor.visit(cloudResourceUid, this);
-    System.out.println("777777");
-    System.out.println(janitorResourceTypeEnum);
     if (janitorResourceTypeEnum == null) {
       throw new InvalidResourceUidException("invalid CloudResourceUid for" + cloudResourceUid);
     }
