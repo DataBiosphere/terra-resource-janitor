@@ -1,11 +1,11 @@
 package bio.terra.janitor.db;
 
 import static bio.terra.janitor.app.common.TestUtils.*;
+import static bio.terra.janitor.common.JanitorResourceTypeEnum.GOOGLE_PROJECT;
 
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
-import bio.terra.janitor.common.CloudResourceType;
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -35,24 +35,11 @@ public class JanitorDaoTest {
 
   @Test
   public void createTrackedResource() throws Exception {
-    // String jsonResourceUid = new Gson().toJson(DEFAULT_CLOUD_RESOURCE_UID);
-    String jsonResourceUid = new Gson().toJson("cloudResourceUid");
-    System.out.println("!!!!!!!!!!!!!33333333");
-    System.out.println(jsonResourceUid);
-
+    String cloudResourceUid = new ObjectMapper().writeValueAsString(newGoogleProjectResourceUid());
     janitorDao.createResource(
-        jsonResourceUid,
-        CloudResourceType.Enum.GOOGLE_BLOB,
-        DEFAULT_LABELS,
-        DEFAULT_CREATION_TIME,
-        DEFAULT_EXPIRATION_TIME);
+        cloudResourceUid, GOOGLE_PROJECT, DEFAULT_LABELS, CREATION, EXPIRATION);
 
-    assertTrackedResourceMatch(
-        jsonResourceUid,
-        CloudResourceType.Enum.GOOGLE_BLOB,
-        DEFAULT_CREATION_TIME,
-        DEFAULT_EXPIRATION_TIME,
-        jdbcTemplate);
-    assertLabelMatch(jsonResourceUid, DEFAULT_LABELS, jdbcTemplate);
+    assertCreateResultMatch(
+        cloudResourceUid, GOOGLE_PROJECT, CREATION, EXPIRATION, jdbcTemplate, DEFAULT_LABELS);
   }
 }

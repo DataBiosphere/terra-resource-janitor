@@ -120,18 +120,7 @@ components:
       properties:
         resourceUid:
           # CloudResourceUid is referred from CRL's cloud-resource-schema.
-          # This comment below is how we can use cloud_resources_uid.yaml reference. But now, we can not use until oneof
-          # problem is supported.
-#          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
-#          type: string
-#          format: json
-             $ref: 'cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
-#          oneOf:
-#            - $ref: 'cloud_resources_uid.yaml#/components/schemas/GoogleBigQueryDatasetUid'
-#            - $ref: 'cloud_resources_uid.yaml#/components/schemas/GoogleBigQueryTableUid'
-#            - $ref: 'cloud_resources_uid.yaml#/components/schemas/GoogleBlobUid'
-#            - $ref: 'cloud_resources_uid.yaml#/components/schemas/GoogleBucketUid'
-#            - $ref: 'cloud_resources_uid.yaml#/components/schemas/GoogleProjectUid'
+          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
         labels:
           description: The labels for the resource
           type: object

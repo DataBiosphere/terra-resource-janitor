@@ -31,7 +31,6 @@ public class JanitorApiController implements JanitorApi {
   @Override
   public ResponseEntity<CreatedResource> createResource(
       @RequestBody CreateResourceRequestBody body) {
-    System.out.println("~~~~~~~~~HERE!!!");
     return new ResponseEntity<>(janitorService.createResource(body), HttpStatus.OK);
   }
 
