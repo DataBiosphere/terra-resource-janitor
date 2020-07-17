@@ -7,7 +7,7 @@ info:
 
 # This file has extra dependencies from: https://github.com/DataBiosphere/terra-cloud-resource-lib/blob/master/cloud-resource-schema/src/main/resources/cloud_resources_uid.yaml
 servers:
-- url: /
+  - url: /
 
 paths:
   '/status':
@@ -16,7 +16,7 @@ paths:
         Returns the operational status of the service
       operationId: serviceStatus
       tags:
-      - unauthenticated
+        - unauthenticated
       responses:
         200:
           description: Service is functional
@@ -68,7 +68,7 @@ paths:
   # TODO(yonghao): remove temporrary placeholder endpoint
   '/api/janitor/v1/resource/{id}':
     parameters:
-    - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
     get:
       description: |
         Get the resource by id.
@@ -129,6 +129,7 @@ components:
       required:
         - resourceUid
         - timeToLiveInMinutes
+        - creation
       properties:
         resourceUid:
           # CloudResourceUid is referred from CRL's cloud-resource-schema.
@@ -138,6 +139,10 @@ components:
           type: object
           additionalProperties:
             type: string
+        creation:
+          description: The time when the resource is created.
+          type: string
+          format: 'date-time'
         timeToLiveInMinutes:
           description: How long created resources should live (at least) before being cleaned up in minutes.
           type: integer
