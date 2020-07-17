@@ -26,7 +26,7 @@ repositories {
 }
 
 // The version of CRL schema library
-def crlSchemaVersion = "0.0.0-SNAPSHOT"
+def crlSchemaVersion = "0.0.2-SNAPSHOT"
 
 dependencies {
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
