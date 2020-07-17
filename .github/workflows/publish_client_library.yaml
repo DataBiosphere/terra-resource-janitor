@@ -1,7 +1,11 @@
 name: Publish package to Artifactory
+#on:
+#  release:
+#    types: [created]
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      -yyu-CA-874
 env:
   VAULT_ADDR: https://clotho.broadinstitute.org:8200
   ARTIFACTORY_ACCOUNT_PATH: secret/dsp/accts/artifactory/dsdejenkins
