@@ -1,12 +1,12 @@
 package bio.terra.janitor.app.common;
 
-import static bio.terra.janitor.common.JanitorResourceTypeEnum.*;
+import static bio.terra.janitor.common.ResourceType.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
-import bio.terra.janitor.common.JanitorResourceEnumVisitor;
+import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -20,8 +20,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
-public class JanitorResourceEnumVisitorTest {
-  @Autowired private JanitorResourceEnumVisitor visitor;
+public class ResourceTypeVisitorTest {
+  @Autowired private ResourceTypeVisitor visitor;
 
   @Test
   public void acceptGoogleProject() {

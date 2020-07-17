@@ -46,12 +46,6 @@ databaseChangeLog:
               constraints:
                 nullable: false
                 unique: false
-          - column:
-              name: wait_until
-              type: timestamp
-              constraints:
-                nullable: true
-                unique: false
     - createTable:
         tableName: label
         columns:

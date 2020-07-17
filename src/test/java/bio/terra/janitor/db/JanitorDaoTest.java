@@ -1,7 +1,7 @@
 package bio.terra.janitor.db;
 
 import static bio.terra.janitor.app.common.TestUtils.*;
-import static bio.terra.janitor.common.JanitorResourceTypeEnum.GOOGLE_PROJECT;
+import static bio.terra.janitor.common.ResourceType.GOOGLE_PROJECT;
 
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;

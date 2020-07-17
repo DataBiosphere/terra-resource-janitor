@@ -3,7 +3,7 @@ package bio.terra.janitor.service.janitor;
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.generated.model.CreatedResource;
-import bio.terra.janitor.common.JanitorResourceEnumVisitor;
+import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import bio.terra.janitor.db.JanitorDao;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -15,11 +15,11 @@ import org.springframework.stereotype.Component;
 public class JanitorService {
 
   private final JanitorDao janitorDao;
-  private final JanitorResourceEnumVisitor visitor;
+  private final ResourceTypeVisitor visitor;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
-  public JanitorService(JanitorDao janitorDao, JanitorResourceEnumVisitor visitor) {
+  public JanitorService(JanitorDao janitorDao, ResourceTypeVisitor visitor) {
     this.janitorDao = janitorDao;
     this.visitor = visitor;
   }

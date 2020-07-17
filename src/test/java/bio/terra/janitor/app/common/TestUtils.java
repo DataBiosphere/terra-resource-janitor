@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleProjectUid;
-import bio.terra.janitor.common.JanitorResourceTypeEnum;
+import bio.terra.janitor.common.ResourceType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -68,7 +68,7 @@ public class TestUtils {
 
   public static void assertCreateResultMatch(
       String cloudResourceUid,
-      JanitorResourceTypeEnum resourceType,
+      ResourceType resourceType,
       OffsetDateTime creation,
       OffsetDateTime expiration,
       NamedParameterJdbcTemplate jdbcTemplate,

@@ -2,18 +2,23 @@ package bio.terra.janitor.common;
 
 import bio.terra.generated.model.*;
 
-public interface CloudResourceUidVisitor {
-  void visit(GoogleProjectUid resource);
+import java.util.Optional;
 
-  void visit(GoogleBucketUid resource);
+/** An interface for switching on the different resource types within a {@link CloudResourceUid}. */
+public interface CloudResourceUidVisitor<R> {
+        R visit(GoogleProjectUid resource);
 
-  void visit(GoogleBlobUid resource);
+        R visit(GoogleBucketUid resource);
 
-  void visit(GoogleBigQueryTableUid resource);
+        R visit(GoogleBlobUid resource);
 
-  void visit(GoogleBigQueryDatasetUid resource);
+        R visit(GoogleBigQueryTableUid resource);
 
-  static void visit(CloudResourceUid resource, CloudResourceUidVisitor visitor) {
+        R visit(GoogleBigQueryDatasetUid resource);
+
+        R noResourceVisited(CloudResourceUid resource);
+
+  static <R> Optional<R> visit(CloudResourceUid resource, CloudResourceUidVisitor<R> visitor) {
     if (resource.getGoogleProjectUid() != null) {
       visitor.visit(resource.getGoogleProjectUid());
     } else if (resource.getGoogleBucketUid() != null) {
@@ -24,7 +29,8 @@ public interface CloudResourceUidVisitor {
       visitor.visit(resource.getGoogleBigQueryDatasetUid());
     } else if (resource.getGoogleBigQueryTableUid() != null) {
       visitor.visit(resource.getGoogleBigQueryTableUid());
+    } else {
+      visitor.noResourceVisited(resource);
     }
-    // Do not process for empty resource. And it's upto the sub-Visitor on how they handle it.
   }
 }

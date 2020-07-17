@@ -1,7 +1,7 @@
 package bio.terra.janitor.db;
 
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
-import bio.terra.janitor.common.JanitorResourceTypeEnum;
+import bio.terra.janitor.common.ResourceType;
 import bio.terra.janitor.common.exception.DuplicateLabelException;
 import bio.terra.janitor.common.exception.DuplicateTrackedResourceException;
 import java.time.OffsetDateTime;
@@ -29,7 +29,7 @@ public class JanitorDao {
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public UUID createResource(
       String cloudResourceUid,
-      JanitorResourceTypeEnum resourceType,
+      ResourceType resourceType,
       Map<String, String> labels,
       OffsetDateTime creation,
       OffsetDateTime expiration) {

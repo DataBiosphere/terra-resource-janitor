@@ -2,7 +2,7 @@ package bio.terra.janitor.app.controller;
 
 import static bio.terra.janitor.app.common.TestUtils.*;
 import static bio.terra.janitor.app.common.TestUtils.DEFAULT_LABELS;
-import static bio.terra.janitor.common.JanitorResourceTypeEnum.GOOGLE_PROJECT;
+import static bio.terra.janitor.common.ResourceType.GOOGLE_PROJECT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
