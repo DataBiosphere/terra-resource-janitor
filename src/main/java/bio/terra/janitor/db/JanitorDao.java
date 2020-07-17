@@ -4,7 +4,6 @@ import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.JanitorResourceTypeEnum;
 import bio.terra.janitor.common.exception.DuplicateLabelException;
 import bio.terra.janitor.common.exception.DuplicateTrackedResourceException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
