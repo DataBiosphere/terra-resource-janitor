@@ -3,7 +3,7 @@ info:
   title: Cloud Resource Janitor
   description: |
     Janitor service to cleanup cloud resources created by Terra CRL.
-  version: 0.0.1
+  version: 0.0.0
 
 # This file has extra dependencies from: https://github.com/DataBiosphere/terra-cloud-resource-lib/blob/master/cloud-resource-schema/src/main/resources/cloud_resources_uid.yaml
 servers:
@@ -139,10 +139,6 @@ components:
           type: object
           additionalProperties:
             type: string
-        creation:
-          description: The time when the resource is created.
-          type: string
-          format: 'date-time'
         timeToLiveInMinutes:
           description: How long created resources should live (at least) before being cleaned up in minutes.
           type: integer

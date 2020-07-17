@@ -6,8 +6,6 @@ plugins {
     id 'org.hidetake.swagger.generator'
 }
 
-group = 'bio.terra.janitor'
-version = '0.0.0-SNAPSHOT'
 sourceCompatibility = '1.8'
 
 repositories {
@@ -94,3 +92,4 @@ artifactory {
 sourceSets.main.java.srcDir "${openapiClientTargetDir}/src/main/java"
 
 build.dependsOn swaggerSources.client.code
+compileJava.dependsOn swaggerSources.client.code
