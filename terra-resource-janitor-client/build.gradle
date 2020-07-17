@@ -45,7 +45,7 @@ swaggerSources {
                     "--api-package", "${this.group}.controller",
                     "--model-package", "${this.group}.model",
                     "--group-id", "${this.group}",
-                    "--artifact-id", "terra-janitor-client",
+                    "--artifact-id", "terra-resource-janitor-client",
                     "--artifact-version", "${this.version}",
                     "-D", "apiTests=false,apiDocs=false,modelTests=false,modelDocs=false"
             ]

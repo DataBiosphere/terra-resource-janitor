@@ -1,2 +1,2 @@
 rootProject.name = 'terra-resource-janitor'
-include 'terra-janitor-client'
+include 'terra-resource-janitor-client'
