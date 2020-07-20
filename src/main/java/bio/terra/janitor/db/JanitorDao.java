@@ -1,10 +1,14 @@
 package bio.terra.janitor.db;
 
+import static bio.terra.janitor.common.JanitorObjectMapperHelper.serializeCloudResourceUid;
+
+import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
-import bio.terra.janitor.common.ResourceType;
+import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.DuplicateLabelException;
 import bio.terra.janitor.common.exception.DuplicateTrackedResourceException;
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +32,10 @@ public class JanitorDao {
   /** Creates the tracked_resource record and adding labels. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public UUID createResource(
-      String cloudResourceUid,
-      ResourceType resourceType,
+      CloudResourceUid cloudResourceUid,
       Map<String, String> labels,
-      OffsetDateTime creation,
-      OffsetDateTime expiration) {
+      Instant creation,
+      Instant expiration) {
     // TODO(yonghao): Solution for handling duplicate CloudResourceUid.
     String sql =
         "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
@@ -42,11 +45,12 @@ public class JanitorDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("id", trackedResourceId)
-            .addValue("resource_uid", cloudResourceUid)
-            .addValue("resource_type", resourceType.toString())
-            .addValue("creation", creation)
+            .addValue("resource_uid", serializeCloudResourceUid(cloudResourceUid))
+            .addValue(
+                "resource_type", new ResourceTypeVisitor().accept(cloudResourceUid).toString())
+            .addValue("creation", creation.atOffset(ZoneOffset.UTC))
             .addValue("state", "READY")
-            .addValue("expiration", expiration);
+            .addValue("expiration", expiration.atOffset(ZoneOffset.UTC));
 
     try {
       jdbcTemplate.update(sql, params);
@@ -56,25 +60,28 @@ public class JanitorDao {
           "tracked_resource " + cloudResourceUid + " already exists.", e);
     }
 
-    String insertLabelSql =
-        "INSERT INTO label (id, tracked_resource_id, key, value) values "
-            + "(:id, :tracked_resource_id, :key, :value)";
-
     if (labels != null) {
-      for (Map.Entry<String, String> entry : labels.entrySet()) {
-        UUID labelId = UUID.randomUUID();
-        MapSqlParameterSource labelSqlParams =
-            new MapSqlParameterSource()
-                .addValue("id", labelId)
-                .addValue("tracked_resource_id", trackedResourceId)
-                .addValue("key", entry.getKey())
-                .addValue("value", entry.getValue())
-                .addValue("state", "READY");
-        try {
-          jdbcTemplate.update(insertLabelSql, labelSqlParams);
-        } catch (DuplicateKeyException e) {
-          throw new DuplicateLabelException("Label " + labelId.toString() + " already exists.", e);
-        }
+      String insertLabelSql =
+          "INSERT INTO label (tracked_resource_id, key, value) values "
+              + "(:tracked_resource_id, :key, :value)";
+
+      MapSqlParameterSource[] sqlParameterSourceList =
+          labels.entrySet().stream()
+              .map(
+                  entry ->
+                      new MapSqlParameterSource()
+                          .addValue("tracked_resource_id", trackedResourceId)
+                          .addValue("key", entry.getKey())
+                          .addValue("value", entry.getValue()))
+              .toArray(size -> new MapSqlParameterSource[labels.size()]);
+      try {
+        jdbcTemplate.batchUpdate(insertLabelSql, sqlParameterSourceList);
+      } catch (DuplicateKeyException e) {
+        throw new DuplicateLabelException(
+            "Duplicate label found for tracked_resource_id: "
+                + trackedResourceId
+                + " already exists.",
+            e);
       }
     }
     return trackedResourceId;

@@ -5,9 +5,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.springframework.http.HttpStatus;
 
 /**
- * This base class has data that corresponds to the ErrorReport model generated from
- * the OpenAPI yaml. The global exception handler auto-magically converts exceptions
- * of this base class into the appropriate ErrorReport REST response.
+ * This base class has data that corresponds to the ErrorReport model generated from the OpenAPI
+ * yaml. The global exception handler auto-magically converts exceptions of this base class into the
+ * appropriate ErrorReport REST response.
  */
 public abstract class ErrorReportException extends RuntimeException {
   private final List<String> causes;

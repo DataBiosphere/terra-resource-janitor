@@ -8,6 +8,7 @@ import bio.terra.janitor.service.janitor.JanitorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +18,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Controller
 public class JanitorApiController implements JanitorApi {
   private final JanitorService janitorService;
+  private final HttpServletRequest request;
 
   @Autowired
-  public JanitorApiController(JanitorService janitorService) {
+  public JanitorApiController(JanitorService janitorService, HttpServletRequest request) {
     this.janitorService = janitorService;
+    this.request = request;
   }
 
   @Override
@@ -30,7 +33,7 @@ public class JanitorApiController implements JanitorApi {
 
   @Override
   public ResponseEntity<CreatedResource> createResource(
-      @RequestBody CreateResourceRequestBody body) {
+      @Valid @RequestBody CreateResourceRequestBody body) {
     return new ResponseEntity<>(janitorService.createResource(body), HttpStatus.OK);
   }
 

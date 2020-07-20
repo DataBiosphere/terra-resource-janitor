@@ -17,8 +17,8 @@ import org.springframework.web.servlet.NoHandlerFoundException;
  * through the controllers are caught in this handler. It converts the exceptions into standard
  * ErrorReport responses.
  *
- * <p>TODO: This class and other exception classes are exactly the same as Workspace Manager and Data Repo's code.
- * Use the common library once we have.
+ * <p>TODO: This class and other exception classes are exactly the same as Workspace Manager and
+ * Data Repo's code. Use the common library once we have.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {

@@ -21,7 +21,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
 public class ResourceTypeVisitorTest {
-  @Autowired private ResourceTypeVisitor visitor;
+  private ResourceTypeVisitor visitor = new ResourceTypeVisitor();
 
   @Test
   public void acceptGoogleProject() {

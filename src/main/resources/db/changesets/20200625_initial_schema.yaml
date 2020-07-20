@@ -50,24 +50,19 @@ databaseChangeLog:
         tableName: label
         columns:
           - column:
-              name: id
-              type: uuid
-              constraints:
-                primaryKey: true
-                unique: true
-                nullable: false
-          - column:
               name: tracked_resource_id
               type: uuid
               constraints:
                 references: tracked_resource(id)
                 foreignKeyName: fk_tracked_id
+                primaryKey: true
                 unique: false
                 nullable: false
           - column:
               name: key
               type: text
               constraints:
+                primaryKey: true
                 nullable: false
                 unique: false
           - column:

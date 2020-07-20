@@ -3,9 +3,10 @@ package bio.terra.janitor.db;
 import static bio.terra.janitor.app.common.TestUtils.*;
 import static bio.terra.janitor.common.ResourceType.GOOGLE_PROJECT;
 
+import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -35,11 +36,16 @@ public class JanitorDaoTest {
 
   @Test
   public void createTrackedResource() throws Exception {
-    String cloudResourceUid = new ObjectMapper().writeValueAsString(newGoogleProjectResourceUid());
-    janitorDao.createResource(
-        cloudResourceUid, GOOGLE_PROJECT, DEFAULT_LABELS, CREATION, EXPIRATION);
+    CloudResourceUid cloudResourceUid = newGoogleProjectResourceUid();
+    janitorDao.createResource(cloudResourceUid, DEFAULT_LABELS, CREATION, EXPIRATION);
 
     assertCreateResultMatch(
-        cloudResourceUid, GOOGLE_PROJECT, CREATION, EXPIRATION, jdbcTemplate, DEFAULT_LABELS);
+        cloudResourceUid,
+        GOOGLE_PROJECT,
+        Optional.of(CREATION),
+        Optional.of(EXPIRATION),
+        TIME_TO_LIVE_MINUTE,
+        jdbcTemplate,
+        DEFAULT_LABELS);
   }
 }

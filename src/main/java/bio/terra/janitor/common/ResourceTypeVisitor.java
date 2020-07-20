@@ -4,13 +4,9 @@ import static bio.terra.janitor.common.ResourceType.*;
 
 import bio.terra.generated.model.*;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
-import org.springframework.stereotype.Component;
 
 /** Gets {@link ResourceType} by visiting {@link CloudResourceUid}. */
-@Component
 public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType> {
-  private ResourceType resourceType;
-
   @Override
   public ResourceType visit(GoogleProjectUid resource) {
     return GOOGLE_PROJECT;
@@ -42,6 +38,9 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   }
 
   public ResourceType accept(CloudResourceUid cloudResourceUid) {
-    return CloudResourceUidVisitor.visit(cloudResourceUid, this);
+    return CloudResourceUidVisitor.visit(cloudResourceUid, this)
+        .orElseThrow(
+            () ->
+                new InvalidResourceUidException("invalid CloudResourceUid for" + cloudResourceUid));
   }
 }

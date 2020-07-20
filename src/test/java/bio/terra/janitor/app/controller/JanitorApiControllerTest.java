@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -54,10 +53,11 @@ public class JanitorApiControllerTest {
 
     // Verify data are created correctly.
     assertCreateResultMatch(
-        new ObjectMapper().writeValueAsString(cloudResourceUid),
+        cloudResourceUid,
         GOOGLE_PROJECT,
-        CREATION,
-        EXPIRATION,
+        Optional.empty(),
+        Optional.empty(),
+        TIME_TO_LIVE_MINUTE,
         jdbcTemplate,
         DEFAULT_LABELS);
   }
