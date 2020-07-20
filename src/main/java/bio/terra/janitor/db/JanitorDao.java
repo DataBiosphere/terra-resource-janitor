@@ -1,16 +1,17 @@
 package bio.terra.janitor.db;
 
-import static bio.terra.janitor.common.JanitorObjectMapperHelper.serializeCloudResourceUid;
-
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.ResourceTypeVisitor;
-import bio.terra.janitor.common.exception.DuplicateLabelException;
-import bio.terra.janitor.common.exception.DuplicateTrackedResourceException;
+import bio.terra.janitor.common.exception.InvalidResourceUidException;
+import bio.terra.janitor.db.exception.DuplicateDbKeyException;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -29,9 +30,13 @@ public class JanitorDao {
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
-  /** Creates the tracked_resource record and adding labels. */
+  /**
+   * Creates the tracked_resource record and adding labels.
+   *
+   * <p>Note that we assume int input {@code cloudResourceUid} is valid.
+   */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public UUID createResource(
+  public String createResource(
       CloudResourceUid cloudResourceUid,
       Map<String, String> labels,
       Instant creation,
@@ -41,11 +46,11 @@ public class JanitorDao {
         "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
             + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state)";
 
-    UUID trackedResourceId = UUID.randomUUID();
+    TrackedResourceId trackedResourceId = new TrackedResourceId();
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("id", trackedResourceId)
-            .addValue("resource_uid", serializeCloudResourceUid(cloudResourceUid))
+            .addValue("id", trackedResourceId.getUUID())
+            .addValue("resource_uid", serialize(cloudResourceUid))
             .addValue(
                 "resource_type", new ResourceTypeVisitor().accept(cloudResourceUid).toString())
             .addValue("creation", creation.atOffset(ZoneOffset.UTC))
@@ -56,7 +61,7 @@ public class JanitorDao {
       jdbcTemplate.update(sql, params);
 
     } catch (DuplicateKeyException e) {
-      throw new DuplicateTrackedResourceException(
+      throw new DuplicateDbKeyException(
           "tracked_resource " + cloudResourceUid + " already exists.", e);
     }
 
@@ -70,20 +75,31 @@ public class JanitorDao {
               .map(
                   entry ->
                       new MapSqlParameterSource()
-                          .addValue("tracked_resource_id", trackedResourceId)
+                          .addValue("tracked_resource_id", trackedResourceId.getUUID())
                           .addValue("key", entry.getKey())
                           .addValue("value", entry.getValue()))
               .toArray(size -> new MapSqlParameterSource[labels.size()]);
       try {
         jdbcTemplate.batchUpdate(insertLabelSql, sqlParameterSourceList);
       } catch (DuplicateKeyException e) {
-        throw new DuplicateLabelException(
+        throw new DuplicateDbKeyException(
             "Duplicate label found for tracked_resource_id: "
                 + trackedResourceId
                 + " already exists.",
             e);
       }
     }
-    return trackedResourceId;
+    return trackedResourceId.toString();
+  }
+
+  @VisibleForTesting
+  static String serialize(CloudResourceUid resource) {
+    ObjectMapper objectMapper =
+        new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    try {
+      return objectMapper.writeValueAsString(resource);
+    } catch (JsonProcessingException e) {
+      throw new InvalidResourceUidException("Failed to serialize CloudResourceUid");
+    }
   }
 }

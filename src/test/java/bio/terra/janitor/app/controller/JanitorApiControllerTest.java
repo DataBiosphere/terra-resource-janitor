@@ -2,14 +2,18 @@ package bio.terra.janitor.app.controller;
 
 import static bio.terra.janitor.app.common.TestUtils.*;
 import static bio.terra.janitor.app.common.TestUtils.DEFAULT_LABELS;
-import static bio.terra.janitor.common.ResourceType.GOOGLE_PROJECT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.generated.model.CloudResourceUid;
+import bio.terra.generated.model.CreatedResource;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -18,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -41,29 +46,26 @@ public class JanitorApiControllerTest {
   }
 
   @Test
-  public void testCreateResourceSuccess() throws Exception {
-    CloudResourceUid cloudResourceUid = newGoogleProjectResourceUid();
-    this.mvc
-        .perform(
-            post("/api/janitor/v1/resource")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(newJsonCreateRequestBody(cloudResourceUid, Optional.of(DEFAULT_LABELS))))
-        .andDo(MockMvcResultHandlers.print())
-        .andExpect(status().isOk());
+  public void createResourceSuccess() throws Exception {
+    String response =
+        this.mvc
+            .perform(
+                post("/api/janitor/v1/resource")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        newJsonCreateRequestBody(
+                            newGoogleProjectResourceUid(), Optional.of(DEFAULT_LABELS))))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
-    // Verify data are created correctly.
-    assertCreateResultMatch(
-        cloudResourceUid,
-        GOOGLE_PROJECT,
-        Optional.empty(),
-        Optional.empty(),
-        TIME_TO_LIVE_MINUTE,
-        jdbcTemplate,
-        DEFAULT_LABELS);
+    assertResourceExists(response);
   }
 
   @Test
-  public void testCreateResourceFail_missingField() throws Exception {
+  public void createResourceFail_missingField() throws Exception {
     this.mvc
         .perform(
             post("/api/janitor/v1/resource")
@@ -71,5 +73,17 @@ public class JanitorApiControllerTest {
                 .content(newJsonCreateRequestBody(new CloudResourceUid(), Optional.empty())))
         .andDo(MockMvcResultHandlers.print())
         .andExpect(status().is4xxClientError());
+  }
+
+  private void assertResourceExists(String jsonResponse) throws JsonProcessingException {
+    // TODO(yonghao): Use get endpoint once we have that.
+    String sql = "SELECT count(*) from tracked_resource where id = :id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue(
+                "id",
+                UUID.fromString(
+                    new ObjectMapper().readValue(jsonResponse, CreatedResource.class).getId()));
+    assertEquals(1, jdbcTemplate.queryForMap(sql, params).size());
   }
 }

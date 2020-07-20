@@ -21,18 +21,13 @@ public class JanitorService {
 
   public CreatedResource createResource(CreateResourceRequestBody body) {
     CloudResourceUid cloudResourceUid = body.getResourceUid();
-    // Only include the not null field, or postgres will mess the order of multiple classes and it's
-    // really hard to query by this column.
-    Instant now = Instant.now();
+    Instant creationTime = Instant.now();
     return new CreatedResource()
         .id(
-            janitorDao
-                .createResource(
-                    // new ObjectMapper().writeValueAsString(cloudResourceUid),
-                    cloudResourceUid,
-                    body.getLabels(),
-                    now,
-                    now.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES))
-                .toString());
+            janitorDao.createResource(
+                cloudResourceUid,
+                body.getLabels(),
+                creationTime,
+                creationTime.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES)));
   }
 }
