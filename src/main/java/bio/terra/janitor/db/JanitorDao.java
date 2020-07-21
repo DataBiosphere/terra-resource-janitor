@@ -4,7 +4,6 @@ import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -81,15 +80,9 @@ public class JanitorDao {
   }
 
   @VisibleForTesting
-  /**
-   * Serializes {@link CloudResourceUid} into json format and ignore null fields. This should not be
-   * changed as this how {@link CloudResourceUid} represents in postgres.
-   */
   static String serialize(CloudResourceUid resource) {
-    ObjectMapper objectMapper =
-        new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     try {
-      return objectMapper.writeValueAsString(resource);
+      return new ObjectMapper().writeValueAsString(resource);
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to serialize CloudResourceUid");
     }
