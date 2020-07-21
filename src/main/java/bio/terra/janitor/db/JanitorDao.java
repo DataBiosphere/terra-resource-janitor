@@ -10,7 +10,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -44,8 +43,7 @@ public class JanitorDao {
         "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
             + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state)";
 
-    TrackedResourceId trackedResourceId =
-        TrackedResourceId.builder().setId(UUID.randomUUID()).build();
+    TrackedResourceId trackedResourceId = TrackedResourceId.newBuilder().build();
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -59,7 +57,7 @@ public class JanitorDao {
 
     jdbcTemplate.update(sql, params);
 
-    if (labels != null) {
+    if (labels != null && !labels.isEmpty()) {
       String insertLabelSql =
           "INSERT INTO label (tracked_resource_id, key, value) values "
               + "(:tracked_resource_id, :key, :value)";

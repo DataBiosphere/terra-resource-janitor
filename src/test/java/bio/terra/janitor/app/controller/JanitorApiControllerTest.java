@@ -5,13 +5,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.generated.model.CloudResourceUid;
+import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.generated.model.CreatedResource;
 import bio.terra.generated.model.GoogleProjectUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
@@ -83,7 +83,7 @@ public class JanitorApiControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(newJsonCreateRequestBody(cloudResourceUid, Optional.empty())))
         .andDo(MockMvcResultHandlers.print())
-        .andExpect(status().is4xxClientError());
+        .andExpect(status().isBadRequest());
   }
 
   private static CreatedResource deserializeCreateResponse(String jsonResponse)
@@ -100,16 +100,16 @@ public class JanitorApiControllerTest {
   }
 
   private static String newJsonCreateRequestBody(
-      CloudResourceUid cloudResourceUid, Optional<Map<String, String>> labels) {
-    ObjectMapper mapper = new ObjectMapper();
-
-    ObjectNode trackedResourceNode =
-        mapper.createObjectNode().put("timeToLiveInMinutes", TIME_TO_LIVE_MINUTE);
-    trackedResourceNode.set("resourceUid", mapper.valueToTree(cloudResourceUid));
+      CloudResourceUid cloudResourceUid, Optional<Map<String, String>> labels)
+      throws JsonProcessingException {
+    CreateResourceRequestBody body =
+        new CreateResourceRequestBody()
+            .resourceUid(cloudResourceUid)
+            .timeToLiveInMinutes(TIME_TO_LIVE_MINUTE);
     labels.ifPresent(
         l -> {
-          trackedResourceNode.set("labels", mapper.valueToTree(l));
+          body.setLabels(l);
         });
-    return trackedResourceNode.toString();
+    return new ObjectMapper().writeValueAsString(body);
   }
 }

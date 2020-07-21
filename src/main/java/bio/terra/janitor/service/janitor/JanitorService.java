@@ -30,7 +30,6 @@ public class JanitorService {
                     body.getLabels(),
                     creationTime,
                     creationTime.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES))
-                .id()
                 .toString());
   }
 }
