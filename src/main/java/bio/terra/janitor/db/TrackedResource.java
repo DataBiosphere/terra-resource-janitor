@@ -4,12 +4,11 @@ import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.common.ResourceType;
 import com.google.auto.value.AutoValue;
 import java.time.Instant;
-import java.util.UUID;
 
 /** A single tracked resource for persistence. */
 @AutoValue
 public abstract class TrackedResource {
-  public abstract UUID id();
+  public abstract TrackedResourceId id();
 
   public abstract ResourceType resourceType();
 
@@ -27,7 +26,7 @@ public abstract class TrackedResource {
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder id(UUID id);
+    public abstract Builder id(TrackedResourceId id);
 
     public abstract Builder resourceType(ResourceType resourceType);
 

@@ -2,6 +2,7 @@ package bio.terra.janitor.db;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
+import bio.terra.janitor.common.ResourceType;
 import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -85,15 +85,6 @@ public class JanitorDao {
     return trackedResourceId;
   }
 
-  @VisibleForTesting
-  static String serialize(CloudResourceUid resource) {
-    try {
-      return new ObjectMapper().writeValueAsString(resource);
-    } catch (JsonProcessingException e) {
-      throw new InvalidResourceUidException("Failed to serialize CloudResourceUid");
-    }
-  }
-
   /**
    * Returns up to {@code limit} {@link TrackedResource}s that are ready to be scheduled for
    * cleaning.
@@ -150,13 +141,31 @@ public class JanitorDao {
         @Override
         public TrackedResource mapRow(ResultSet rs, int rowNum) throws SQLException {
           return TrackedResource.builder()
-              .id(rs.getObject("id", UUID.class))
+              .id(TrackedResourceId.builder().setId(rs.getObject("id", UUID.class)).build())
               .resourceType(ResourceType.valueOf(rs.getString("resource_type")))
-              .cloudResourceUid(JanitorObjectMapperHelper.deserialize(rs.getString("resource_uid")))
+              .cloudResourceUid(deserialize(rs.getString("resource_uid")))
               .creationTime(rs.getObject("creation", OffsetDateTime.class).toInstant())
               .expirationTime(rs.getObject("expiration", OffsetDateTime.class).toInstant())
               .trackedResourceState(TrackedResourceState.valueOf(rs.getString("state")))
               .build();
         }
       };
+
+  @VisibleForTesting
+  static String serialize(CloudResourceUid resource) {
+    try {
+      return new ObjectMapper().writeValueAsString(resource);
+    } catch (JsonProcessingException e) {
+      throw new InvalidResourceUidException("Failed to serialize CloudResourceUid");
+    }
+  }
+
+  @VisibleForTesting
+  static CloudResourceUid deserialize(String resource) {
+    try {
+      return new ObjectMapper().readValue(resource, CloudResourceUid.class);
+    } catch (JsonProcessingException e) {
+      throw new InvalidResourceUidException("Failed to deserialize CloudResourceUid: " + resource);
+    }
+  }
 }
