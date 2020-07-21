@@ -38,9 +38,6 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   }
 
   public ResourceType accept(CloudResourceUid cloudResourceUid) {
-    return CloudResourceUidVisitor.visit(cloudResourceUid, this)
-        .orElseThrow(
-            () ->
-                new InvalidResourceUidException("invalid CloudResourceUid for" + cloudResourceUid));
+    return CloudResourceUidVisitor.visit(cloudResourceUid, this);
   }
 }

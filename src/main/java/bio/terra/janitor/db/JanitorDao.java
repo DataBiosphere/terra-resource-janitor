@@ -1,14 +1,12 @@
 package bio.terra.janitor.db;
 
-import static bio.terra.janitor.common.JanitorObjectMapperHelper.serializeCloudResourceUid;
-
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
-import bio.terra.janitor.common.JanitorObjectMapperHelper;
-import bio.terra.janitor.common.ResourceType;
 import bio.terra.janitor.common.ResourceTypeVisitor;
-import bio.terra.janitor.common.exception.DuplicateLabelException;
-import bio.terra.janitor.common.exception.DuplicateTrackedResourceException;
+import bio.terra.janitor.common.exception.InvalidResourceUidException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -36,9 +34,13 @@ public class JanitorDao {
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
-  /** Creates the tracked_resource record and adding labels. */
+  /**
+   * Creates the tracked_resource record and adding labels.
+   *
+   * <p>Note that we assume int input {@code cloudResourceUid} is valid.
+   */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public UUID createResource(
+  public TrackedResourceId createResource(
       CloudResourceUid cloudResourceUid,
       Map<String, String> labels,
       Instant creation,
@@ -48,24 +50,20 @@ public class JanitorDao {
         "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
             + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state)";
 
-    UUID trackedResourceId = UUID.randomUUID();
+    TrackedResourceId trackedResourceId =
+        TrackedResourceId.builder().setId(UUID.randomUUID()).build();
+
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("id", trackedResourceId)
-            .addValue("resource_uid", serializeCloudResourceUid(cloudResourceUid))
+            .addValue("id", trackedResourceId.id())
+            .addValue("resource_uid", serialize(cloudResourceUid))
             .addValue(
                 "resource_type", new ResourceTypeVisitor().accept(cloudResourceUid).toString())
             .addValue("creation", creation.atOffset(ZoneOffset.UTC))
             .addValue("state", "READY")
             .addValue("expiration", expiration.atOffset(ZoneOffset.UTC));
 
-    try {
-      jdbcTemplate.update(sql, params);
-
-    } catch (DuplicateKeyException e) {
-      throw new DuplicateTrackedResourceException(
-          "tracked_resource " + cloudResourceUid + " already exists.", e);
-    }
+    jdbcTemplate.update(sql, params);
 
     if (labels != null) {
       String insertLabelSql =
@@ -77,21 +75,23 @@ public class JanitorDao {
               .map(
                   entry ->
                       new MapSqlParameterSource()
-                          .addValue("tracked_resource_id", trackedResourceId)
+                          .addValue("tracked_resource_id", trackedResourceId.id())
                           .addValue("key", entry.getKey())
                           .addValue("value", entry.getValue()))
               .toArray(size -> new MapSqlParameterSource[labels.size()]);
-      try {
-        jdbcTemplate.batchUpdate(insertLabelSql, sqlParameterSourceList);
-      } catch (DuplicateKeyException e) {
-        throw new DuplicateLabelException(
-            "Duplicate label found for tracked_resource_id: "
-                + trackedResourceId
-                + " already exists.",
-            e);
-      }
+
+      jdbcTemplate.batchUpdate(insertLabelSql, sqlParameterSourceList);
     }
     return trackedResourceId;
+  }
+
+  @VisibleForTesting
+  static String serialize(CloudResourceUid resource) {
+    try {
+      return new ObjectMapper().writeValueAsString(resource);
+    } catch (JsonProcessingException e) {
+      throw new InvalidResourceUidException("Failed to serialize CloudResourceUid");
+    }
   }
 
   /**
