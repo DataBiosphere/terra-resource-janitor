@@ -24,10 +24,13 @@ public class JanitorService {
     Instant creationTime = Instant.now();
     return new CreatedResource()
         .id(
-            janitorDao.createResource(
-                cloudResourceUid,
-                body.getLabels(),
-                creationTime,
-                creationTime.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES)));
+            janitorDao
+                .createResource(
+                    cloudResourceUid,
+                    body.getLabels(),
+                    creationTime,
+                    creationTime.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES))
+                .id()
+                .toString());
   }
 }

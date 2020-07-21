@@ -1,7 +1,5 @@
 package bio.terra.janitor.db;
 
-import static bio.terra.janitor.app.common.TestUtils.*;
-import static bio.terra.janitor.common.ResourceType.GOOGLE_PROJECT;
 import static bio.terra.janitor.db.JanitorDao.serialize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -12,11 +10,14 @@ import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.ResourceType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class JanitorDaoTest {
+  private static final Map<String, String> DEFAULT_LABELS =
+      ImmutableMap.of("key1", "value1", "key2", "value2");
+
+  private static final Instant CREATION = Instant.now();
+  private static final Instant EXPIRATION = CREATION.plus(1, ChronoUnit.MINUTES);
+
   @Autowired JanitorJdbcConfiguration jdbcConfiguration;
   @Autowired JanitorDao janitorDao;
 
@@ -47,10 +54,19 @@ public class JanitorDaoTest {
 
   @Test
   public void createTrackedResource() throws Exception {
-    CloudResourceUid cloudResourceUid = newGoogleProjectResourceUid();
-    janitorDao.createResource(cloudResourceUid, DEFAULT_LABELS, CREATION, EXPIRATION);
+    CloudResourceUid cloudResourceUid =
+        new CloudResourceUid()
+            .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
+    TrackedResourceId trackedResourceId =
+        janitorDao.createResource(cloudResourceUid, DEFAULT_LABELS, CREATION, EXPIRATION);
 
-    assertCreateResultMatch(cloudResourceUid, GOOGLE_PROJECT, CREATION, EXPIRATION, DEFAULT_LABELS);
+    assertCreateResultMatch(
+        trackedResourceId,
+        cloudResourceUid,
+        ResourceType.GOOGLE_PROJECT,
+        CREATION,
+        EXPIRATION,
+        DEFAULT_LABELS);
   }
 
   @Test
@@ -81,6 +97,7 @@ public class JanitorDaoTest {
   }
 
   private void assertCreateResultMatch(
+      TrackedResourceId trackedResourceId,
       CloudResourceUid cloudResourceUid,
       ResourceType resourceType,
       Instant creation,
@@ -89,6 +106,7 @@ public class JanitorDaoTest {
       throws JsonProcessingException {
     Map<String, Object> actual = queryTrackedResource(jdbcTemplate, cloudResourceUid);
 
+    assertEquals(trackedResourceId.id().toString(), (actual.get("id")).toString());
     assertEquals(
         cloudResourceUid,
         new ObjectMapper().readValue((String) actual.get("resource_uid"), CloudResourceUid.class));

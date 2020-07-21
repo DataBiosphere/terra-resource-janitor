@@ -4,7 +4,6 @@ import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
-import bio.terra.janitor.db.exception.DuplicateDbKeyException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,8 +11,8 @@ import com.google.common.annotations.VisibleForTesting;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -36,7 +35,7 @@ public class JanitorDao {
    * <p>Note that we assume int input {@code cloudResourceUid} is valid.
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public String createResource(
+  public TrackedResourceId createResource(
       CloudResourceUid cloudResourceUid,
       Map<String, String> labels,
       Instant creation,
@@ -46,10 +45,12 @@ public class JanitorDao {
         "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
             + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state)";
 
-    TrackedResourceId trackedResourceId = new TrackedResourceId();
+    TrackedResourceId trackedResourceId =
+        TrackedResourceId.builder().setId(UUID.randomUUID()).build();
+
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("id", trackedResourceId.getUUID())
+            .addValue("id", trackedResourceId.id())
             .addValue("resource_uid", serialize(cloudResourceUid))
             .addValue(
                 "resource_type", new ResourceTypeVisitor().accept(cloudResourceUid).toString())
@@ -57,13 +58,7 @@ public class JanitorDao {
             .addValue("state", "READY")
             .addValue("expiration", expiration.atOffset(ZoneOffset.UTC));
 
-    try {
-      jdbcTemplate.update(sql, params);
-
-    } catch (DuplicateKeyException e) {
-      throw new DuplicateDbKeyException(
-          "tracked_resource " + cloudResourceUid + " already exists.", e);
-    }
+    jdbcTemplate.update(sql, params);
 
     if (labels != null) {
       String insertLabelSql =
@@ -75,24 +70,21 @@ public class JanitorDao {
               .map(
                   entry ->
                       new MapSqlParameterSource()
-                          .addValue("tracked_resource_id", trackedResourceId.getUUID())
+                          .addValue("tracked_resource_id", trackedResourceId.id())
                           .addValue("key", entry.getKey())
                           .addValue("value", entry.getValue()))
               .toArray(size -> new MapSqlParameterSource[labels.size()]);
-      try {
-        jdbcTemplate.batchUpdate(insertLabelSql, sqlParameterSourceList);
-      } catch (DuplicateKeyException e) {
-        throw new DuplicateDbKeyException(
-            "Duplicate label found for tracked_resource_id: "
-                + trackedResourceId
-                + " already exists.",
-            e);
-      }
+
+      jdbcTemplate.batchUpdate(insertLabelSql, sqlParameterSourceList);
     }
-    return trackedResourceId.toString();
+    return trackedResourceId;
   }
 
   @VisibleForTesting
+  /**
+   * Serializes {@link CloudResourceUid} into json format and ignore null fields. This should not be
+   * changed as this how {@link CloudResourceUid} represents in postgres.
+   */
   static String serialize(CloudResourceUid resource) {
     ObjectMapper objectMapper =
         new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
