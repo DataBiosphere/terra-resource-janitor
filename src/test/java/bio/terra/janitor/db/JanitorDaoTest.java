@@ -2,14 +2,12 @@ package bio.terra.janitor.db;
 
 import static bio.terra.janitor.db.JanitorDao.serialize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleProjectUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.ResourceType;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -74,7 +72,7 @@ public class JanitorDaoTest {
   @Test
   public void serializeCloudResourceUid() {
     assertEquals(
-        "{\"googleProjectUid\":{\"projectId\":\"my-project\"},\"googleBigQueryDatasetUid\":null,\"googleBigQueryTableUid\":null,\"googleBlobUid\":null,\"googleBucketUid\":null}",
+        "{\"googleProjectUid\":{\"projectId\":\"my-project\"}}",
         serialize(
             new CloudResourceUid()
                 .googleProjectUid(new GoogleProjectUid().projectId("my-project"))));
@@ -86,27 +84,6 @@ public class JanitorDaoTest {
         "SELECT id, resource_uid::text, resource_type, creation, expiration, state FROM tracked_resource WHERE resource_uid::jsonb @> :resource_uid::jsonb";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("resource_uid", serialize(resourceUid));
-    return jdbcTemplate.queryForMap(sql, params);
-  }
-
-  /**
-   * Query by CloudResourceUid but not use the default serialize method which includes null value to
-   * verify query works.
-   */
-  public static Map<String, Object> queryTrackedResourceNonNull(
-      NamedParameterJdbcTemplate jdbcTemplate, CloudResourceUid resourceUid)
-      throws JsonProcessingException {
-    ObjectMapper mapper =
-        new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
-    String sql =
-        "SELECT id, resource_uid::text, resource_type, creation, expiration, state "
-            + "FROM tracked_resource "
-            + "WHERE jsonb_strip_nulls(resource_uid)::text = :resource_uid::text";
-
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("resource_uid", mapper.writeValueAsString(resourceUid));
     return jdbcTemplate.queryForMap(sql, params);
   }
 
@@ -153,8 +130,5 @@ public class JanitorDaoTest {
       actualLabelMap.put(map.get("key").toString(), map.get("value").toString());
     }
     assertEquals(expectedLabels, actualLabelMap);
-
-    // Verify query works without null values in json string.
-    assertNotNull(queryTrackedResourceNonNull(jdbcTemplate, cloudResourceUid));
   }
 }
