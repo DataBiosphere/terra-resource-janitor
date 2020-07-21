@@ -83,8 +83,8 @@ public class JanitorDao {
   /**
    * Serializes {@link CloudResourceUid} into json format string.
    *
-   * <p>It should not be changed since this is how the database will store {@link CloudResourceUid}
-   * in json format.
+   * <p>It only contains non null fields and should not be changed since this is how the database will store
+   * {@link CloudResourceUid} in json format.
    */
   @VisibleForTesting
   static String serialize(CloudResourceUid resource) {
