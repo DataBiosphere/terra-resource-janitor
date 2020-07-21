@@ -81,7 +81,9 @@ public class JanitorDaoTest {
   public static Map<String, Object> queryTrackedResource(
       NamedParameterJdbcTemplate jdbcTemplate, CloudResourceUid resourceUid) {
     String sql =
-        "SELECT id, resource_uid::text, resource_type, creation, expiration, state FROM tracked_resource WHERE resource_uid::jsonb @> :resource_uid::jsonb";
+        "SELECT id, resource_uid::text, resource_type, creation, expiration, state " +
+                "FROM tracked_resource " +
+                "WHERE resource_uid::jsonb @> :resource_uid::jsonb";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("resource_uid", serialize(resourceUid));
     return jdbcTemplate.queryForMap(sql, params);
