@@ -98,8 +98,12 @@ public class JanitorDaoTest {
       throws JsonProcessingException {
     ObjectMapper mapper =
         new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
     String sql =
-        "SELECT id, resource_uid::text, resource_type, creation, expiration, state FROM tracked_resource WHERE resource_uid::jsonb @> :resource_uid::jsonb";
+        "SELECT id, resource_uid::text, resource_type, creation, expiration, state "
+            + "FROM tracked_resource "
+            + "WHERE jsonb_strip_nulls(resource_uid)::text = :resource_uid::text";
+
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("resource_uid", mapper.writeValueAsString(resourceUid));
@@ -108,8 +112,12 @@ public class JanitorDaoTest {
 
   public static List<Map<String, Object>> queryLabel(
       NamedParameterJdbcTemplate jdbcTemplate, String trackedResourceId) {
+
     String sql =
-        "SELECT tracked_resource_id, key, value FROM label WHERE tracked_resource_id = :tracked_resource_id::uuid";
+        "SELECT tracked_resource_id, key, value "
+            + "FROM label "
+            + "WHERE tracked_resource_id = :tracked_resource_id::uuid";
+
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("tracked_resource_id", trackedResourceId);
     return jdbcTemplate.queryForList(sql, params);

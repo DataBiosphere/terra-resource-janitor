@@ -10,6 +10,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -43,7 +44,8 @@ public class JanitorDao {
         "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
             + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state)";
 
-    TrackedResourceId trackedResourceId = TrackedResourceId.newBuilder().build();
+    TrackedResourceId trackedResourceId =
+        TrackedResourceId.builder().setId(UUID.randomUUID()).build();
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -77,6 +79,12 @@ public class JanitorDao {
     return trackedResourceId;
   }
 
+  /**
+   * Serializes {@link CloudResourceUid} into json format string.
+   *
+   * <p>It should not be changed since this is how the database will store {@link CloudResourceUid}
+   * in json format.
+   */
   @VisibleForTesting
   static String serialize(CloudResourceUid resource) {
     try {
