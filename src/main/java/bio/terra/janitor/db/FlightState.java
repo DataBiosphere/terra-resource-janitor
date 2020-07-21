@@ -7,9 +7,9 @@ package bio.terra.janitor.db;
  * changed.
  */
 public enum FlightState {
-    INITIATING,
-    IN_FLIGHT,
-    FINISHING,
-    FATAL,
-    FINISHED,
+  INITIATING,
+  IN_FLIGHT,
+  FINISHING,
+  FATAL,
+  FINISHED,
 }
