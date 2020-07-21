@@ -14,4 +14,12 @@ public class JanitorObjectMapperHelper {
       throw new InvalidResourceUidException("Failed to serialize CloudResourceUid: " + resource);
     }
   }
+
+  public static CloudResourceUid deserialize(String value) {
+    try {
+      return new ObjectMapper().readValue(value, CloudResourceUid.class);
+    } catch (JsonProcessingException e) {
+      throw new InvalidResourceUidException("Failed to deserialize CloudResourceUid: " + value);
+    }
+  }
 }

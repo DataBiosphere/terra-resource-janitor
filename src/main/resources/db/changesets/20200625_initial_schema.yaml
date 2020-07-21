@@ -72,6 +72,31 @@ databaseChangeLog:
                 nullable: false
                 unique: false
     - createTable:
+        tableName: flight
+          columns:
+          - column:
+              name: flight_id
+              type: text
+              constraints:
+                primaryKey: true
+                nullable: false
+                unique: true
+          - column:
+              name: tracked_resource_id
+              type: uuid
+              constraints:
+                references: tracked_resource(id)
+                foreignKeyName: fk_tracked_id
+                unique: false
+                nullable: false
+          - column:
+              name: state
+              type: text
+              remarks: Contains flight state enum('INITIATING', 'IN_FLIGHT', 'FINISHING', 'FATAL', 'FINISHED')
+              constraints:
+                nullable: false
+                unique: false
+    - createTable:
         tableName: cleanup_log
         columns:
           - column:
