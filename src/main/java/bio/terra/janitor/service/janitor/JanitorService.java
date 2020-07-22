@@ -24,10 +24,20 @@ public class JanitorService {
     Instant creationTime = Instant.now();
     return new CreatedResource()
         .id(
+<<<<<<< HEAD
             janitorDao.createResource(
                 cloudResourceUid,
                 body.getLabels(),
                 creationTime,
                 creationTime.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES)));
+=======
+            janitorDao
+                .createResource(
+                    cloudResourceUid,
+                    body.getLabels(),
+                    creationTime,
+                    creationTime.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES))
+                .toString());
+>>>>>>> master
   }
 }
