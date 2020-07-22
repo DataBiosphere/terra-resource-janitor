@@ -52,8 +52,8 @@ swaggerSources {
     }
 }
 
-def artifactory_username = 'dsdejenkins'
-def artifactory_password = 'ch0s05hfnwg6gx47864t0w'
+def artifactory_username = System.getenv('ARTIFACTORY_USERNAME')
+def artifactory_password = System.getenv('ARTIFACTORY_PASSWORD')
 
 gradle.taskGraph.whenReady { taskGraph ->
     if (taskGraph.hasTask(artifactoryPublish) &&

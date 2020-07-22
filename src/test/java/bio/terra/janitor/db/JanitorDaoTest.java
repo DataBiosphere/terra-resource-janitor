@@ -1,10 +1,5 @@
 package bio.terra.janitor.db;
 
-<<<<<<< HEAD
-import static bio.terra.janitor.app.common.TestUtils.*;
-import static bio.terra.janitor.common.ResourceType.GOOGLE_PROJECT;
-=======
->>>>>>> master
 import static bio.terra.janitor.db.JanitorDao.serialize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -15,13 +10,6 @@ import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.ResourceType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-<<<<<<< HEAD
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-=======
 import com.google.common.collect.ImmutableMap;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -30,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
->>>>>>> master
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -49,129 +36,101 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class JanitorDaoTest {
-<<<<<<< HEAD
-=======
-  private static final Map<String, String> DEFAULT_LABELS =
-      ImmutableMap.of("key1", "value1", "key2", "value2");
+    private static final Map<String, String> DEFAULT_LABELS =
+            ImmutableMap.of("key1", "value1", "key2", "value2");
 
-  private static final Instant CREATION = Instant.now();
-  private static final Instant EXPIRATION = CREATION.plus(1, ChronoUnit.MINUTES);
+    private static final Instant CREATION = Instant.now();
+    private static final Instant EXPIRATION = CREATION.plus(1, ChronoUnit.MINUTES);
 
->>>>>>> master
-  @Autowired JanitorJdbcConfiguration jdbcConfiguration;
-  @Autowired JanitorDao janitorDao;
+    @Autowired JanitorJdbcConfiguration jdbcConfiguration;
+    @Autowired JanitorDao janitorDao;
 
-  private NamedParameterJdbcTemplate jdbcTemplate;
+    private NamedParameterJdbcTemplate jdbcTemplate;
 
-  @BeforeEach
-  public void setup() {
-    jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
-  }
-
-  @Test
-  public void createTrackedResource() throws Exception {
-<<<<<<< HEAD
-    CloudResourceUid cloudResourceUid = newGoogleProjectResourceUid();
-    janitorDao.createResource(cloudResourceUid, DEFAULT_LABELS, CREATION, EXPIRATION);
-
-    assertCreateResultMatch(cloudResourceUid, GOOGLE_PROJECT, CREATION, EXPIRATION, DEFAULT_LABELS);
-=======
-    CloudResourceUid cloudResourceUid =
-        new CloudResourceUid()
-            .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
-    TrackedResourceId trackedResourceId =
-        janitorDao.createResource(cloudResourceUid, DEFAULT_LABELS, CREATION, EXPIRATION);
-
-    assertCreateResultMatch(
-        trackedResourceId,
-        cloudResourceUid,
-        ResourceType.GOOGLE_PROJECT,
-        CREATION,
-        EXPIRATION,
-        DEFAULT_LABELS);
->>>>>>> master
-  }
-
-  @Test
-  public void serializeCloudResourceUid() {
-    assertEquals(
-        "{\"googleProjectUid\":{\"projectId\":\"my-project\"}}",
-        serialize(
-            new CloudResourceUid()
-                .googleProjectUid(new GoogleProjectUid().projectId("my-project"))));
-  }
-
-  public static Map<String, Object> queryTrackedResource(
-      NamedParameterJdbcTemplate jdbcTemplate, CloudResourceUid resourceUid) {
-    String sql =
-<<<<<<< HEAD
-        "SELECT id, resource_uid::text, resource_type, creation, expiration, state FROM tracked_resource WHERE resource_uid::jsonb @> :resource_uid::jsonb";
-=======
-        "SELECT id, resource_uid::text, resource_type, creation, expiration, state "
-            + "FROM tracked_resource "
-            + "WHERE resource_uid::jsonb = :resource_uid::jsonb";
->>>>>>> master
-    MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("resource_uid", serialize(resourceUid));
-    return jdbcTemplate.queryForMap(sql, params);
-  }
-
-  public static List<Map<String, Object>> queryLabel(
-      NamedParameterJdbcTemplate jdbcTemplate, String trackedResourceId) {
-<<<<<<< HEAD
-    String sql =
-        "SELECT tracked_resource_id, key, value FROM label WHERE tracked_resource_id = :tracked_resource_id::uuid";
-=======
-
-    String sql =
-        "SELECT tracked_resource_id, key, value "
-            + "FROM label "
-            + "WHERE tracked_resource_id = :tracked_resource_id::uuid";
-
->>>>>>> master
-    MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("tracked_resource_id", trackedResourceId);
-    return jdbcTemplate.queryForList(sql, params);
-  }
-
-  private void assertCreateResultMatch(
-<<<<<<< HEAD
-=======
-      TrackedResourceId trackedResourceId,
->>>>>>> master
-      CloudResourceUid cloudResourceUid,
-      ResourceType resourceType,
-      Instant creation,
-      Instant expiration,
-      Map<String, String> expectedLabels)
-      throws JsonProcessingException {
-    Map<String, Object> actual = queryTrackedResource(jdbcTemplate, cloudResourceUid);
-
-<<<<<<< HEAD
-    assertEquals(
-        cloudResourceUid,
-        new ObjectMapper().readValue((String) actual.get("resource_uid"), CloudResourceUid.class));
-=======
-    assertEquals(trackedResourceId.id().toString(), (actual.get("id")).toString());
-    assertEquals(
-        cloudResourceUid,
-        new ObjectMapper().readValue((String) actual.get("resource_uid"), CloudResourceUid.class));
-
->>>>>>> master
-    assertEquals(resourceType.toString(), actual.get("resource_type"));
-    assertEquals(creation, ((Timestamp) actual.get("creation")).toInstant());
-    assertEquals(expiration, ((Timestamp) actual.get("expiration")).toInstant());
-
-    assertEquals("READY", actual.get("state"));
-
-    List<Map<String, Object>> actualLabel = queryLabel(jdbcTemplate, actual.get("id").toString());
-
-    // Label
-    assertEquals(expectedLabels.size(), actualLabel.size());
-    Map<String, String> actualLabelMap = new HashMap<>();
-    for (Map<String, Object> map : actualLabel) {
-      actualLabelMap.put(map.get("key").toString(), map.get("value").toString());
+    @BeforeEach
+    public void setup() {
+        jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
     }
-    assertEquals(expectedLabels, actualLabelMap);
-  }
+
+    @Test
+    public void createTrackedResource() throws Exception {
+        CloudResourceUid cloudResourceUid =
+                new CloudResourceUid()
+                        .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
+        TrackedResourceId trackedResourceId =
+                janitorDao.createResource(cloudResourceUid, DEFAULT_LABELS, CREATION, EXPIRATION);
+
+        assertCreateResultMatch(
+                trackedResourceId,
+                cloudResourceUid,
+                ResourceType.GOOGLE_PROJECT,
+                CREATION,
+                EXPIRATION,
+                DEFAULT_LABELS);
+    }
+
+    @Test
+    public void serializeCloudResourceUid() {
+        assertEquals(
+                "{\"googleProjectUid\":{\"projectId\":\"my-project\"}}",
+                serialize(
+                        new CloudResourceUid()
+                                .googleProjectUid(new GoogleProjectUid().projectId("my-project"))));
+    }
+
+    public static Map<String, Object> queryTrackedResource(
+            NamedParameterJdbcTemplate jdbcTemplate, CloudResourceUid resourceUid) {
+        String sql =
+                "SELECT id, resource_uid::text, resource_type, creation, expiration, state "
+                        + "FROM tracked_resource "
+                        + "WHERE resource_uid::jsonb = :resource_uid::jsonb";
+        MapSqlParameterSource params =
+                new MapSqlParameterSource().addValue("resource_uid", serialize(resourceUid));
+        return jdbcTemplate.queryForMap(sql, params);
+    }
+
+    public static List<Map<String, Object>> queryLabel(
+            NamedParameterJdbcTemplate jdbcTemplate, String trackedResourceId) {
+
+        String sql =
+                "SELECT tracked_resource_id, key, value "
+                        + "FROM label "
+                        + "WHERE tracked_resource_id = :tracked_resource_id::uuid";
+
+        MapSqlParameterSource params =
+                new MapSqlParameterSource().addValue("tracked_resource_id", trackedResourceId);
+        return jdbcTemplate.queryForList(sql, params);
+    }
+
+    private void assertCreateResultMatch(
+            TrackedResourceId trackedResourceId,
+            CloudResourceUid cloudResourceUid,
+            ResourceType resourceType,
+            Instant creation,
+            Instant expiration,
+            Map<String, String> expectedLabels)
+            throws JsonProcessingException {
+        Map<String, Object> actual = queryTrackedResource(jdbcTemplate, cloudResourceUid);
+
+        assertEquals(trackedResourceId.id().toString(), (actual.get("id")).toString());
+        assertEquals(
+                cloudResourceUid,
+                new ObjectMapper().readValue((String) actual.get("resource_uid"), CloudResourceUid.class));
+
+        assertEquals(resourceType.toString(), actual.get("resource_type"));
+        assertEquals(creation, ((Timestamp) actual.get("creation")).toInstant());
+        assertEquals(expiration, ((Timestamp) actual.get("expiration")).toInstant());
+
+        assertEquals("READY", actual.get("state"));
+
+        List<Map<String, Object>> actualLabel = queryLabel(jdbcTemplate, actual.get("id").toString());
+
+        // Label
+        assertEquals(expectedLabels.size(), actualLabel.size());
+        Map<String, String> actualLabelMap = new HashMap<>();
+        for (Map<String, Object> map : actualLabel) {
+            actualLabelMap.put(map.get("key").toString(), map.get("value").toString());
+        }
+        assertEquals(expectedLabels, actualLabelMap);
+    }
 }

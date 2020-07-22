@@ -1,23 +1,5 @@
 package bio.terra.janitor.db;
 
-<<<<<<< HEAD
-import java.util.UUID;
-
-/** Wraps the tracked_resource_id in db tracked_resource table. */
-public class TrackedResourceId {
-  private final UUID id;
-
-  public TrackedResourceId() {
-    this.id = UUID.randomUUID();
-  }
-
-  public UUID getUUID() {
-    return this.id;
-  }
-
-  public String toString() {
-    return id.toString();
-=======
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
 
@@ -41,6 +23,5 @@ public abstract class TrackedResourceId {
     public abstract Builder setId(UUID value);
 
     public abstract TrackedResourceId build();
->>>>>>> master
   }
 }
