@@ -73,7 +73,7 @@ databaseChangeLog:
                 unique: false
     - createTable:
         tableName: cleanup_flight
-          columns:
+        columns:
           - column:
               name: flight_id
               type: text

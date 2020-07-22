@@ -17,16 +17,14 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * The FlightScheduler is responsible for finding tracked reosurces that are ready to be cleaned up
  * with Flights and scheduling them.
  */
-// TODO separate into a FlightManager to hand off to stairway and a scheduler to manage the scheduling of the manager.
+// TODO separate into a FlightManager to hand off to stairway and a scheduler to manage the
+// scheduling of the manager.
 // TODO add metrics.
-@Component
 public class FlightScheduler {
   /** How often to query for flights to schedule. */
   private static final Duration SCHEDULE_PERIOD = Duration.ofMinutes(1);
@@ -46,7 +44,6 @@ public class FlightScheduler {
   private final JanitorDao janitorDao;
   private final CleanupFlightFactory cleanupFlightFactory;
 
-  @Autowired
   public FlightScheduler(
       StairwayComponent stairwayComponent,
       JanitorDao janitorDao,
@@ -138,7 +135,8 @@ public class FlightScheduler {
     } catch (StairwayException | InterruptedException e) {
       logger.error(
           String.format(
-              "Error scheduling flight for tracked_resource_id [%s]", resource.id().toString()));
+              "Error scheduling flight for tracked_resource_id [%s]",
+              resource.trackedResourceId().toString()));
     }
   }
 

@@ -11,11 +11,12 @@ public enum CleanupFlightState {
   INITIATING,
   // The flight is being executed by Stairway.
   IN_FLIGHT,
-  // The flight is ending its execution in Stairway. Stairway might not think the flight is done yet.
-  // This is used to hand the flight back to the scheduler from Stairway.
+  // The flight is ending its execution in Stairway. Stairway might not think the flight is done
+  // yet. This is used to hand the flight back to the scheduler from Stairway.
   FINISHING,
   // The flight finished as an error or completion in Stairway normally.
   FINISHED,
-  // The flight ended in the fatal, non-recoverable state in Stairway. It did not terminate normally.
+  // The flight ended in the fatal, non-recoverable state in Stairway. It did not terminate
+  // normally.
   FATAL,
 }

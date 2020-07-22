@@ -1,11 +1,14 @@
 package bio.terra.janitor.service.janitor;
 
-import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.generated.model.CreatedResource;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.TrackedResource;
+import bio.terra.janitor.db.TrackedResourceId;
+import bio.terra.janitor.db.TrackedResourceState;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,16 +23,17 @@ public class JanitorService {
   }
 
   public CreatedResource createResource(CreateResourceRequestBody body) {
-    CloudResourceUid cloudResourceUid = body.getResourceUid();
     Instant creationTime = Instant.now();
-    return new CreatedResource()
-        .id(
-            janitorDao
-                .createResource(
-                    cloudResourceUid,
-                    body.getLabels(),
-                    creationTime,
-                    creationTime.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES))
-                .toString());
+    TrackedResource resource =
+        TrackedResource.builder()
+            .trackedResourceId(TrackedResourceId.create(UUID.randomUUID()))
+            .trackedResourceState(TrackedResourceState.READY)
+            .cloudResourceUid(body.getResourceUid())
+            .creation(creationTime)
+            .expiration(creationTime.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES))
+            .build();
+    // TODO(yonghao): Solution for handling duplicate CloudResourceUid.
+    janitorDao.createResource(resource, body.getLabels());
+    return new CreatedResource().id(resource.trackedResourceId().toString());
   }
 }
