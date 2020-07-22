@@ -5,7 +5,12 @@ import bio.terra.janitor.common.ResourceType;
 import com.google.auto.value.AutoValue;
 import java.time.Instant;
 
-/** A single tracked resource for persistence. */
+/**
+ * A single tracked resource for persistence.
+ *
+ * <p>The Janitor service attempts to cleanup resources that it is tracking once they expire. This
+ * class describes a single resource being tracked.
+ */
 @AutoValue
 public abstract class TrackedResource {
   public abstract TrackedResourceId id();

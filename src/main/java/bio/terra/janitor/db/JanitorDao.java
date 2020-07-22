@@ -7,14 +7,14 @@ import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
@@ -103,31 +103,63 @@ public class JanitorDao {
   }
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public void initiateFlight(UUID trackedResourceId, String flightId) {
-    {
-      String sql = "UPDATE tracked_resource SET state = :cleaning WHERE state = :ready id = :id;";
-      MapSqlParameterSource params =
-          new MapSqlParameterSource()
-              .addValue("cleaning", TrackedResourceState.CLEANING.toString())
-              .addValue("ready", TrackedResourceState.READY.toString())
-              .addValue("id", trackedResourceId);
-      jdbcTemplate.update(sql, params);
+  public Optional<TrackedResource> updateResourceForCleaning(Instant now, String flightId) {
+    UUID id =
+        jdbcTemplate.queryForObject(
+            "SELECT id FROM tracked_resource "
+                + "WHERE state = :ready and expiration < :now LIMIT 1",
+            new MapSqlParameterSource()
+                .addValue("ready", TrackedResourceState.READY.toString())
+                .addValue("now", now.atOffset(ZoneOffset.UTC)),
+            UUID.class);
+    if (id == null) {
+      // No resources ready to schedule.
+      return Optional.empty();
     }
-    {
-      String sql =
-          "INSERT INTO flight (tracked_resource_id, flight_id, state) values (:tracked_resource_id, :flight_id, :initiating)";
-      MapSqlParameterSource params =
-          new MapSqlParameterSource()
-              .addValue("tracked_resource_id", trackedResourceId)
-              .addValue("flight_id", flightId)
-              .addValue("initiating", FlightState.INITIATING);
-      jdbcTemplate.update(sql, params);
-    }
+
+    TrackedResourceId resourceToClean = TrackedResourceId.builder().setId(id).build();
+    jdbcTemplate.update(
+        "INSERT INTO cleanup_flight (tracked_resource_id, flight_id, state) "
+            + "values (:tracked_resource_id, :flight_id, :initiating)",
+        new MapSqlParameterSource()
+            .addValue("tracked_resource_id", resourceToClean.id())
+            .addValue("flight_id", flightId)
+            .addValue("initiating", CleanupFlightState.INITIATING));
+    return Optional.of(
+        jdbcTemplate.queryForObject(
+            "UPDATE tracked_resource SET state = :cleaning WHERE id = :id "
+                + "RETURNING id, resource_type, resource_uid, creation, expiration, state",
+            new MapSqlParameterSource()
+                .addValue("cleaning", TrackedResourceState.CLEANING.toString())
+                .addValue("id", resourceToClean.id()),
+            TRACKED_RESOURCE_ROW_MAPPER));
+  }
+
+  /** Returns up to {@code limit} resources with a cleanup flight in the given state. */
+  public List<TrackedResourceAndFlight> retrieveResourcesWith(
+      CleanupFlightState flightState, int limit) {
+    String sql =
+        "SELECT tr.id, tr.resource_type, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+            + "cf.flight_id, cf.flight_state FROM tracked_resource tr"
+            + "JOIN cleanup_flight cf ON tr.id = cf.tracked_resource_id "
+            + "WHERE cf.state = :flight_state LIMIT :limit";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("flight_state", flightState.toString())
+            .addValue("limit", limit);
+    return jdbcTemplate.query(
+        sql,
+        params,
+        (rs, rowNum) ->
+            TrackedResourceAndFlight.create(
+                TRACKED_RESOURCE_ROW_MAPPER.mapRow(rs, rowNum),
+                CLEANUP_FLIGHT_ROW_MAPPER.mapRow(rs, rowNum)));
   }
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public void setFlightState(String flightId, FlightState flightState) {
-    String sql = "UPDATE flight SET state = :state WHERE flight_id = :flight_id;";
+  public void setFlightState(
+      TrackedResourceId trackedResourceId, String flightId, CleanupFlightState flightState) {
+    String sql = "UPDATE cleanup_flight SET state = :state WHERE flight_id = :flight_id;";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("cleaning", TrackedResourceState.CLEANING.toString())
@@ -137,10 +169,8 @@ public class JanitorDao {
   }
 
   private static final RowMapper<TrackedResource> TRACKED_RESOURCE_ROW_MAPPER =
-      new RowMapper<TrackedResource>() {
-        @Override
-        public TrackedResource mapRow(ResultSet rs, int rowNum) throws SQLException {
-          return TrackedResource.builder()
+      (rs, rowNum) ->
+          TrackedResource.builder()
               .id(TrackedResourceId.builder().setId(rs.getObject("id", UUID.class)).build())
               .resourceType(ResourceType.valueOf(rs.getString("resource_type")))
               .cloudResourceUid(deserialize(rs.getString("resource_uid")))
@@ -148,8 +178,11 @@ public class JanitorDao {
               .expirationTime(rs.getObject("expiration", OffsetDateTime.class).toInstant())
               .trackedResourceState(TrackedResourceState.valueOf(rs.getString("state")))
               .build();
-        }
-      };
+
+  private static final RowMapper<CleanupFlight> CLEANUP_FLIGHT_ROW_MAPPER =
+      (rs, rowNum) ->
+          CleanupFlight.create(
+              rs.getString("flight_id"), CleanupFlightState.valueOf(rs.getString("flight_state")));
 
   @VisibleForTesting
   static String serialize(CloudResourceUid resource) {
@@ -166,6 +199,19 @@ public class JanitorDao {
       return new ObjectMapper().readValue(resource, CloudResourceUid.class);
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to deserialize CloudResourceUid: " + resource);
+    }
+  }
+
+  /** A {@link TrackedResource} with the {@link CleanupFlight} associated with it. */
+  @AutoValue
+  public abstract static class TrackedResourceAndFlight {
+    public abstract TrackedResource trackedResource();
+
+    public abstract CleanupFlight cleanupFlight();
+
+    public static TrackedResourceAndFlight create(
+        TrackedResource trackedResource, CleanupFlight cleanupFlight) {
+      return new AutoValue_JanitorDao_TrackedResourceAndFlight(trackedResource, cleanupFlight);
     }
   }
 }

@@ -72,7 +72,7 @@ databaseChangeLog:
                 nullable: false
                 unique: false
     - createTable:
-        tableName: flight
+        tableName: cleanup_flight
           columns:
           - column:
               name: flight_id
@@ -90,7 +90,7 @@ databaseChangeLog:
                 unique: false
                 nullable: false
           - column:
-              name: state
+              name: flight_state
               type: text
               remarks: Contains flight state enum('INITIATING', 'IN_FLIGHT', 'FINISHING', 'FATAL', 'FINISHED')
               constraints:
