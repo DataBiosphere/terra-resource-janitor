@@ -20,7 +20,6 @@ dependencies {
     implementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${jersey}"
     implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: "${jersey}"
     implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: "${jersey}"
-    implementation "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
 
     implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.11.1'
 
