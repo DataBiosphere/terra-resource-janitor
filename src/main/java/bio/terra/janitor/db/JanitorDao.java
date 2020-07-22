@@ -79,8 +79,9 @@ public class JanitorDao {
   }
 
   /**
-   * Retrieves and updates a TrackedResource that is ready and has expired by {@code now} to
-   * CLEANING. Inserts a new CleanupFlight for that resource as initiating.
+   * Retrieves and updates a TrackedResource that is ready and has expired by {@code now} to {@link
+   * TrackedResourceState#CLEANING}. Inserts a new {@link CleanupFlight} for that resource as
+   * initiating.
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public Optional<TrackedResource> updateResourceForCleaning(Instant now, String flightId) {
@@ -137,6 +138,7 @@ public class JanitorDao {
                 CLEANUP_FLIGHT_ROW_MAPPER.mapRow(rs, rowNum)));
   }
 
+  /** Retrieve the {@link CleanupFlight}s associated with the tracked resource. */
   public List<CleanupFlight> getFlights(TrackedResourceId trackedResourceId) {
     String sql =
         "SELECT flight_id, flight_state from cleanup_flight WHERE tracked_resource_id = :tracked_resource_id;";
@@ -145,7 +147,7 @@ public class JanitorDao {
     return jdbcTemplate.query(sql, params, CLEANUP_FLIGHT_ROW_MAPPER);
   }
 
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  /** Modifies the {@link CleanupFlightState} of a single flight. */
   public void setFlightState(String flightId, CleanupFlightState flightState) {
     String sql =
         "UPDATE cleanup_flight SET flight_state = :flight_state " + "WHERE flight_id = :flight_id;";

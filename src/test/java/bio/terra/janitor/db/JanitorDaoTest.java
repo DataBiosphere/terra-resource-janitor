@@ -53,7 +53,7 @@ public class JanitorDaoTest {
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
-  public static TrackedResource.Builder newDefaultResource() {
+  private static TrackedResource.Builder newDefaultResource() {
     return TrackedResource.builder()
         .trackedResourceId(TrackedResourceId.create(UUID.randomUUID()))
         .trackedResourceState(TrackedResourceState.READY)
