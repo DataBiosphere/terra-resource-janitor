@@ -9,9 +9,16 @@ info:
 servers:
   - url: /
 
+security:
+  - googleoauth:
+      - openid
+      - email
+      - profile
+
 paths:
   '/status':
     get:
+      security: []
       description: |
         Returns the operational status of the service
       operationId: serviceStatus
@@ -186,3 +193,17 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ResourceDescription'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    authorization:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://accounts.google.com/o/oauth2/auth
+          scopes:
+            openid: open id authorization
+            email: email authorization
+            profile: profile authorization
