@@ -8,8 +8,8 @@ import java.util.UUID;
 public abstract class TrackedResourceId {
   public abstract UUID id();
 
-  public static Builder builder() {
-    return new AutoValue_TrackedResourceId.Builder();
+  public static TrackedResourceId create(UUID id) {
+    return new AutoValue_TrackedResourceId.Builder().setId(id).build();
   }
 
   @Override

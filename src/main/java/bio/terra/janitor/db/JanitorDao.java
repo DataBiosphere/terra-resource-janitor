@@ -45,8 +45,7 @@ public class JanitorDao {
         "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
             + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state)";
 
-    TrackedResourceId trackedResourceId =
-        TrackedResourceId.builder().setId(UUID.randomUUID()).build();
+    TrackedResourceId trackedResourceId = TrackedResourceId.create(UUID.randomUUID());
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -83,8 +82,8 @@ public class JanitorDao {
   /**
    * Serializes {@link CloudResourceUid} into json format string.
    *
-   * <p>It only contains non null fields and should not be changed since this is how the database will store
-   * {@link CloudResourceUid} in json format.
+   * <p>It only contains non null fields and should not be changed since this is how the database
+   * will store {@link CloudResourceUid} in json format.
    */
   @VisibleForTesting
   static String serialize(CloudResourceUid resource) {
