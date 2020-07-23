@@ -79,20 +79,20 @@ public class JanitorDao {
   }
 
   /**
-   * Retrieves and updates a TrackedResource that is ready and has expired by {@code now} to {@link
-   * TrackedResourceState#CLEANING}. Inserts a new {@link CleanupFlight} for that resource as
+   * Retrieves and updates a TrackedResource that is ready and has expired by {@code expiredBy} to
+   * {@link TrackedResourceState#CLEANING}. Inserts a new {@link CleanupFlight} for that resource as
    * initiating.
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public Optional<TrackedResource> updateResourceForCleaning(Instant now, String flightId) {
+  public Optional<TrackedResource> updateResourceForCleaning(Instant expiredBy, String flightId) {
     UUID id =
         DataAccessUtils.singleResult(
             jdbcTemplate.queryForList(
                 "SELECT id FROM tracked_resource "
-                    + "WHERE state = :ready and expiration <= :now LIMIT 1",
+                    + "WHERE state = :ready and expiration <= :expiration LIMIT 1",
                 new MapSqlParameterSource()
                     .addValue("ready", TrackedResourceState.READY.toString())
-                    .addValue("now", now.atOffset(ZoneOffset.UTC)),
+                    .addValue("expiration", expiredBy.atOffset(ZoneOffset.UTC)),
                 UUID.class));
     if (id == null) {
       // No resources ready to schedule.
