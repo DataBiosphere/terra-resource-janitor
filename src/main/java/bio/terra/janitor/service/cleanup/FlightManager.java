@@ -47,9 +47,9 @@ public class FlightManager {
    * Schedule a single resource for cleaning. Returns whether a flight id if a flight was attempted
    * to be submitted to Stairway.
    */
-  public Optional<String> submitFlight(Instant now) {
+  public Optional<String> submitFlight(Instant expiredBy) {
     String flightId = stairway.createFlightId();
-    Optional<TrackedResource> resource = janitorDao.updateResourceForCleaning(now, flightId);
+    Optional<TrackedResource> resource = janitorDao.updateResourceForCleaning(expiredBy, flightId);
     if (!resource.isPresent()) {
       // No resource to schedule.
       return Optional.empty();
