@@ -4,6 +4,7 @@ import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.google.common.base.Preconditions;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -14,8 +15,6 @@ import org.slf4j.LoggerFactory;
  * The FlightScheduler is responsible for finding tracked reosurces that are ready to be cleaned up
  * with Flights and scheduling them.
  */
-// TODO separate into a FlightManager to hand off to stairway and a scheduler to manage the
-// scheduling of the manager.
 // TODO add metrics.
 public class FlightScheduler {
   /** How often to query for flights to schedule. */
@@ -47,10 +46,10 @@ public class FlightScheduler {
     Preconditions.checkState(
         stairwayComponent.getStatus().equals(StairwayComponent.Status.OK),
         "Stairway must be ready before FlightScheduler can be initialized.");
-    executor.execute(this::start);
+    executor.execute(this::startSchedulingFlights);
   }
 
-  private void start() {
+  private void startSchedulingFlights() {
     cleanupFlightManager.recoverUnsubmittedFlights();
     executor.schedule(this::scheduleFlights, SCHEDULE_PERIOD.toMillis(), TimeUnit.MILLISECONDS);
   }
@@ -60,8 +59,7 @@ public class FlightScheduler {
    * up.
    */
   private void scheduleFlights() {
-    // TODO add metrics.
-    while (cleanupFlightManager.submitFlight().isPresent()) {}
+    while (cleanupFlightManager.submitFlight(Instant.now()).isPresent()) {}
   }
   // TODO consider termination shutdown
 }

@@ -42,10 +42,9 @@ public class CleanupFlightManager {
    * Schedule a single resource for cleaning. Returns whether a flight id if a flight was attempted
    * to be submitted to Stairway.
    */
-  public Optional<String> submitFlight() {
+  public Optional<String> submitFlight(Instant now) {
     String flightId = stairway.createFlightId();
-    Optional<TrackedResource> resource =
-        janitorDao.updateResourceForCleaning(Instant.now(), flightId);
+    Optional<TrackedResource> resource = janitorDao.updateResourceForCleaning(now, flightId);
     if (resource.isEmpty()) {
       // No resource to schedule.
       return Optional.empty();
@@ -56,12 +55,12 @@ public class CleanupFlightManager {
 
   /**
    * Recover tracked resources with flight ids in the Janitor's storage that are not known to
-   * Stairway. Resubmit the flights.
+   * Stairway. Resubmit the flights, returning how many flights were resubmitted.
    *
    * <p>This function assumes that it is not running concurrently with any other submissions to
-   * Stairway, e.g {@link #submitFlight()}.
+   * Stairway, e.g {@link #submitFlight(Instant)}.
    */
-  public void recoverUnsubmittedFlights() {
+  public int recoverUnsubmittedFlights() {
     List<JanitorDao.TrackedResourceAndFlight> resourceAndFlights =
         janitorDao.retrieveResourcesWith(CleanupFlightState.INITIATING, RECOVERY_LIMIT);
     if (resourceAndFlights.size() == RECOVERY_LIMIT) {
@@ -69,6 +68,7 @@ public class CleanupFlightManager {
           "Recovering as many flights as the limit {}. Some flights may still need recovering.",
           RECOVERY_LIMIT);
     }
+    int submissions = 0;
     for (JanitorDao.TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
       String flightId = resourceAndFlight.cleanupFlight().flightId();
       try {
@@ -81,10 +81,12 @@ public class CleanupFlightManager {
         // Stairway does not know about the flightId, so we must not have submitted successfully.
         // Try to resubmit.
         submitToStairway(flightId, resourceAndFlight.trackedResource());
+        ++submissions;
       } catch (DatabaseOperationException | InterruptedException e) {
         logger.error(String.format("Error recovering flight id [%s]", flightId), e);
       }
     }
+    return submissions;
   }
 
   /** Submits a cleanup flight for the resource to Stairway, or fails logging any exceptions. */
