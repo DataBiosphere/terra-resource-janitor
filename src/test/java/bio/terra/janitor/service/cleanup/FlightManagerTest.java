@@ -1,7 +1,6 @@
 package bio.terra.janitor.service.cleanup;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleBucketUid;
@@ -100,7 +99,7 @@ public class FlightManagerTest {
             janitorDao,
             trackedResource ->
                 FlightFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
-    assertTrue(manager.submitFlight(EXPIRATION).isEmpty());
+    assertFalse(manager.submitFlight(EXPIRATION).isPresent());
   }
 
   @Test
