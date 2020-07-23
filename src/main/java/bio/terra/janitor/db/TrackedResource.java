@@ -5,10 +5,8 @@ import com.google.auto.value.AutoValue;
 import java.time.Instant;
 
 /**
- * A single tracked resource for persistence.
- *
- * <p>The Janitor service attempts to cleanup resources that it is tracking once they expire. This
- * class describes a single resource being tracked.
+ * A resource being tracked for cleanup. This class represents a record in the tracked_resources
+ * table in the Janitor's database.
  */
 @AutoValue
 public abstract class TrackedResource {
