@@ -131,7 +131,8 @@ public class FlightManagerTest {
     FlightMap inputMap = new FlightMap();
     LatchStep.createLatch(inputMap, latchKey);
 
-    // Use the LatchBeforeCleanupFlight to ensure that the CleanupFlightState is not modified before this test calls recoverUnsubmittedFlights.
+    // Use the LatchBeforeCleanupFlight to ensure that the CleanupFlightState is not modified before
+    // this test calls recoverUnsubmittedFlights.
     FlightManager manager =
         new FlightManager(
             stairwayComponent.get(),
@@ -143,7 +144,8 @@ public class FlightManagerTest {
 
     Optional<String> flightId = manager.submitFlight(EXPIRATION);
     assertTrue(flightId.isPresent());
-    assertEquals(janitorDao.getFlightState(flightId.get()), Optional.of(CleanupFlightState.INITIATING));
+    assertEquals(
+        janitorDao.getFlightState(flightId.get()), Optional.of(CleanupFlightState.INITIATING));
     // The flight was submitted, so this should be a no-op.
     assertEquals(0, manager.recoverUnsubmittedFlights());
 
