@@ -150,7 +150,7 @@ public class JanitorDao {
   /** Modifies the {@link CleanupFlightState} of a single flight. */
   public void setFlightState(String flightId, CleanupFlightState flightState) {
     String sql =
-        "UPDATE cleanup_flight SET flight_state = :flight_state " + "WHERE flight_id = :flight_id;";
+        "UPDATE cleanup_flight SET flight_state = :flight_state WHERE flight_id = :flight_id;";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("flight_state", flightState.toString())
