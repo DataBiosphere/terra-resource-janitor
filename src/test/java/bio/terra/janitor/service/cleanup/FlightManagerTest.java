@@ -1,4 +1,4 @@
-package bio.terra.janitor.service.primary;
+package bio.terra.janitor.service.cleanup;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -7,17 +7,17 @@ import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.db.*;
+import bio.terra.janitor.service.cleanup.flight.FinalCleanupStep;
+import bio.terra.janitor.service.cleanup.flight.InitialCleanupStep;
+import bio.terra.janitor.service.cleanup.flight.LatchStep;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class CleanupFlightManagerTest {
+public class FlightManagerTest {
   private static final Instant CREATION = Instant.EPOCH;
   private static final Instant EXPIRATION = CREATION.plusSeconds(60);
 
@@ -75,13 +75,12 @@ public class CleanupFlightManagerTest {
 
   @Test
   public void scheduleFlight() throws Exception {
-    CleanupFlightManager manager =
-        new CleanupFlightManager(
+    FlightManager manager =
+        new FlightManager(
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                CleanupFlightFactory.FlightSubmission.create(
-                    OkCleanupFlight.class, new FlightMap()));
+                FlightFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
     TrackedResource resource = newResourceForCleaning();
     janitorDao.createResource(resource, ImmutableMap.of());
 
@@ -95,25 +94,23 @@ public class CleanupFlightManagerTest {
   @Test
   public void scheduleFlight_nothingReady() {
     // No resources for cleaning inserted.
-    CleanupFlightManager manager =
-        new CleanupFlightManager(
+    FlightManager manager =
+        new FlightManager(
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                CleanupFlightFactory.FlightSubmission.create(
-                    OkCleanupFlight.class, new FlightMap()));
+                FlightFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
     assertTrue(manager.submitFlight(EXPIRATION).isEmpty());
   }
 
   @Test
   public void recoverUnsubmittedFlights_unsubmittedFlight() throws Exception {
-    CleanupFlightManager manager =
-        new CleanupFlightManager(
+    FlightManager manager =
+        new FlightManager(
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                CleanupFlightFactory.FlightSubmission.create(
-                    OkCleanupFlight.class, new FlightMap()));
+                FlightFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
     TrackedResource resource = newResourceForCleaning();
     janitorDao.createResource(resource, ImmutableMap.of());
 
@@ -134,20 +131,23 @@ public class CleanupFlightManagerTest {
     FlightMap inputMap = new FlightMap();
     LatchStep.createLatch(inputMap, latchKey);
 
-    CleanupFlightManager manager =
-        new CleanupFlightManager(
+    // Use the LatchBeforeCleanupFlight to ensure that the CleanupFlightState is not modified before this test calls recoverUnsubmittedFlights.
+    FlightManager manager =
+        new FlightManager(
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                CleanupFlightFactory.FlightSubmission.create(LatchBeforeCleanup.class, inputMap));
+                FlightFactory.FlightSubmission.create(LatchBeforeCleanupFlight.class, inputMap));
     TrackedResource resource = newResourceForCleaning();
     janitorDao.createResource(resource, ImmutableMap.of());
 
     Optional<String> flightId = manager.submitFlight(EXPIRATION);
     assertTrue(flightId.isPresent());
+    assertEquals(janitorDao.getFlightState(flightId.get()), Optional.of(CleanupFlightState.INITIATING));
     // The flight was submitted, so this should be a no-op.
     assertEquals(0, manager.recoverUnsubmittedFlights());
 
+    // Let the flight finish now.
     LatchStep.releaseLatch(latchKey);
     blockUntilFlightComplete(flightId.get());
 
@@ -166,55 +166,14 @@ public class CleanupFlightManagerTest {
   }
 
   /** A {@link Flight} for cleanup that latches before setting the clenaup flight state. */
-  public static class LatchBeforeCleanup extends Flight {
-
-    public LatchBeforeCleanup(FlightMap inputParameters, Object applicationContext) {
+  public static class LatchBeforeCleanupFlight extends Flight {
+    public LatchBeforeCleanupFlight(FlightMap inputParameters, Object applicationContext) {
       super(inputParameters, applicationContext);
       JanitorDao janitorDao =
           ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
       addStep(new LatchStep());
       addStep(new InitialCleanupStep(janitorDao));
       addStep(new FinalCleanupStep(janitorDao));
-    }
-  }
-
-  /**
-   * A step to block until the latch is released to be used for testing.
-   *
-   * <p>This step relies on in-memory state and does not work across services or after a service
-   * restart.
-   */
-  public static class LatchStep implements Step {
-    private static ConcurrentHashMap<String, CountDownLatch> latches = new ConcurrentHashMap<>();
-
-    private static final String FLIGHT_MAP_KEY = "LatchStep";
-
-    /**
-     * Initialize a new latch at {@code key} and add a parameter for it to the {@link FlightMap}.
-     * Replaces any existing latches with the same key.
-     */
-    public static void createLatch(FlightMap flightMap, String latchKey) {
-      latches.put(latchKey, new CountDownLatch(1));
-      flightMap.put(FLIGHT_MAP_KEY, latchKey);
-    }
-
-    /** Releases a latch added with {@link #createLatch(FlightMap, String)}. */
-    public static void releaseLatch(String latchKey) {
-      latches.get(latchKey).countDown();
-    }
-
-    @Override
-    public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-      String latchKey = flightContext.getInputParameters().get(FLIGHT_MAP_KEY, String.class);
-      CountDownLatch latch = latches.get(latchKey);
-      Preconditions.checkNotNull(latch, "Expected a latch to exist with key %s", latchKey);
-      latch.await();
-      return StepResult.getStepResultSuccess();
-    }
-
-    @Override
-    public StepResult undoStep(FlightContext flightContext) {
-      return StepResult.getStepResultSuccess();
     }
   }
 }

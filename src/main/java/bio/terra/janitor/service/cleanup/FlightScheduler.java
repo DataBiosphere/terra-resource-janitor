@@ -1,4 +1,4 @@
-package bio.terra.janitor.service.primary;
+package bio.terra.janitor.service.cleanup;
 
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.service.stairway.StairwayComponent;
@@ -26,15 +26,12 @@ public class FlightScheduler {
   private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
 
   private final StairwayComponent stairwayComponent;
-  private final CleanupFlightManager cleanupFlightManager;
+  private final FlightManager flightManager;
 
   public FlightScheduler(
-      StairwayComponent stairwayComponent,
-      JanitorDao janitorDao,
-      CleanupFlightFactory cleanupFlightFactory) {
+      StairwayComponent stairwayComponent, JanitorDao janitorDao, FlightFactory flightFactory) {
     this.stairwayComponent = stairwayComponent;
-    cleanupFlightManager =
-        new CleanupFlightManager(stairwayComponent.get(), janitorDao, cleanupFlightFactory);
+    flightManager = new FlightManager(stairwayComponent.get(), janitorDao, flightFactory);
   }
 
   /**
@@ -50,7 +47,7 @@ public class FlightScheduler {
   }
 
   private void startSchedulingFlights() {
-    cleanupFlightManager.recoverUnsubmittedFlights();
+    flightManager.recoverUnsubmittedFlights();
     executor.schedule(this::scheduleFlights, SCHEDULE_PERIOD.toMillis(), TimeUnit.MILLISECONDS);
   }
 
@@ -59,7 +56,7 @@ public class FlightScheduler {
    * up.
    */
   private void scheduleFlights() {
-    while (cleanupFlightManager.submitFlight(Instant.now()).isPresent()) {}
+    while (flightManager.submitFlight(Instant.now()).isPresent()) {}
   }
   // TODO consider termination shutdown
 }

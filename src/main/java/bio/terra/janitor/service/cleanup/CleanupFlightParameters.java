@@ -1,4 +1,4 @@
-package bio.terra.janitor.service.primary;
+package bio.terra.janitor.service.cleanup;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.db.TrackedResource;

@@ -1,4 +1,4 @@
-package bio.terra.janitor.service.primary;
+package bio.terra.janitor.service.cleanup.flight;
 
 import bio.terra.janitor.db.CleanupFlightState;
 import bio.terra.janitor.db.JanitorDao;

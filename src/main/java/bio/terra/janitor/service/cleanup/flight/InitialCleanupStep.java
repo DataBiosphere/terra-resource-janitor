@@ -1,4 +1,4 @@
-package bio.terra.janitor.service.primary;
+package bio.terra.janitor.service.cleanup.flight;
 
 import bio.terra.janitor.db.CleanupFlightState;
 import bio.terra.janitor.db.JanitorDao;
@@ -7,7 +7,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 
 /**
- * The initial step to run as a part of any cleanup flight. Modifies the cleanup flight table to
+ * The initial step to run as a part of any cleanup flight. Modifies the cleanup_flight table to
  * signal starting/ending.
  */
 public class InitialCleanupStep implements Step {

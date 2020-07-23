@@ -1,4 +1,4 @@
-package bio.terra.janitor.service.primary;
+package bio.terra.janitor.service.cleanup;
 
 import bio.terra.janitor.db.CleanupFlightState;
 import bio.terra.janitor.db.JanitorDao;
@@ -14,11 +14,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The FlightMonitor manages the Flights to clean up tracked resources. It queries {@link
- * JanitorDao} and {@link Stairway} to hand off work between the two.
+ * Manages the Flights to clean up tracked resources. It queries {@link JanitorDao} and {@link
+ * Stairway} to hand off work between the two.
+ *
+ * <p>This class is meant to be run by only the primary Janitor instance, not by the secondaries.
+ *
+ * <p>The handoff is done by this class and tracked in the cleanup_flight table and Stairway's
+ * database.
  */
-public class CleanupFlightManager {
-  private Logger logger = LoggerFactory.getLogger(CleanupFlightManager.class);
+public class FlightManager {
+  private Logger logger = LoggerFactory.getLogger(FlightManager.class);
 
   /**
    * A limit on how many flights to recover at startup. This is to prevent blowing out the service
@@ -29,10 +34,10 @@ public class CleanupFlightManager {
 
   private final Stairway stairway;
   private final JanitorDao janitorDao;
-  private final CleanupFlightFactory cleanupFlightFactory;
+  private final FlightFactory cleanupFlightFactory;
 
-  public CleanupFlightManager(
-      Stairway stairway, JanitorDao janitorDao, CleanupFlightFactory cleanupFlightFactory) {
+  public FlightManager(
+      Stairway stairway, JanitorDao janitorDao, FlightFactory cleanupFlightFactory) {
     this.stairway = stairway;
     this.janitorDao = janitorDao;
     this.cleanupFlightFactory = cleanupFlightFactory;
@@ -91,7 +96,7 @@ public class CleanupFlightManager {
 
   /** Submits a cleanup flight for the resource to Stairway, or fails logging any exceptions. */
   private void submitToStairway(String flightId, TrackedResource resource) {
-    CleanupFlightFactory.FlightSubmission flightSubmission =
+    FlightFactory.FlightSubmission flightSubmission =
         cleanupFlightFactory.createSubmission(resource);
     try {
       stairway.submitToQueue(

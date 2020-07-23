@@ -1,4 +1,4 @@
-package bio.terra.janitor.service.primary;
+package bio.terra.janitor.service.cleanup;
 
 import bio.terra.janitor.db.TrackedResource;
 import bio.terra.stairway.Flight;
@@ -9,7 +9,7 @@ import com.google.auto.value.AutoValue;
  * An interface for creating the parameters needed to submit a {@link Flight} to Stairway to cleanup
  * a {@link TrackedResource}.
  */
-public interface CleanupFlightFactory {
+public interface FlightFactory {
   FlightSubmission createSubmission(TrackedResource trackedResource);
 
   /** A value class of the parameters needed to submit a new flight to Stairway. */
@@ -21,7 +21,7 @@ public interface CleanupFlightFactory {
 
     public static FlightSubmission create(
         Class<? extends Flight> clazz, FlightMap inputParameters) {
-      return new AutoValue_CleanupFlightFactory_FlightSubmission(clazz, inputParameters);
+      return new AutoValue_FlightFactory_FlightSubmission(clazz, inputParameters);
     }
   }
 }
