@@ -24,7 +24,9 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
 
   @Autowired
   UnauthenticatedApiController(
-          JanitorJdbcConfiguration jdbcConfiguration, StairwayComponent stairwayComponent, FlightScheduler flightScheduler) {
+      JanitorJdbcConfiguration jdbcConfiguration,
+      StairwayComponent stairwayComponent,
+      FlightScheduler flightScheduler) {
     this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
     this.stairwayComponent = stairwayComponent;
     this.flightScheduler = flightScheduler;
