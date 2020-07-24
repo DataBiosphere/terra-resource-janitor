@@ -10,10 +10,8 @@ servers:
   - url: /
 
 security:
-  - googleoauth:
-      - openid
-      - email
-      - profile
+  - bearerAuth: []
+  - authorization: [openid, email, profile]
 
 paths:
   '/status':
@@ -207,3 +205,4 @@ components:
             openid: open id authorization
             email: email authorization
             profile: profile authorization
+
