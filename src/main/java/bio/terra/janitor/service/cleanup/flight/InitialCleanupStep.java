@@ -19,7 +19,7 @@ public class InitialCleanupStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) {
-    janitorDao.setFlightState(flightContext.getFlightId(), CleanupFlightState.IN_FLIGHT);
+    janitorDao.updateFlightState(flightContext.getFlightId(), CleanupFlightState.IN_FLIGHT);
     return StepResult.getStepResultSuccess();
   }
 
@@ -27,7 +27,7 @@ public class InitialCleanupStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     // Since this is the initial step, if it's being undone we are at the end of the undo chain and
     // the Flight is finishing.
-    janitorDao.setFlightState(flightContext.getFlightId(), CleanupFlightState.FINISHING);
+    janitorDao.updateFlightState(flightContext.getFlightId(), CleanupFlightState.FINISHING);
     return StepResult.getStepResultSuccess();
   }
 }

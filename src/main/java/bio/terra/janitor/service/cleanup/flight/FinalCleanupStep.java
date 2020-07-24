@@ -19,7 +19,7 @@ public class FinalCleanupStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) {
-    janitorDao.setFlightState(flightContext.getFlightId(), CleanupFlightState.FINISHING);
+    janitorDao.updateFlightState(flightContext.getFlightId(), CleanupFlightState.FINISHING);
     return StepResult.getStepResultSuccess();
   }
 
