@@ -29,9 +29,9 @@ public class FlightScheduler {
   private final FlightManager flightManager;
 
   public FlightScheduler(
-      StairwayComponent stairwayComponent, JanitorDao janitorDao, FlightFactory flightFactory) {
+      StairwayComponent stairwayComponent, JanitorDao janitorDao, FlightSubmissionFactory submissionFactory) {
     this.stairwayComponent = stairwayComponent;
-    flightManager = new FlightManager(stairwayComponent.get(), janitorDao, flightFactory);
+    flightManager = new FlightManager(stairwayComponent.get(), janitorDao, submissionFactory);
   }
 
   /**
@@ -47,7 +47,8 @@ public class FlightScheduler {
   }
 
   private void startSchedulingFlights() {
-    flightManager.recoverUnsubmittedFlights();
+    int numRecoveredFlights = flightManager.recoverUnsubmittedFlights();
+    logger.info("Recovered {} unsubmitted flights.", numRecoveredFlights);
     executor.schedule(this::scheduleFlights, SCHEDULE_PERIOD.toMillis(), TimeUnit.MILLISECONDS);
   }
 
@@ -56,7 +57,12 @@ public class FlightScheduler {
    * up.
    */
   private void scheduleFlights() {
-    while (flightManager.submitFlight(Instant.now()).isPresent()) {}
+    logger.info("Beginning scheduling flights.");
+    int flightsScheduled = 0;
+    while (flightManager.submitFlight(Instant.now()).isPresent()) {
+      ++flightsScheduled;
+    }
+    logger.info("Done scheduling {} flights.", flightsScheduled);
   }
   // TODO consider termination shutdown
 }
