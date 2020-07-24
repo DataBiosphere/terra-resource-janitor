@@ -82,5 +82,9 @@ public class FlightScheduler {
     }
     logger.info("Done scheduling {} flights.", flightsScheduled);
   }
-  // TODO consider termination shutdown
+
+  public void shutdown() {
+    // Don't schedule  anything new during shutdown.
+    executor.shutdown();
+  }
 }

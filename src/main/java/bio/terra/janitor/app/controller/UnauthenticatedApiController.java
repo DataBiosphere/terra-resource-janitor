@@ -4,6 +4,7 @@ import bio.terra.generated.controller.UnauthenticatedApi;
 import bio.terra.generated.model.SystemStatus;
 import bio.terra.generated.model.SystemStatusSystems;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
+import bio.terra.janitor.service.cleanup.FlightScheduler;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Connection;
@@ -19,12 +20,14 @@ import org.springframework.stereotype.Controller;
 public class UnauthenticatedApiController implements UnauthenticatedApi {
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final StairwayComponent stairwayComponent;
+  private final FlightScheduler flightScheduler;
 
   @Autowired
   UnauthenticatedApiController(
-      JanitorJdbcConfiguration jdbcConfiguration, StairwayComponent stairwayComponent) {
+          JanitorJdbcConfiguration jdbcConfiguration, StairwayComponent stairwayComponent, FlightScheduler flightScheduler) {
     this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
     this.stairwayComponent = stairwayComponent;
+    this.flightScheduler = flightScheduler;
   }
 
   @Override
@@ -53,6 +56,7 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
   @Override
   public ResponseEntity<Void> shutdownRequest() {
     try {
+      flightScheduler.shutdown();
       if (!stairwayComponent.shutdown()) {
         // Stairway shutdown did not complete. Return an error so the caller knows that.
         return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
