@@ -9,7 +9,7 @@ import com.google.auto.value.AutoValue;
  * An interface for creating the parameters needed to submit a {@link Flight} to Stairway to cleanup
  * a {@link TrackedResource}.
  */
-public interface FlightFactory {
+public interface FlightSubmissionFactory {
   FlightSubmission createSubmission(TrackedResource trackedResource);
 
   /** A value class of the parameters needed to submit a new flight to Stairway. */
@@ -21,7 +21,7 @@ public interface FlightFactory {
 
     public static FlightSubmission create(
         Class<? extends Flight> clazz, FlightMap inputParameters) {
-      return new AutoValue_FlightFactory_FlightSubmission(clazz, inputParameters);
+      return new AutoValue_FlightSubmissionFactory_FlightSubmission(clazz, inputParameters);
     }
   }
 }

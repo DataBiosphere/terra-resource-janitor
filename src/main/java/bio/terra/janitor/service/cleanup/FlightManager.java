@@ -34,13 +34,13 @@ public class FlightManager {
 
   private final Stairway stairway;
   private final JanitorDao janitorDao;
-  private final FlightFactory cleanupFlightFactory;
+  private final FlightSubmissionFactory submissionFactory;
 
   public FlightManager(
-      Stairway stairway, JanitorDao janitorDao, FlightFactory cleanupFlightFactory) {
+      Stairway stairway, JanitorDao janitorDao, FlightSubmissionFactory submissionFactory) {
     this.stairway = stairway;
     this.janitorDao = janitorDao;
-    this.cleanupFlightFactory = cleanupFlightFactory;
+    this.submissionFactory = submissionFactory;
   }
 
   /**
@@ -96,8 +96,8 @@ public class FlightManager {
 
   /** Submits a cleanup flight for the resource to Stairway, or fails logging any exceptions. */
   private void submitToStairway(String flightId, TrackedResource resource) {
-    FlightFactory.FlightSubmission flightSubmission =
-        cleanupFlightFactory.createSubmission(resource);
+    FlightSubmissionFactory.FlightSubmission flightSubmission =
+        submissionFactory.createSubmission(resource);
     try {
       stairway.submitToQueue(
           flightId, flightSubmission.clazz(), flightSubmission.inputParameters());
@@ -105,7 +105,8 @@ public class FlightManager {
       logger.error(
           String.format(
               "Error scheduling flight for tracked_resource_id [%s]",
-              resource.trackedResourceId().toString()));
+              resource.trackedResourceId().toString()),
+          e);
     }
   }
 

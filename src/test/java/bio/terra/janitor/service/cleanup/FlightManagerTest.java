@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -33,6 +34,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class FlightManagerTest {
   private static final Instant CREATION = Instant.EPOCH;
   private static final Instant EXPIRATION = CREATION.plusSeconds(60);
@@ -79,7 +81,8 @@ public class FlightManagerTest {
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                FlightFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
+                FlightSubmissionFactory.FlightSubmission.create(
+                    OkCleanupFlight.class, new FlightMap()));
     TrackedResource resource = newResourceForCleaning();
     janitorDao.createResource(resource, ImmutableMap.of());
 
@@ -98,7 +101,8 @@ public class FlightManagerTest {
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                FlightFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
+                FlightSubmissionFactory.FlightSubmission.create(
+                    OkCleanupFlight.class, new FlightMap()));
     assertFalse(manager.submitFlight(EXPIRATION).isPresent());
   }
 
@@ -109,7 +113,8 @@ public class FlightManagerTest {
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                FlightFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
+                FlightSubmissionFactory.FlightSubmission.create(
+                    OkCleanupFlight.class, new FlightMap()));
     TrackedResource resource = newResourceForCleaning();
     janitorDao.createResource(resource, ImmutableMap.of());
 
@@ -137,7 +142,8 @@ public class FlightManagerTest {
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                FlightFactory.FlightSubmission.create(LatchBeforeCleanupFlight.class, inputMap));
+                FlightSubmissionFactory.FlightSubmission.create(
+                    LatchBeforeCleanupFlight.class, inputMap));
     TrackedResource resource = newResourceForCleaning();
     janitorDao.createResource(resource, ImmutableMap.of());
 
