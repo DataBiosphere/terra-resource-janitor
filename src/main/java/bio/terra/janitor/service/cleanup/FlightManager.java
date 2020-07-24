@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
  * <p>The handoff is done by this class and tracked in the cleanup_flight table and Stairway's
  * database.
  */
-public class FlightManager {
+class FlightManager {
   private Logger logger = LoggerFactory.getLogger(FlightManager.class);
 
   /**
@@ -54,6 +54,7 @@ public class FlightManager {
       // No resource to schedule.
       return Optional.empty();
     }
+    // If submission fails, it will be recovered later.
     submitToStairway(flightId, resource.get());
     return Optional.of(flightId);
   }
@@ -69,6 +70,7 @@ public class FlightManager {
     List<JanitorDao.TrackedResourceAndFlight> resourceAndFlights =
         janitorDao.retrieveResourcesWith(CleanupFlightState.INITIATING, RECOVERY_LIMIT);
     if (resourceAndFlights.size() == RECOVERY_LIMIT) {
+      // TODO add alerting for this case.
       logger.error(
           "Recovering as many flights as the limit {}. Some flights may still need recovering.",
           RECOVERY_LIMIT);
@@ -85,8 +87,9 @@ public class FlightManager {
       } catch (FlightNotFoundException e) {
         // Stairway does not know about the flightId, so we must not have submitted successfully.
         // Try to resubmit.
-        submitToStairway(flightId, resourceAndFlight.trackedResource());
-        ++submissions;
+        if (submitToStairway(flightId, resourceAndFlight.trackedResource())) {
+          ++submissions;
+        }
       } catch (DatabaseOperationException | InterruptedException e) {
         logger.error(String.format("Error recovering flight id [%s]", flightId), e);
       }
@@ -94,8 +97,11 @@ public class FlightManager {
     return submissions;
   }
 
-  /** Submits a cleanup flight for the resource to Stairway, or fails logging any exceptions. */
-  private void submitToStairway(String flightId, TrackedResource resource) {
+  /**
+   * Submits a cleanup flight for the resource to Stairway, or fails logging any exceptions. Returns
+   * success.
+   */
+  private boolean submitToStairway(String flightId, TrackedResource resource) {
     FlightSubmissionFactory.FlightSubmission flightSubmission =
         submissionFactory.createSubmission(resource);
     try {
@@ -107,7 +113,9 @@ public class FlightManager {
               "Error scheduling flight for tracked_resource_id [%s]",
               resource.trackedResourceId().toString()),
           e);
+      return false;
     }
+    return true;
   }
 
   // TODO(wchamber): Add methods for finding completed and fatal Flights.
