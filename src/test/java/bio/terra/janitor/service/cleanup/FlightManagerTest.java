@@ -81,7 +81,7 @@ public class FlightManagerTest {
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                FlightFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
+                FlightSubmissionFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
     TrackedResource resource = newResourceForCleaning();
     janitorDao.createResource(resource, ImmutableMap.of());
 
@@ -100,7 +100,7 @@ public class FlightManagerTest {
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                FlightFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
+                FlightSubmissionFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
     assertFalse(manager.submitFlight(EXPIRATION).isPresent());
   }
 
@@ -111,7 +111,7 @@ public class FlightManagerTest {
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                FlightFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
+                FlightSubmissionFactory.FlightSubmission.create(OkCleanupFlight.class, new FlightMap()));
     TrackedResource resource = newResourceForCleaning();
     janitorDao.createResource(resource, ImmutableMap.of());
 
@@ -139,7 +139,7 @@ public class FlightManagerTest {
             stairwayComponent.get(),
             janitorDao,
             trackedResource ->
-                FlightFactory.FlightSubmission.create(LatchBeforeCleanupFlight.class, inputMap));
+                FlightSubmissionFactory.FlightSubmission.create(LatchBeforeCleanupFlight.class, inputMap));
     TrackedResource resource = newResourceForCleaning();
     janitorDao.createResource(resource, ImmutableMap.of());
 
