@@ -51,7 +51,7 @@ public class FlightSchedulerTest {
     // TODO(wchamber): Finish flight lifecycle and check TrackedResourceState instead.
     Supplier<Boolean> flightIsFinished =
         () ->
-            janitorDao.getFlights(resource.trackedResourceId()).stream()
+            janitorDao.retrieveFlights(resource.trackedResourceId()).stream()
                 .anyMatch(
                     cleanupFlight -> cleanupFlight.state().equals(CleanupFlightState.FINISHING));
     pollUntil(flightIsFinished, Duration.ofSeconds(1), 10);

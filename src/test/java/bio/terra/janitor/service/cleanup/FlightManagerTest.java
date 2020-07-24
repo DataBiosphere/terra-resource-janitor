@@ -71,7 +71,7 @@ public class FlightManagerTest {
 
   /** Assert that the cleanup flight is finishing. */
   private void assertFlightFinishing(String flightId) {
-    assertEquals(janitorDao.getFlightState(flightId), Optional.of(CleanupFlightState.FINISHING));
+    assertEquals(janitorDao.retrieveFlightState(flightId), Optional.of(CleanupFlightState.FINISHING));
   }
 
   @Test
@@ -150,7 +150,7 @@ public class FlightManagerTest {
     Optional<String> flightId = manager.submitFlight(EXPIRATION);
     assertTrue(flightId.isPresent());
     assertEquals(
-        janitorDao.getFlightState(flightId.get()), Optional.of(CleanupFlightState.INITIATING));
+        janitorDao.retrieveFlightState(flightId.get()), Optional.of(CleanupFlightState.INITIATING));
     // The flight was submitted, so this should be a no-op.
     assertEquals(0, manager.recoverUnsubmittedFlights());
 
