@@ -1,5 +1,6 @@
 package bio.terra.janitor.service.cleanup;
 
+import bio.terra.janitor.app.configuration.PrimaryConfiguration;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.google.common.base.Preconditions;
@@ -10,12 +11,12 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-/**
- * The FlightScheduler is responsible for finding tracked reosurces that are ready to be cleaned up
- * with Flights and scheduling them.
- */
+/** The FlightScheduler runs the {@link FlightManager} periodically to clean resources. */
 // TODO add metrics.
+@Component
 public class FlightScheduler {
   /** How often to query for flights to schedule. */
   private static final Duration SCHEDULE_PERIOD = Duration.ofMinutes(1);
@@ -25,11 +26,17 @@ public class FlightScheduler {
   /** Only need as many threads as we have scheduled tasks. */
   private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
 
+  private final PrimaryConfiguration primaryConfiguration;
   private final StairwayComponent stairwayComponent;
   private final FlightManager flightManager;
 
+  @Autowired
   public FlightScheduler(
-      StairwayComponent stairwayComponent, JanitorDao janitorDao, FlightSubmissionFactory submissionFactory) {
+      PrimaryConfiguration primaryConfiguration,
+      StairwayComponent stairwayComponent,
+      JanitorDao janitorDao,
+      FlightSubmissionFactory submissionFactory) {
+    this.primaryConfiguration = primaryConfiguration;
     this.stairwayComponent = stairwayComponent;
     flightManager = new FlightManager(stairwayComponent.get(), janitorDao, submissionFactory);
   }
@@ -43,13 +50,24 @@ public class FlightScheduler {
     Preconditions.checkState(
         stairwayComponent.getStatus().equals(StairwayComponent.Status.OK),
         "Stairway must be ready before FlightScheduler can be initialized.");
+    if (primaryConfiguration.isSchedulerEnabled()) {
+      logger.info("Janitor scheduling enabled.");
+    } else {
+      // Do nothing if scheduling is disabled.
+      logger.info("Janitor scheduling disabled.");
+      return;
+    }
     executor.execute(this::startSchedulingFlights);
   }
 
   private void startSchedulingFlights() {
     int numRecoveredFlights = flightManager.recoverUnsubmittedFlights();
     logger.info("Recovered {} unsubmitted flights.", numRecoveredFlights);
-    executor.schedule(this::scheduleFlights, SCHEDULE_PERIOD.toMillis(), TimeUnit.MILLISECONDS);
+    executor.scheduleAtFixedRate(
+        this::scheduleFlights,
+        /* initialDelay= */ 0,
+        /* period= */ SCHEDULE_PERIOD.toMillis(),
+        TimeUnit.MILLISECONDS);
   }
 
   /**
