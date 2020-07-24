@@ -105,7 +105,8 @@ public class FlightManager {
       logger.error(
           String.format(
               "Error scheduling flight for tracked_resource_id [%s]",
-              resource.trackedResourceId().toString()), e);
+              resource.trackedResourceId().toString()),
+          e);
     }
   }
 

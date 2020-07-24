@@ -21,7 +21,7 @@ public interface FlightSubmissionFactory {
 
     public static FlightSubmission create(
         Class<? extends Flight> clazz, FlightMap inputParameters) {
-      return new AutoValue_FlightFactory_FlightSubmission(clazz, inputParameters);
+      return new AutoValue_FlightSubmissionFactory_FlightSubmission(clazz, inputParameters);
     }
   }
 }
