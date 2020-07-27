@@ -151,8 +151,10 @@ public class JanitorDaoTest {
 
     CleanupFlight expectedFlight = CleanupFlight.create(flightId, CleanupFlightState.IN_FLIGHT);
     assertThat(
-        janitorDao.retrieveFlights(resource.trackedResourceId()), Matchers.contains(expectedFlight));
-    assertEquals(janitorDao.retrieveFlightState(flightId), Optional.of(CleanupFlightState.IN_FLIGHT));
+        janitorDao.retrieveFlights(resource.trackedResourceId()),
+        Matchers.contains(expectedFlight));
+    assertEquals(
+        janitorDao.retrieveFlightState(flightId), Optional.of(CleanupFlightState.IN_FLIGHT));
     assertThat(
         janitorDao.retrieveResourcesWith(CleanupFlightState.IN_FLIGHT, 10),
         Matchers.contains(JanitorDao.TrackedResourceAndFlight.create(expected, expectedFlight)));

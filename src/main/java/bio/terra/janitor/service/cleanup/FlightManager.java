@@ -7,11 +7,8 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
-import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Stream;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Isolation;
@@ -123,73 +120,95 @@ class FlightManager {
     return true;
   }
 
-  public void updateCompletedFlights() {
-    Set<String> flightIdsToIgnore = new HashSet<>();
-    // select FINISHING flight resources limit 1000.
+  /**
+   * Find flights that are finishing cleanup in the Janitor's storage and transitions there state
+   * out of cleaning as appropriate. Returns how many resources finished their cleanup flights.
+   *
+   * <p>This function assumes that it is not running concurrently with itself.
+   */
+  public int updateCompletedFlights() {
     List<JanitorDao.TrackedResourceAndFlight> resourceAndFlights =
         janitorDao.retrieveResourcesWith(CleanupFlightState.FINISHING, 1000);
-    for (JanitorDao.TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {}
-
-    // check flight id with stairway.
-    //  if not finished, put in map to not recheck
-    //  if flight fatal, put in map to not recheck
-    // transaction in janitor dao to update state based on current state & set to FINISHED
+    int completedFlights = 0;
+    for (JanitorDao.TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
+      if (completeFlight(resourceAndFlight)) {
+        ++completedFlights;
+      }
+    }
+    return completedFlights;
   }
 
-  private boolean finishFlight(JanitorDao.TrackedResourceAndFlight resourceAndFlight) {
+  /**
+   * Completes the flight if Stairway has finished the flight non-fatally. Returns whether we were
+   * able to update the state of the resource and flight successfully for the completed flight.
+   */
+  private boolean completeFlight(JanitorDao.TrackedResourceAndFlight resourceAndFlight) {
     String flightId = resourceAndFlight.cleanupFlight().flightId();
     FlightState flightState;
     try {
       flightState = stairway.getFlightState(flightId);
     } catch (DatabaseOperationException | InterruptedException e) {
-      logger.error("Error getting state of finishing flight [{}]", flightId);
+      logger.error(String.format("Error getting state of finishing flight [%s]", flightId), e);
       return false;
     }
-    TrackedResourceState newState;
+    TrackedResourceState endCleaningState;
     if (flightState.getFlightStatus().equals(FlightStatus.SUCCESS)) {
-      newState = TrackedResourceState.DONE;
+      endCleaningState = TrackedResourceState.DONE;
     } else if (flightState.getFlightStatus().equals(FlightStatus.ERROR)) {
-      newState = TrackedResourceState.ERROR;
+      endCleaningState = TrackedResourceState.ERROR;
     } else {
       // The flight hasn't finished or has finished fatally. Let Stairway keep working or the fatal
-      // monitor handle this repsectively.
+      // monitor handle this respectively.
       return false;
     }
-
-    ImmutableMap<TrackedResourceState, TrackedResourceState> stateMap =
-        ImmutableMap.<TrackedResourceState, TrackedResourceState>builder()
-            // Update the resource's state depending on the outcome of the cleanup flight.
-            .put(TrackedResourceState.CLEANING, newState)
-            // If the resource was abandoned or duplicated during cleaning, it should stay that way.
-            .put(TrackedResourceState.ABANDONED, TrackedResourceState.ABANDONED)
-            .put(TrackedResourceState.DUPLICATED, TrackedResourceState.DUPLICATED)
-            .build();
+    try {
+      updateFinishedCleanupState(
+          resourceAndFlight.trackedResource().trackedResourceId(), flightId, endCleaningState);
+    } catch (UnexpectedCleanupState unexpectedCleanupState) {
+      logger.error(
+          String.format("Error finishing flight changing cleanup state. [%s]", flightId),
+          unexpectedCleanupState);
+      return false;
+    }
     return true;
   }
 
-  /** */
+  /**
+   * Transactionally update the TrackedResourceState and CleanupFlightState for the finishing
+   * flight. Throws an exception if there is an unexpected state to rollback the transaction.
+   */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  void finishFlight(TrackedResourceId trackedResourceId, String flightId, TrackedResourceState endCleaningState) throws UnexpectedCleanupState {
+  void updateFinishedCleanupState(
+      TrackedResourceId trackedResourceId, String flightId, TrackedResourceState endCleaningState)
+      throws UnexpectedCleanupState {
+    // Retrieve the TrackedResource within this transaction to ensure no one else is abandoning or
+    // duplicating it while we finish it.
     Optional<TrackedResource> resource = janitorDao.retrieveTrackedResource(trackedResourceId);
     if (!resource.isPresent()) {
-      throw new UnexpectedCleanupState(String.format("Unable to find tracked_resource with id [{}]", trackedResourceId));
+      throw new UnexpectedCleanupState(
+          String.format("Unable to find tracked_resource with id [%s]", trackedResourceId));
     }
     TrackedResourceState resourceState = resource.get().trackedResourceState();
     if (resourceState.equals(TrackedResourceState.CLEANING)) {
       janitorDao.updateResourceState(trackedResourceId, endCleaningState);
-    } else if (!Stream.of(TrackedResourceState.ABANDONED, TrackedResourceState.DUPLICATED).anyMatch(resourceState::equals)) {
-      throw new UnexpectedCleanupState(String.format("Unexpected TrackedResourceState: {}", resourceState));
+      // We assume no one else is modifying the CleanupFlightState while we do this.
+      janitorDao.updateFlightState(flightId, CleanupFlightState.FINISHED);
     }
-    // TODO check that the CleanupFlightState was still initiating?
-    janitorDao.updateFlightState(flightId, CleanupFlightState.FINISHED);
+    if (!resourceState.equals(TrackedResourceState.ABANDONED)
+        && !resourceState.equals(TrackedResourceState.DUPLICATED)) {
+      // The resource should not have moved from CLEANING to any other state while there was a
+      // flight working on it.
+      throw new UnexpectedCleanupState(
+          String.format("Unexpected TrackedResourceState: %s", resourceState));
+    }
   }
 
-
+  /** Exception for unexpected resource state when finishing a cleanup flight. */
   private static class UnexpectedCleanupState extends Exception {
     UnexpectedCleanupState(String message) {
       super(message);
     }
   }
 
-  // TODO(wchamber): Add methods for finding completed and fatal Flights.
+  // TODO(wchamber): Add methods for finding fatal Flights.
 }
