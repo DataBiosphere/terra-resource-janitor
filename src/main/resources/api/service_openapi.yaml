@@ -32,7 +32,7 @@ paths:
           description: Service is broken
           $ref: '#/components/responses/StatusResponse'
 
-  # TODO configure this to only be callable by Kubernetes in production and to be hooked to Pod termination.
+  # TODO(PF-57) configure this to only be callable by Kubernetes in production and to be hooked to Pod termination.
   '/shutdown':
     get:
       description: |
