@@ -81,23 +81,27 @@ public class JanitorDao {
   /** Returns the {@link TrackedResource} for a {@link TrackedResourceId} if there is one. */
   @Transactional(propagation = Propagation.SUPPORTS)
   public Optional<TrackedResource> retrieveTrackedResource(TrackedResourceId trackedResourceId) {
-    String sql = "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource tr "
-                    + "WHERE id = :id";
+    String sql =
+        "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource tr "
+            + "WHERE id = :id";
     MapSqlParameterSource params =
-            new MapSqlParameterSource()
-                    .addValue("id", trackedResourceId.toString());
-    return Optional.ofNullable(DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER)));
+        new MapSqlParameterSource().addValue("id", trackedResourceId.toString());
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER)));
   }
 
-  /** Modifies the {@link TrackedResourceState} for a single id. Returns whether there was a resource for that id. */
+  /**
+   * Modifies the {@link TrackedResourceState} for a single id. Returns whether there was a resource
+   * for that id.
+   */
   @Transactional(propagation = Propagation.SUPPORTS)
-  public boolean updateResourceState(TrackedResourceId trackedResourceId, TrackedResourceState newState) {
-    String sql =
-            "UPDATE tracked_resource SET state = :state WHERE id = :id;";
+  public boolean updateResourceState(
+      TrackedResourceId trackedResourceId, TrackedResourceState newState) {
+    String sql = "UPDATE tracked_resource SET state = :state WHERE id = :id;";
     MapSqlParameterSource params =
-            new MapSqlParameterSource()
-                    .addValue("state", newState.toString())
-                    .addValue("id", trackedResourceId.toString());
+        new MapSqlParameterSource()
+            .addValue("state", newState.toString())
+            .addValue("id", trackedResourceId.toString());
     return jdbcTemplate.update(sql, params) == 1;
   }
 
@@ -106,6 +110,7 @@ public class JanitorDao {
    * {@link TrackedResourceState#CLEANING}. Inserts a new {@link CleanupFlight} for that resource as
    * initiating.
    */
+  // TODO(wchamber): Pull business logic out of this and into the FlightMonitor. Make this into several functions.
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public Optional<TrackedResource> updateResourceForCleaning(Instant expiredBy, String flightId) {
     UUID id =
@@ -181,7 +186,9 @@ public class JanitorDao {
     return Optional.ofNullable(rawState).map(CleanupFlightState::valueOf);
   }
 
-  /** Modifies the {@link CleanupFlightState} of a single flight. Returns whether there was a flight. */
+  /**
+   * Modifies the {@link CleanupFlightState} of a single flight. Returns whether there was a flight with the flightId.
+   */
   @Transactional(propagation = Propagation.SUPPORTS)
   public boolean updateFlightState(String flightId, CleanupFlightState flightState) {
     String sql =

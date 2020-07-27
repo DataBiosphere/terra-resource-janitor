@@ -71,7 +71,8 @@ public class FlightManagerTest {
 
   /** Assert that the cleanup flight is finishing. */
   private void assertFlightFinishing(String flightId) {
-    assertEquals(janitorDao.retrieveFlightState(flightId), Optional.of(CleanupFlightState.FINISHING));
+    assertEquals(
+        janitorDao.retrieveFlightState(flightId), Optional.of(CleanupFlightState.FINISHING));
   }
 
   @Test
