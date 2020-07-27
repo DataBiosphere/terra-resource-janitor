@@ -63,6 +63,8 @@ public class FlightScheduler {
   private void startSchedulingFlights() {
     int numRecoveredFlights = flightManager.recoverUnsubmittedFlights();
     logger.info("Recovered {} unsubmitted flights.", numRecoveredFlights);
+    // The scheduled task will not execute concurrently with itself even if it takes a long time.
+    // See javadoc on ScheduledExecutorService#scheduleAtFixedRate.
     executor.scheduleAtFixedRate(
         this::scheduleFlights,
         /* initialDelay= */ 0,
