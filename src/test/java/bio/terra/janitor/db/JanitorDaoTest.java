@@ -73,7 +73,7 @@ public class JanitorDaoTest {
   }
 
   @Test
-  public void createAndRetrieveTrackedResource() throws Exception {
+  public void createTrackedResource() throws Exception {
     CloudResourceUid cloudResourceUid =
         new CloudResourceUid()
             .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
