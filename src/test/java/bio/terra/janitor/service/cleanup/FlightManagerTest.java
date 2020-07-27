@@ -131,7 +131,7 @@ public class FlightManagerTest {
     String flightId = stairwayComponent.get().createFlightId();
     janitorDao.updateResourceForCleaning(EXPIRATION, flightId);
 
-    assertEquals(1, manager.recoverUnsubmittedFlights());
+    assertEquals(1, manager.recoverUnsubmittedFlights(10));
 
     blockUntilFlightComplete(flightId);
 
@@ -162,7 +162,7 @@ public class FlightManagerTest {
     assertEquals(
         janitorDao.retrieveFlightState(flightId.get()), Optional.of(CleanupFlightState.INITIATING));
     // The flight was submitted, so this should be a no-op.
-    assertEquals(0, manager.recoverUnsubmittedFlights());
+    assertEquals(0, manager.recoverUnsubmittedFlights(10));
 
     // Let the flight finish now.
     LatchStep.releaseLatch(latchKey);

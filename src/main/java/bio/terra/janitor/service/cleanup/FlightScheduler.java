@@ -4,7 +4,6 @@ import bio.terra.janitor.app.configuration.PrimaryConfiguration;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.google.common.base.Preconditions;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -18,13 +17,10 @@ import org.springframework.stereotype.Component;
 // TODO add metrics.
 @Component
 public class FlightScheduler {
-  /** How often to query for flights to schedule. */
-  private static final Duration SCHEDULE_PERIOD = Duration.ofMinutes(1);
-
   private Logger logger = LoggerFactory.getLogger(FlightScheduler.class);
 
   /** Only need as many threads as we have scheduled tasks. */
-  private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+  private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(2);
 
   private final PrimaryConfiguration primaryConfiguration;
   private final StairwayComponent stairwayComponent;
@@ -58,17 +54,30 @@ public class FlightScheduler {
       return;
     }
     executor.execute(this::startSchedulingFlights);
+    executor.scheduleAtFixedRate(
+        this::completeFlights,
+        /* initialDelay= */ 0,
+        /* period= */ primaryConfiguration.getFlightCompletionPeriod().toMillis(),
+        TimeUnit.MILLISECONDS);
   }
 
   private void startSchedulingFlights() {
-    int numRecoveredFlights = flightManager.recoverUnsubmittedFlights();
+    int numRecoveredFlights =
+        flightManager.recoverUnsubmittedFlights(
+            primaryConfiguration.getUnsubmittedFlightRecoveryLimit());
+    if (numRecoveredFlights == primaryConfiguration.getUnsubmittedFlightRecoveryLimit()) {
+      // TODO add alerting for this case.
+      logger.error(
+          "Recovering as many flights as the limit {}. Some flights may still need recovering.",
+          numRecoveredFlights);
+    }
     logger.info("Recovered {} unsubmitted flights.", numRecoveredFlights);
     // The scheduled task will not execute concurrently with itself even if it takes a long time.
     // See javadoc on ScheduledExecutorService#scheduleAtFixedRate.
     executor.scheduleAtFixedRate(
         this::scheduleFlights,
         /* initialDelay= */ 0,
-        /* period= */ SCHEDULE_PERIOD.toMillis(),
+        /* period= */ primaryConfiguration.getFlightSubmissionPeriod().toMillis(),
         TimeUnit.MILLISECONDS);
   }
 
@@ -83,6 +92,13 @@ public class FlightScheduler {
       ++flightsScheduled;
     }
     logger.info("Done scheduling {} flights.", flightsScheduled);
+  }
+
+  private void completeFlights() {
+    logger.info("Beginning completing flights.");
+    int completedFlights =
+        flightManager.updateCompletedFlights(primaryConfiguration.getFlightCompletionLimit());
+    logger.info("Done completing {} flights.", completedFlights);
   }
 
   public void shutdown() {
