@@ -121,14 +121,15 @@ class FlightManager {
   }
 
   /**
-   * Find flights that are finishing cleanup in the Janitor's storage and transitions there state
-   * out of cleaning as appropriate. Returns how many resources finished their cleanup flights.
+   * Find up to {@code limit} flights that are finishing cleanup in the Janitor's storage and
+   * transitions there state out of cleaning as appropriate. Returns how many resources finished
+   * their cleanup flights.
    *
    * <p>This function assumes that it is not running concurrently with itself.
    */
-  public int updateCompletedFlights() {
+  public int updateCompletedFlights(int limit) {
     List<JanitorDao.TrackedResourceAndFlight> resourceAndFlights =
-        janitorDao.retrieveResourcesWith(CleanupFlightState.FINISHING, 1000);
+        janitorDao.retrieveResourcesWith(CleanupFlightState.FINISHING, limit);
     int completedFlights = 0;
     for (JanitorDao.TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
       if (completeFlight(resourceAndFlight)) {
@@ -193,8 +194,7 @@ class FlightManager {
       janitorDao.updateResourceState(trackedResourceId, endCleaningState);
       // We assume no one else is modifying the CleanupFlightState while we do this.
       janitorDao.updateFlightState(flightId, CleanupFlightState.FINISHED);
-    }
-    if (!resourceState.equals(TrackedResourceState.ABANDONED)
+    } else if (!resourceState.equals(TrackedResourceState.ABANDONED)
         && !resourceState.equals(TrackedResourceState.DUPLICATED)) {
       // The resource should not have moved from CLEANING to any other state while there was a
       // flight working on it.

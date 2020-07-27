@@ -110,7 +110,8 @@ public class JanitorDao {
    * {@link TrackedResourceState#CLEANING}. Inserts a new {@link CleanupFlight} for that resource as
    * initiating.
    */
-  // TODO(wchamber): Pull business logic out of this and into the FlightMonitor. Make this into several functions.
+  // TODO(wchamber): Pull business logic out of this and into the FlightMonitor. Make this into
+  // several functions.
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public Optional<TrackedResource> updateResourceForCleaning(Instant expiredBy, String flightId) {
     UUID id =
@@ -187,7 +188,8 @@ public class JanitorDao {
   }
 
   /**
-   * Modifies the {@link CleanupFlightState} of a single flight. Returns whether there was a flight with the flightId.
+   * Modifies the {@link CleanupFlightState} of a single flight. Returns whether there was a flight
+   * with the flightId.
    */
   @Transactional(propagation = Propagation.SUPPORTS)
   public boolean updateFlightState(String flightId, CleanupFlightState flightState) {
