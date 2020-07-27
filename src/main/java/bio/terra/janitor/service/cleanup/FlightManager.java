@@ -179,7 +179,7 @@ class FlightManager {
    * flight. Throws an exception if there is an unexpected state to rollback the transaction.
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  void updateFinishedCleanupState(
+  private void updateFinishedCleanupState(
       TrackedResourceId trackedResourceId, String flightId, TrackedResourceState endCleaningState)
       throws UnexpectedCleanupState {
     // Retrieve the TrackedResource within this transaction to ensure no one else is abandoning or
@@ -193,7 +193,6 @@ class FlightManager {
     if (resourceState.equals(TrackedResourceState.CLEANING)) {
       janitorDao.updateResourceState(trackedResourceId, endCleaningState);
       // We assume no one else is modifying the CleanupFlightState while we do this.
-      janitorDao.updateFlightState(flightId, CleanupFlightState.FINISHED);
     } else if (!resourceState.equals(TrackedResourceState.ABANDONED)
         && !resourceState.equals(TrackedResourceState.DUPLICATED)) {
       // The resource should not have moved from CLEANING to any other state while there was a
@@ -201,6 +200,7 @@ class FlightManager {
       throw new UnexpectedCleanupState(
           String.format("Unexpected TrackedResourceState: %s", resourceState));
     }
+    janitorDao.updateFlightState(flightId, CleanupFlightState.FINISHED);
   }
 
   /** Exception for unexpected resource state when finishing a cleanup flight. */

@@ -85,7 +85,7 @@ public class JanitorDao {
         "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource tr "
             + "WHERE id = :id";
     MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("id", trackedResourceId.toString());
+        new MapSqlParameterSource().addValue("id", trackedResourceId.uuid());
     return Optional.ofNullable(
         DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER)));
   }
@@ -101,7 +101,7 @@ public class JanitorDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("state", newState.toString())
-            .addValue("id", trackedResourceId.toString());
+            .addValue("id", trackedResourceId.uuid());
     return jdbcTemplate.update(sql, params) == 1;
   }
 
