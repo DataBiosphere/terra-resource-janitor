@@ -51,7 +51,7 @@ class FlightManager {
    */
   public Optional<String> submitFlight(Instant expiredBy) {
     String flightId = stairway.createFlightId();
-    Optional<TrackedResource> resource = janitorDao.updateResourceForCleaning(expiredBy, flightId);
+    Optional<TrackedResource> resource = updateResourceForCleaning(expiredBy, flightId);
     if (!resource.isPresent()) {
       // No resource to schedule.
       return Optional.empty();
@@ -59,6 +59,26 @@ class FlightManager {
     // If submission fails, it will be recovered later.
     submitToStairway(flightId, resource.get());
     return Optional.of(flightId);
+  }
+
+  /**
+   * Retrieves and updates a TrackedResource that is ready and has expired by {@code expiredBy} to
+   * {@link TrackedResourceState#CLEANING}. Inserts a new {@link CleanupFlight} for that resource as
+   * initiating.
+   */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  private Optional<TrackedResource> updateResourceForCleaning(Instant expiredBy, String flightId) {
+    Optional<TrackedResource> resource =
+        janitorDao.retrieveExpiredResourceWith(expiredBy, TrackedResourceState.READY);
+    if (!resource.isPresent()) {
+      return Optional.empty();
+    }
+
+    janitorDao.createCleanupFlight(
+        resource.get().trackedResourceId(),
+        CleanupFlight.create(flightId, CleanupFlightState.INITIATING));
+    return janitorDao.updateResourceState(
+        resource.get().trackedResourceId(), TrackedResourceState.CLEANING);
   }
 
   /**
