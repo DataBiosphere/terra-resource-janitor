@@ -4,6 +4,7 @@ import bio.terra.janitor.app.configuration.StairwayConfiguration;
 import bio.terra.janitor.app.configuration.StairwayJdbcConfiguration;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.exception.StairwayException;
+import bio.terra.stairway.exception.StairwayExecutionException;
 import com.google.common.collect.ImmutableList;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ public class StairwayComponent {
     OK,
     ERROR,
     SHUTDOWN,
-  };
+  }
 
   private Status status = Status.INITIALIZING;
 
@@ -42,14 +43,18 @@ public class StairwayComponent {
         "Creating Stairway: name: [{}]  cluster name: [{}]",
         stairwayConfiguration.getClusterName(),
         stairwayConfiguration.getClusterName());
-    // TODO(CA-941): Add projectId for Stairway to make a pubsub work queue.
-    stairway =
+    // TODO(CA-941): Configure the workqueue pubsub subscription and topic for multi-instance.
+    Stairway.Builder builder =
         Stairway.newBuilder()
             .maxParallelFlights(stairwayConfiguration.getMaxParallelFlights())
             .applicationContext(applicationContext)
             .stairwayName(stairwayConfiguration.getName())
-            .stairwayClusterName(stairwayConfiguration.getClusterName())
-            .build();
+            .stairwayClusterName(stairwayConfiguration.getClusterName());
+    try {
+      stairway = builder.build();
+    } catch (StairwayExecutionException e) {
+      throw new IllegalArgumentException("Failed to build Stairway.", e);
+    }
   }
 
   public void initialize() {

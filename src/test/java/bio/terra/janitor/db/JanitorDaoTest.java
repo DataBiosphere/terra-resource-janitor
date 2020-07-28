@@ -152,11 +152,17 @@ public class JanitorDaoTest {
     CleanupFlight expectedFlight = CleanupFlight.create(flightId, CleanupFlightState.IN_FLIGHT);
     assertThat(
         janitorDao.getFlights(resource.trackedResourceId()), Matchers.contains(expectedFlight));
+    assertEquals(janitorDao.getFlightState(flightId), Optional.of(CleanupFlightState.IN_FLIGHT));
     assertThat(
         janitorDao.retrieveResourcesWith(CleanupFlightState.IN_FLIGHT, 10),
         Matchers.contains(JanitorDao.TrackedResourceAndFlight.create(expected, expectedFlight)));
     assertThat(
         janitorDao.retrieveResourcesWith(CleanupFlightState.INITIATING, 10), Matchers.empty());
+  }
+
+  @Test
+  public void getFlightState_noMatchingFlight() {
+    assertEquals(janitorDao.getFlightState("unknown-flight-id"), Optional.empty());
   }
 
   public static Map<String, Object> queryTrackedResource(

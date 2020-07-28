@@ -23,6 +23,9 @@ repositories {
     maven {
         url 'https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/'
     }
+    maven {
+        url 'https://broadinstitute.jfrog.io/broadinstitute/libs-release-local/'
+    }
 }
 
 // The version of CRL schema library
@@ -44,7 +47,7 @@ dependencies {
     implementation "com.google.auto.value:auto-value-annotations:1.7.3"
     annotationProcessor "com.google.auto.value:auto-value:1.7.3"
 
-    implementation 'bio.terra:stairway:0.0.10-SNAPSHOT'
+    implementation 'bio.terra:stairway:0.0.20'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema', version: crlSchemaVersion
 
     // -- Swagger CodeGen dependencies --

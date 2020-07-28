@@ -147,6 +147,14 @@ public class JanitorDao {
     return jdbcTemplate.query(sql, params, CLEANUP_FLIGHT_ROW_MAPPER);
   }
 
+  public Optional<CleanupFlightState> getFlightState(String flightId) {
+    String sql = "SELECT flight_state from cleanup_flight WHERE flight_id = :flight_id;";
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("flight_id", flightId);
+    String rawState =
+        DataAccessUtils.singleResult(jdbcTemplate.queryForList(sql, params, String.class));
+    return Optional.ofNullable(rawState).map(CleanupFlightState::valueOf);
+  }
+
   /** Modifies the {@link CleanupFlightState} of a single flight. */
   public void setFlightState(String flightId, CleanupFlightState flightState) {
     String sql =
