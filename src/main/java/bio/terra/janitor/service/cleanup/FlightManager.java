@@ -1,9 +1,7 @@
 package bio.terra.janitor.service.cleanup;
 
 import bio.terra.janitor.db.*;
-import bio.terra.stairway.FlightState;
-import bio.terra.stairway.FlightStatus;
-import bio.terra.stairway.Stairway;
+import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
@@ -26,13 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 class FlightManager {
   private Logger logger = LoggerFactory.getLogger(FlightManager.class);
-
-  /**
-   * A limit on how many flights to recover at startup. This is to prevent blowing out the service
-   * at start up, but if we have too many flights to recover, they will not all be recovered
-   * immediately.
-   */
-  private static final int RECOVERY_LIMIT = 1000;
 
   private final Stairway stairway;
   private final JanitorDao janitorDao;
@@ -159,10 +150,9 @@ class FlightManager {
     try {
       updateFinishedCleanupState(
           resourceAndFlight.trackedResource().trackedResourceId(), flightId, endCleaningState);
-    } catch (UnexpectedCleanupState unexpectedCleanupState) {
+    } catch (UnexpectedCleanupStateException e) {
       logger.error(
-          String.format("Error finishing flight changing cleanup state. [%s]", flightId),
-          unexpectedCleanupState);
+          String.format("Error finishing flight changing cleanup state. [%s]", flightId), e);
       return false;
     }
     return true;
@@ -175,34 +165,109 @@ class FlightManager {
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   private void updateFinishedCleanupState(
       TrackedResourceId trackedResourceId, String flightId, TrackedResourceState endCleaningState)
-      throws UnexpectedCleanupState {
+      throws UnexpectedCleanupStateException {
     // Retrieve the TrackedResource within this transaction to ensure no one else is abandoning or
     // duplicating it while we finish it.
     Optional<TrackedResource> resource = janitorDao.retrieveTrackedResource(trackedResourceId);
     if (!resource.isPresent()) {
-      throw new UnexpectedCleanupState(
+      throw new UnexpectedCleanupStateException(
           String.format("Unable to find tracked_resource with id [%s]", trackedResourceId));
     }
     TrackedResourceState resourceState = resource.get().trackedResourceState();
     if (resourceState.equals(TrackedResourceState.CLEANING)) {
       janitorDao.updateResourceState(trackedResourceId, endCleaningState);
-      // We assume no one else is modifying the CleanupFlightState while we do this.
     } else if (!resourceState.equals(TrackedResourceState.ABANDONED)
         && !resourceState.equals(TrackedResourceState.DUPLICATED)) {
       // The resource should not have moved from CLEANING to any other state while there was a
       // flight working on it.
-      throw new UnexpectedCleanupState(
+      throw new UnexpectedCleanupStateException(
           String.format("Unexpected TrackedResourceState: %s", resourceState));
     }
+    // We assume no one else is modifying the CleanupFlightState while we do this.
     janitorDao.updateFlightState(flightId, CleanupFlightState.FINISHED);
   }
 
+  /**
+   * Finds up to {@code limit} flights that are FATAL in Stairway transition their state out of cleaning as appropriate.
+   * Returns how many resources finished their cleanup flights.
+   *
+   * <p>This function assumes that it is not running concurrently with itself.*/
+  public int completeFatalFlights(int limit) {
+    FlightFilter flightFilter =
+        new FlightFilter().addFilterFlightStatus(FlightFilterOp.EQUAL, FlightStatus.FATAL);
+    List<FlightState> flights;
+    try {
+      flights = stairway.getFlights(/* offset =*/ 0, limit, flightFilter);
+    } catch (DatabaseOperationException | InterruptedException e) {
+      logger.error("Error getting FATAL flights.", e);
+      return 0;
+    }
+    int completedFlights = 0;
+    for (FlightState flight : flights) {
+      if (completeFatalFlight(flight.getFlightId())) {
+        ++completedFlights;
+      }
+    }
+    return completedFlights;
+  }
+
+  private boolean completeFatalFlight(String flightId) {
+    try {
+      updateFatalCleanupState(flightId);
+    } catch (UnexpectedCleanupStateException e) {
+      logger.error(
+          String.format("Error finishing fatal flight changing cleanup state. [%s]", flightId), e);
+      return false;
+    }
+    try {
+      // We delete the FATAL flights from Stairway once they've been processed so that we can
+      // continue to query Stairway for FATAL flights efficiently.
+      stairway.deleteFlight(flightId, /* forceDelete =*/ false);
+    } catch (DatabaseOperationException | InterruptedException e) {
+      // Even though Stairway failed to delete the flight, the Janitor considers it cleaned up. We
+      // will try to delete the flight from Stairway on another go around.
+      logger.error(String.format("Error deleting flight [%s]", flightId), e);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Transactionally update the TrackedResourceState and CleanupFlightState for the fatal flight.
+   * Throws an exception if there is an unexpected state to rollback the transaction.
+   */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  private void updateFatalCleanupState(String flightId) throws UnexpectedCleanupStateException {
+    Optional<JanitorDao.TrackedResourceAndFlight> resourceAndFlight =
+        janitorDao.retrieveResourceAndFlight(flightId);
+    if (!resourceAndFlight.isPresent()) {
+      throw new UnexpectedCleanupStateException(
+          String.format("Unable to find tracked_resource for flight id [%s]", flightId));
+    }
+    TrackedResourceState resourceState =
+        resourceAndFlight.get().trackedResource().trackedResourceState();
+    if (resourceAndFlight.get().cleanupFlight().state().equals(CleanupFlightState.FATAL)) {
+      // We already marked the flight as completed, we must have previously failed to delete the
+      // flight from Stairway. We should try the Stairway deletion again.
+      // TODO(wchamber): Add metric.
+      return;
+    }
+    if (resourceState.equals(TrackedResourceState.CLEANING)) {
+      janitorDao.updateResourceState(
+          resourceAndFlight.get().trackedResource().trackedResourceId(),
+          TrackedResourceState.ERROR);
+    } else if (!resourceState.equals(TrackedResourceState.ABANDONED)
+        && !resourceState.equals(TrackedResourceState.DUPLICATED)) {
+      throw new UnexpectedCleanupStateException(
+          String.format("Unexpected TrackedResourceState: %s", resourceState));
+    }
+    janitorDao.updateFlightState(flightId, CleanupFlightState.FATAL);
+  }
+
   /** Exception for unexpected resource state when finishing a cleanup flight. */
-  private static class UnexpectedCleanupState extends Exception {
-    UnexpectedCleanupState(String message) {
+  private static class UnexpectedCleanupStateException extends Exception {
+    UnexpectedCleanupStateException(String message) {
       super(message);
     }
   }
-
-  // TODO(wchamber): Add methods for finding fatal Flights.
 }
