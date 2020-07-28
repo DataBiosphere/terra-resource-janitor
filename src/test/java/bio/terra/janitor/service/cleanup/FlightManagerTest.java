@@ -10,7 +10,7 @@ import bio.terra.janitor.db.*;
 import bio.terra.janitor.service.cleanup.flight.FinalCleanupStep;
 import bio.terra.janitor.service.cleanup.flight.InitialCleanupStep;
 import bio.terra.janitor.service.cleanup.flight.LatchStep;
-import bio.terra.janitor.service.cleanup.flight.UnimplementedCleanupStep;
+import bio.terra.janitor.service.cleanup.flight.UnsupportedCleanupStep;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
@@ -332,7 +332,7 @@ public class FlightManagerTest {
       JanitorDao janitorDao =
           ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
       addStep(new InitialCleanupStep(janitorDao));
-      addStep(new UnimplementedCleanupStep());
+      addStep(new UnsupportedCleanupStep());
       addStep(new FinalCleanupStep(janitorDao));
     }
   }
