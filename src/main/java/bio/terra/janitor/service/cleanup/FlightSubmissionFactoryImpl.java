@@ -4,6 +4,7 @@ import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.db.TrackedResource;
 import bio.terra.janitor.service.cleanup.flight.FinalCleanupStep;
 import bio.terra.janitor.service.cleanup.flight.InitialCleanupStep;
+import bio.terra.janitor.service.cleanup.flight.UnsupportedCleanupStep;
 import bio.terra.stairway.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -27,23 +28,8 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
       JanitorDao janitorDao =
           ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
       addStep(new InitialCleanupStep(janitorDao));
-      addStep(new UnimplementedCleanupStep());
+      addStep(new UnsupportedCleanupStep());
       addStep(new FinalCleanupStep(janitorDao));
-    }
-  }
-
-  /** A fatal step for resource types that have not been implemented yet. */
-  private static class UnimplementedCleanupStep implements Step {
-    @Override
-    public StepResult doStep(FlightContext flightContext) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new UnsupportedOperationException("UnimplementedCleanupStep"));
-    }
-
-    @Override
-    public StepResult undoStep(FlightContext flightContext) {
-      return StepResult.getStepResultSuccess();
     }
   }
 }

@@ -1,5 +1,7 @@
 package bio.terra.janitor.service.cleanup;
 
+import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
+
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.janitor.app.Main;
@@ -9,7 +11,6 @@ import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,7 @@ public class FlightSchedulerTest {
     // TODO(wchamber): Finish flight lifecycle and check TrackedResourceState instead.
     Supplier<Boolean> flightIsFinished =
         () ->
-            janitorDao.getFlights(resource.trackedResourceId()).stream()
+            janitorDao.retrieveFlights(resource.trackedResourceId()).stream()
                 .anyMatch(
                     cleanupFlight -> cleanupFlight.state().equals(CleanupFlightState.FINISHING));
     pollUntil(flightIsFinished, Duration.ofSeconds(1), 10);
@@ -61,18 +62,5 @@ public class FlightSchedulerTest {
     // Assumes that the scheduler is disabled by default.
     primaryConfiguration.setSchedulerEnabled(true);
     flightScheduler.initialize();
-  }
-
-  private void pollUntil(Supplier<Boolean> condition, Duration period, int maxNumPolls)
-      throws InterruptedException {
-    int numPolls = 0;
-    while (numPolls < maxNumPolls) {
-      TimeUnit.MILLISECONDS.sleep(period.toMillis());
-      if (condition.get()) {
-        return;
-      }
-      ++numPolls;
-    }
-    throw new InterruptedException("Polling exceeded maxNumPolls");
   }
 }

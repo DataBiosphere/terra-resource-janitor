@@ -1,8 +1,7 @@
 package bio.terra.janitor.db;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleProjectUid;
@@ -98,7 +97,35 @@ public class JanitorDaoTest {
   }
 
   @Test
-  public void updateResourceForCleaning_OnlyReadyExpired() {
+  public void retrieveTrackedResource_unknownId() {
+    assertEquals(
+        Optional.empty(),
+        janitorDao.retrieveTrackedResource(TrackedResourceId.create(UUID.randomUUID())));
+  }
+
+  @Test
+  public void updateResourceState() {
+    TrackedResource resource =
+        newDefaultResource().trackedResourceState(TrackedResourceState.READY).build();
+    janitorDao.createResource(resource, ImmutableMap.of());
+    assertTrue(
+        janitorDao.updateResourceState(
+            resource.trackedResourceId(), TrackedResourceState.ABANDONED));
+    assertEquals(
+        Optional.of(
+            resource.toBuilder().trackedResourceState(TrackedResourceState.ABANDONED).build()),
+        janitorDao.retrieveTrackedResource(resource.trackedResourceId()));
+  }
+
+  @Test
+  public void updateResourceState_unknownId() {
+    assertFalse(
+        janitorDao.updateResourceState(
+            TrackedResourceId.create(UUID.randomUUID()), TrackedResourceState.READY));
+  }
+
+  @Test
+  public void updateResourceForCleaning_onlyReadyExpired() {
     // This resource is ready to update to cleaning once it has expired.
     TrackedResource readyResource =
         newDefaultResource()
@@ -147,12 +174,14 @@ public class JanitorDaoTest {
         resource.toBuilder().trackedResourceState(TrackedResourceState.CLEANING).build();
     assertEquals(janitorDao.updateResourceForCleaning(EXPIRATION, flightId).get(), expected);
 
-    janitorDao.setFlightState(flightId, CleanupFlightState.IN_FLIGHT);
+    assertTrue(janitorDao.updateFlightState(flightId, CleanupFlightState.IN_FLIGHT));
 
     CleanupFlight expectedFlight = CleanupFlight.create(flightId, CleanupFlightState.IN_FLIGHT);
     assertThat(
-        janitorDao.getFlights(resource.trackedResourceId()), Matchers.contains(expectedFlight));
-    assertEquals(janitorDao.getFlightState(flightId), Optional.of(CleanupFlightState.IN_FLIGHT));
+        janitorDao.retrieveFlights(resource.trackedResourceId()),
+        Matchers.contains(expectedFlight));
+    assertEquals(
+        janitorDao.retrieveFlightState(flightId), Optional.of(CleanupFlightState.IN_FLIGHT));
     assertThat(
         janitorDao.retrieveResourcesWith(CleanupFlightState.IN_FLIGHT, 10),
         Matchers.contains(JanitorDao.TrackedResourceAndFlight.create(expected, expectedFlight)));
@@ -162,7 +191,7 @@ public class JanitorDaoTest {
 
   @Test
   public void getFlightState_noMatchingFlight() {
-    assertEquals(janitorDao.getFlightState("unknown-flight-id"), Optional.empty());
+    assertEquals(janitorDao.retrieveFlightState("unknown-flight-id"), Optional.empty());
   }
 
   public static Map<String, Object> queryTrackedResource(
