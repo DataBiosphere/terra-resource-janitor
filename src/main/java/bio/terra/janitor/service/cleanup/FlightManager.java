@@ -115,7 +115,7 @@ class FlightManager {
   }
 
   /**
-   * Find up to {@code limit} flights that are finishing cleanup in the Janitor's storage and
+   * Finds up to {@code limit} flights that are finishing cleanup in the Janitor's storage and
    * transition their state out of cleaning as appropriate. Returns how many resources finished
    * their cleanup flights.
    *
