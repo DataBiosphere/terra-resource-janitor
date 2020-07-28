@@ -62,21 +62,15 @@ class FlightManager {
   }
 
   /**
-   * Recover tracked resources with flight ids in the Janitor's storage that are not known to
-   * Stairway. Resubmit the flights, returning how many flights were resubmitted.
+   * Recover up to {@code limit} tracked resources with flight ids in the Janitor's storage that are
+   * not known to Stairway. Resubmit the flights, returning how many flights were resubmitted.
    *
    * <p>This function assumes that it is not running concurrently with any other submissions to
    * Stairway, e.g {@link #submitFlight(Instant)}.
    */
-  public int recoverUnsubmittedFlights() {
+  public int recoverUnsubmittedFlights(int limit) {
     List<JanitorDao.TrackedResourceAndFlight> resourceAndFlights =
-        janitorDao.retrieveResourcesWith(CleanupFlightState.INITIATING, RECOVERY_LIMIT);
-    if (resourceAndFlights.size() == RECOVERY_LIMIT) {
-      // TODO add alerting for this case.
-      logger.error(
-          "Recovering as many flights as the limit {}. Some flights may still need recovering.",
-          RECOVERY_LIMIT);
-    }
+        janitorDao.retrieveResourcesWith(CleanupFlightState.INITIATING, limit);
     int submissions = 0;
     for (JanitorDao.TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
       String flightId = resourceAndFlight.cleanupFlight().flightId();

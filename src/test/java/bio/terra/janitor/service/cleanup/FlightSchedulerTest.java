@@ -12,8 +12,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Supplier;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,6 +33,21 @@ public class FlightSchedulerTest {
   @Autowired PrimaryConfiguration primaryConfiguration;
   @Autowired JanitorDao janitorDao;
 
+  @BeforeEach
+  public void setUp() {
+    // Assumes that the scheduler is disabled by default.
+    primaryConfiguration.setSchedulerEnabled(true);
+    primaryConfiguration.setFlightCompletionPeriod(Duration.ofSeconds(2));
+    primaryConfiguration.setFlightSubmissionPeriod(Duration.ofSeconds(2));
+    flightScheduler.initialize();
+  }
+
+  @AfterEach
+  public void tearDown() {
+    // Shutdown the FlightScheduler so that it isn't running during other tests.
+    flightScheduler.shutdown();
+  }
+
   @Test
   public void resourceScheduledForCleanup() throws Exception {
     Instant now = Instant.now();
@@ -48,19 +62,13 @@ public class FlightSchedulerTest {
             .build();
     janitorDao.createResource(resource, ImmutableMap.of());
 
-    initializeScheduler();
-    // TODO(wchamber): Finish flight lifecycle and check TrackedResourceState instead.
-    Supplier<Boolean> flightIsFinished =
+    Supplier<Boolean> cleanupIsFinished =
         () ->
-            janitorDao.retrieveFlights(resource.trackedResourceId()).stream()
-                .anyMatch(
-                    cleanupFlight -> cleanupFlight.state().equals(CleanupFlightState.FINISHING));
-    pollUntil(flightIsFinished, Duration.ofSeconds(1), 10);
-  }
-
-  private void initializeScheduler() {
-    // Assumes that the scheduler is disabled by default.
-    primaryConfiguration.setSchedulerEnabled(true);
-    flightScheduler.initialize();
+            janitorDao
+                .retrieveTrackedResource(resource.trackedResourceId())
+                .get()
+                .trackedResourceState()
+                .equals(TrackedResourceState.ERROR);
+    pollUntil(cleanupIsFinished, Duration.ofSeconds(1), 10);
   }
 }
