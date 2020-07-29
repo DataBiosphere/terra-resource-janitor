@@ -331,8 +331,9 @@ public class FlightManagerTest {
     Optional<String> flightId = manager.submitFlight(EXPIRATION);
     blockUntilFlightComplete(flightId.get());
 
-    // Fatal flights are not completed.
+    // Updates for completed flights does not include fatal flights.
     assertEquals(0, manager.updateCompletedFlights(10));
+
     assertEquals(1, manager.updateFatalFlights(10));
     assertEquals(
         Optional.of(CleanupFlightState.FATAL), janitorDao.retrieveFlightState(flightId.get()));
