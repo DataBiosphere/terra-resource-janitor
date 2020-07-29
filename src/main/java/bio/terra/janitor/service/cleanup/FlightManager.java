@@ -20,7 +20,23 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>This class is meant to be run by only the primary Janitor instance, not by the secondaries.
  *
  * <p>The handoff is done by this class and tracked in the cleanup_flight table and Stairway's
- * database.
+ * database. Invariants:
+ *
+ * <ul>
+ *   <li>A tracked resource must be in the READY state and have expired to create a cleaning flight.
+ *   <li>A tracked resource has at most one "active" cleaning flight - a CleanupFlight whose state
+ *       is not FINISHED or FATAL.
+ *   <li>A tracked resource with an active flight must be in the CLEANING, DUPLICATED, or ABANDONED
+ *       state. This cannot be enforced by this class but is relied on.
+ *   <li>When a Stairway Flight begins, the cleanup flight will be in the INITIATING state.
+ *   <li>The Stairway Flight is responsible for transitioning the cleaning flight state to IN_FLIGHT
+ *       and FINISHING. A non-FATAL Flight must change the state to FINISHING.
+ *   <li>This class is responsible for atomically the cleaning flight state to FINISHED or FATAL and
+ *       updating the tracked resource state. This is only done after Stairway has finished
+ *       executing the Flight.
+ *   <li>If the tracked resource is DUPLICATED or ABANDONED before this class transitions the flight
+ *       state to FINISHED or FATAL, the tracked resource state should not change.
+ * </ul>
  */
 class FlightManager {
   private Logger logger = LoggerFactory.getLogger(FlightManager.class);
