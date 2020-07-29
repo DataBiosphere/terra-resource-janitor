@@ -208,11 +208,12 @@ class FlightManager {
   }
 
   /**
-   * Finds up to {@code limit} flights that are FATAL in Stairway transition their state out of cleaning as appropriate.
-   * Returns how many resources finished their cleanup flights.
+   * Finds up to {@code limit} flights that are FATAL in Stairway transition their state out of
+   * cleaning as appropriate. Returns how many resources finished their cleanup flights.
    *
-   * <p>This function assumes that it is not running concurrently with itself.*/
-  public int completeFatalFlights(int limit) {
+   * <p>This function assumes that it is not running concurrently with itself.
+   */
+  public int updateFatalFlights(int limit) {
     FlightFilter flightFilter =
         new FlightFilter().addFilterFlightStatus(FlightFilterOp.EQUAL, FlightStatus.FATAL);
     List<FlightState> flights;
@@ -224,14 +225,14 @@ class FlightManager {
     }
     int completedFlights = 0;
     for (FlightState flight : flights) {
-      if (completeFatalFlight(flight.getFlightId())) {
+      if (updateFatalFlight(flight.getFlightId())) {
         ++completedFlights;
       }
     }
     return completedFlights;
   }
 
-  private boolean completeFatalFlight(String flightId) {
+  private boolean updateFatalFlight(String flightId) {
     try {
       updateFatalCleanupState(flightId);
     } catch (UnexpectedCleanupStateException e) {

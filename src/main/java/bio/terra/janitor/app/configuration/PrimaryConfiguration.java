@@ -30,6 +30,12 @@ public class PrimaryConfiguration {
   /** How many flights to process for completion at a time. */
   private int flightCompletionLimit = 1000;
 
+  /** How often to query for flights that have completed fatally. */
+  private Duration fatalFlightCompletionPeriod = Duration.ofMinutes(1);
+
+  /** How many fatal flights to process for completion at a time. */
+  private int fatalFlightCompletionLimit = 1000;
+
   public boolean isSchedulerEnabled() {
     return schedulerEnabled;
   }
@@ -50,6 +56,14 @@ public class PrimaryConfiguration {
     return flightCompletionLimit;
   }
 
+  public Duration getFatalFlightCompletionPeriod() {
+    return fatalFlightCompletionPeriod;
+  }
+
+  public int getFatalFlightCompletionLimit() {
+    return fatalFlightCompletionLimit;
+  }
+
   public void setSchedulerEnabled(boolean schedulerEnabled) {
     this.schedulerEnabled = schedulerEnabled;
   }
@@ -68,5 +82,13 @@ public class PrimaryConfiguration {
 
   public void setFlightCompletionLimit(int flightCompletionLimit) {
     this.flightCompletionLimit = flightCompletionLimit;
+  }
+
+  public void setFatalFlightCompletionLimit(int fatalFlightCompletionLimit) {
+    this.fatalFlightCompletionLimit = fatalFlightCompletionLimit;
+  }
+
+  public void setFatalFlightCompletionPeriod(Duration fatalFlightCompletionPeriod) {
+    this.fatalFlightCompletionPeriod = fatalFlightCompletionPeriod;
   }
 }

@@ -107,8 +107,8 @@ public class JanitorDao {
   }
 
   /**
-   * Returns a single resource with an expiration less than or equal to {@code expiredyBy} in the given
-   * state, if there is such a TrackedResource.
+   * Returns a single resource with an expiration less than or equal to {@code expiredyBy} in the
+   * given state, if there is such a TrackedResource.
    */
   @Transactional(propagation = Propagation.SUPPORTS)
   public Optional<TrackedResource> retrieveExpiredResourceWith(

@@ -7,10 +7,7 @@ import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.db.*;
-import bio.terra.janitor.service.cleanup.flight.FinalCleanupStep;
-import bio.terra.janitor.service.cleanup.flight.InitialCleanupStep;
-import bio.terra.janitor.service.cleanup.flight.LatchStep;
-import bio.terra.janitor.service.cleanup.flight.UnsupportedCleanupStep;
+import bio.terra.janitor.service.cleanup.flight.*;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
@@ -320,6 +317,98 @@ public class FlightManagerTest {
         Optional.of(CleanupFlightState.FINISHING), janitorDao.retrieveFlightState(readyFlight));
   }
 
+  @Test
+  public void updateFatalFlight() throws Exception {
+    FlightManager manager =
+        new FlightManager(
+            stairwayComponent.get(),
+            janitorDao,
+            trackedResource ->
+                FlightSubmissionFactory.FlightSubmission.create(
+                    FatalFlight.class, new FlightMap()));
+    TrackedResource resource = newResourceForCleaning();
+    janitorDao.createResource(resource, ImmutableMap.of());
+    Optional<String> flightId = manager.submitFlight(EXPIRATION);
+    blockUntilFlightComplete(flightId.get());
+
+    // Fatal flights are not completed.
+    assertEquals(0, manager.updateCompletedFlights(10));
+    assertEquals(1, manager.updateFatalFlights(10));
+    assertEquals(
+        Optional.of(CleanupFlightState.FATAL), janitorDao.retrieveFlightState(flightId.get()));
+    assertEquals(
+        Optional.of(resource.toBuilder().trackedResourceState(TrackedResourceState.ERROR).build()),
+        janitorDao.retrieveTrackedResource(resource.trackedResourceId()));
+  }
+
+  @Test
+  public void updateFatalFlight_stateModifiedDuringCleaning() throws Exception {
+    String latchKey = "foo";
+    FlightMap inputMap = new FlightMap();
+    LatchStep.createLatch(inputMap, latchKey);
+
+    FlightManager manager =
+        new FlightManager(
+            stairwayComponent.get(),
+            janitorDao,
+            trackedResource ->
+                FlightSubmissionFactory.FlightSubmission.create(
+                    LatchBeforeFatalFlight.class, inputMap));
+
+    TrackedResource duplicatedResource = newResourceForCleaning();
+    janitorDao.createResource(duplicatedResource, ImmutableMap.of());
+    String duplicatedFlight = manager.submitFlight(EXPIRATION).get();
+
+    TrackedResource abandonedResource = newResourceForCleaning();
+    janitorDao.createResource(abandonedResource, ImmutableMap.of());
+    String abandonedFlight = manager.submitFlight(EXPIRATION).get();
+
+    TrackedResource readyResource = newResourceForCleaning();
+    janitorDao.createResource(readyResource, ImmutableMap.of());
+    String readyFlight = manager.submitFlight(EXPIRATION).get();
+
+    // The resource is modified while the flight is being cleaned up.
+    janitorDao.updateResourceState(
+        duplicatedResource.trackedResourceId(), TrackedResourceState.DUPLICATED);
+    janitorDao.updateResourceState(
+        abandonedResource.trackedResourceId(), TrackedResourceState.ABANDONED);
+    janitorDao.updateResourceState(readyResource.trackedResourceId(), TrackedResourceState.READY);
+
+    LatchStep.releaseLatch(latchKey);
+    blockUntilFlightComplete(duplicatedFlight);
+    blockUntilFlightComplete(abandonedFlight);
+    blockUntilFlightComplete(readyFlight);
+    // Only the duplicated and abandoned tracked resource states (2) are updated for fatal.
+    assertEquals(2, manager.updateFatalFlights(10));
+
+    assertEquals(
+        Optional.of(
+            duplicatedResource
+                .toBuilder()
+                .trackedResourceState(TrackedResourceState.DUPLICATED)
+                .build()),
+        janitorDao.retrieveTrackedResource(duplicatedResource.trackedResourceId()));
+    assertEquals(
+        Optional.of(CleanupFlightState.FATAL), janitorDao.retrieveFlightState(duplicatedFlight));
+
+    assertEquals(
+        Optional.of(
+            abandonedResource
+                .toBuilder()
+                .trackedResourceState(TrackedResourceState.ABANDONED)
+                .build()),
+        janitorDao.retrieveTrackedResource(abandonedResource.trackedResourceId()));
+    assertEquals(
+        Optional.of(CleanupFlightState.FATAL), janitorDao.retrieveFlightState(abandonedFlight));
+
+    assertEquals(
+        Optional.of(
+            readyResource.toBuilder().trackedResourceState(TrackedResourceState.READY).build()),
+        janitorDao.retrieveTrackedResource(readyResource.trackedResourceId()));
+    assertEquals(
+        Optional.of(CleanupFlightState.INITIATING), janitorDao.retrieveFlightState(readyFlight));
+  }
+
   /** A basic cleanup {@link Flight} that uses the standard cleanup steps. */
   public static class OkCleanupFlight extends Flight {
     public OkCleanupFlight(FlightMap inputParameters, Object applicationContext) {
@@ -340,6 +429,14 @@ public class FlightManagerTest {
       addStep(new InitialCleanupStep(janitorDao));
       addStep(new UnsupportedCleanupStep());
       addStep(new FinalCleanupStep(janitorDao));
+    }
+  }
+
+  /** A {@link Flight} that ends in a dismal fatal failure. */
+  public static class FatalFlight extends Flight {
+    public FatalFlight(FlightMap inputParameters, Object applicationContext) {
+      super(inputParameters, applicationContext);
+      addStep(new FatalStep());
     }
   }
 
@@ -364,6 +461,15 @@ public class FlightManagerTest {
       addStep(new InitialCleanupStep(janitorDao));
       addStep(new FinalCleanupStep(janitorDao));
       addStep(new LatchStep());
+    }
+  }
+
+  /** A {@link Flight} that latches before ending in a dismal fatal failure. */
+  public static class LatchBeforeFatalFlight extends Flight {
+    public LatchBeforeFatalFlight(FlightMap inputParameters, Object applicationContext) {
+      super(inputParameters, applicationContext);
+      addStep(new LatchStep());
+      addStep(new FatalStep());
     }
   }
 }
