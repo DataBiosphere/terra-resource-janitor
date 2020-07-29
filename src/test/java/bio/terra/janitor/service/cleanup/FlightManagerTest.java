@@ -124,12 +124,18 @@ public class FlightManagerTest {
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     OkCleanupFlight.class, new FlightMap()));
-    TrackedResource resource = newResourceForCleaning();
+    // Create a resource with a flight outside of the manager to represent a stored flight that was
+    // not submitted.
+    TrackedResource resource =
+        newResourceForCleaning()
+            .toBuilder()
+            .trackedResourceState(TrackedResourceState.CLEANING)
+            .build();
     janitorDao.createResource(resource, ImmutableMap.of());
-
-    // Create a flight outside of the manager to represent a stored flight that was not submitted.
     String flightId = stairwayComponent.get().createFlightId();
-    janitorDao.updateResourceForCleaning(EXPIRATION, flightId);
+    janitorDao.createCleanupFlight(
+        resource.trackedResourceId(),
+        CleanupFlight.create(flightId, CleanupFlightState.INITIATING));
 
     assertEquals(1, manager.recoverUnsubmittedFlights(10));
 
