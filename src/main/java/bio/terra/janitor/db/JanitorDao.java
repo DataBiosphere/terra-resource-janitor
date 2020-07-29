@@ -107,8 +107,8 @@ public class JanitorDao {
   }
 
   /**
-   * Returns a single resource with an expiration less than or equal to {@code expiredyBy} in the given
-   * state, if there is such a TrackedResource.
+   * Returns a single resource with an expiration less than or equal to {@code expiredyBy} in the
+   * given state, if there is such a TrackedResource.
    */
   @Transactional(propagation = Propagation.SUPPORTS)
   public Optional<TrackedResource> retrieveExpiredResourceWith(
@@ -124,6 +124,26 @@ public class JanitorDao {
                     .addValue("state", state.toString())
                     .addValue("expiration", expiredBy.atOffset(ZoneOffset.UTC)),
                 TRACKED_RESOURCE_ROW_MAPPER)));
+  }
+
+  /** Return the resource and flight associated with the {@code flightId}, if they exist. */
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public Optional<TrackedResourceAndFlight> retrieveResourceAndFlight(String flightId) {
+    String sql =
+        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+            + "cf.flight_id, cf.flight_state FROM tracked_resource tr "
+            + "JOIN cleanup_flight cf ON tr.id = cf.tracked_resource_id "
+            + "WHERE cf.flight_id = :flight_id";
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("flight_id", flightId);
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) ->
+                    TrackedResourceAndFlight.create(
+                        TRACKED_RESOURCE_ROW_MAPPER.mapRow(rs, rowNum),
+                        CLEANUP_FLIGHT_ROW_MAPPER.mapRow(rs, rowNum)))));
   }
 
   /** Returns up to {@code limit} resources with a cleanup flight in the given state. */

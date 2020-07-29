@@ -174,7 +174,26 @@ public class JanitorDaoTest {
   }
 
   @Test
-  public void getFlightState_noMatchingFlight() {
+  public void getFlightState_unknownFlightId() {
     assertEquals(janitorDao.retrieveFlightState("unknown-flight-id"), Optional.empty());
+  }
+
+  @Test
+  public void retrieveResourceAndFlight() {
+    String flightId = "foo";
+    TrackedResource resource = newDefaultResource().build();
+    CleanupFlight cleanupFlight = CleanupFlight.create(flightId, CleanupFlightState.INITIATING);
+
+    janitorDao.createResource(resource, ImmutableMap.of());
+    janitorDao.createCleanupFlight(resource.trackedResourceId(), cleanupFlight);
+
+    assertEquals(
+        Optional.of(JanitorDao.TrackedResourceAndFlight.create(resource, cleanupFlight)),
+        janitorDao.retrieveResourceAndFlight(flightId));
+  }
+
+  @Test
+  public void retrieveResourceAndFlight_unknownFlightId() {
+    assertEquals(Optional.empty(), janitorDao.retrieveResourceAndFlight("unknown-flight-id"));
   }
 }

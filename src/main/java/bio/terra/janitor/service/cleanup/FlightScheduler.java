@@ -20,7 +20,7 @@ public class FlightScheduler {
   private Logger logger = LoggerFactory.getLogger(FlightScheduler.class);
 
   /** Only need as many threads as we have scheduled tasks. */
-  private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(2);
+  private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(3);
 
   private final PrimaryConfiguration primaryConfiguration;
   private final StairwayComponent stairwayComponent;
@@ -54,10 +54,17 @@ public class FlightScheduler {
       return;
     }
     executor.execute(this::startSchedulingFlights);
+    // The scheduled task will not execute concurrently with itself even if it takes a long time.
+    // See javadoc on ScheduledExecutorService#scheduleAtFixedRate.
     executor.scheduleAtFixedRate(
         this::completeFlights,
         /* initialDelay= */ 0,
         /* period= */ primaryConfiguration.getFlightCompletionPeriod().toMillis(),
+        TimeUnit.MILLISECONDS);
+    executor.scheduleAtFixedRate(
+        this::completeFatalFlights,
+        /* initialDelay= */ 0,
+        /* period= */ primaryConfiguration.getFatalFlightCompletionPeriod().toMillis(),
         TimeUnit.MILLISECONDS);
   }
 
@@ -72,8 +79,6 @@ public class FlightScheduler {
           numRecoveredFlights);
     }
     logger.info("Recovered {} unsubmitted flights.", numRecoveredFlights);
-    // The scheduled task will not execute concurrently with itself even if it takes a long time.
-    // See javadoc on ScheduledExecutorService#scheduleAtFixedRate.
     executor.scheduleAtFixedRate(
         this::scheduleFlights,
         /* initialDelay= */ 0,
@@ -99,6 +104,13 @@ public class FlightScheduler {
     int completedFlights =
         flightManager.updateCompletedFlights(primaryConfiguration.getFlightCompletionLimit());
     logger.info("Done completing {} flights.", completedFlights);
+  }
+
+  private void completeFatalFlights() {
+    logger.info("Beginning completing fatal flights.");
+    int completedFlights =
+        flightManager.updateFatalFlights(primaryConfiguration.getFatalFlightCompletionLimit());
+    logger.info("Done completing {} fatal flights.", completedFlights);
   }
 
   public void shutdown() {
