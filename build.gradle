@@ -50,6 +50,8 @@ dependencies {
     implementation 'bio.terra:stairway:0.0.20'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema', version: crlSchemaVersion
 
+    implementation 'com.google.cloud:google-cloud-pubsub:1.108.0'
+
     // -- Swagger CodeGen dependencies --
     swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.20'
     implementation group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.1.3'
