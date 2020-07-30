@@ -8,10 +8,7 @@ import bio.terra.generated.model.GoogleProjectUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.ResourceType;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -73,7 +70,7 @@ public class JanitorDaoTest {
   }
 
   @Test
-  public void createTrackedResource() throws Exception {
+  public void createTrackedResource() {
     CloudResourceUid cloudResourceUid =
         new CloudResourceUid()
             .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
@@ -87,13 +84,15 @@ public class JanitorDaoTest {
             .build();
     janitorDao.createResource(resource, DEFAULT_LABELS);
 
-    assertCreateResultMatch(
-        resource.trackedResourceId(),
-        cloudResourceUid,
-        ResourceType.GOOGLE_PROJECT,
-        CREATION,
-        EXPIRATION,
-        DEFAULT_LABELS);
+    assertEquals(
+        Optional.of(resource), janitorDao.retrieveTrackedResource(resource.trackedResourceId()));
+    assertEquals(DEFAULT_LABELS, janitorDao.retrieveLabels(resource.trackedResourceId()));
+    String resourceType =
+        jdbcTemplate.queryForObject(
+            "SELECT resource_type FROM tracked_resource WHERE id = :id",
+            new MapSqlParameterSource().addValue("id", resource.trackedResourceId().uuid()),
+            String.class);
+    assertEquals(ResourceType.GOOGLE_PROJECT, ResourceType.valueOf(resourceType));
   }
 
   @Test
@@ -108,75 +107,60 @@ public class JanitorDaoTest {
     TrackedResource resource =
         newDefaultResource().trackedResourceState(TrackedResourceState.READY).build();
     janitorDao.createResource(resource, ImmutableMap.of());
-    assertTrue(
+
+    TrackedResource expected =
+        resource.toBuilder().trackedResourceState(TrackedResourceState.ABANDONED).build();
+    assertEquals(
+        Optional.of(expected),
         janitorDao.updateResourceState(
             resource.trackedResourceId(), TrackedResourceState.ABANDONED));
     assertEquals(
-        Optional.of(
-            resource.toBuilder().trackedResourceState(TrackedResourceState.ABANDONED).build()),
-        janitorDao.retrieveTrackedResource(resource.trackedResourceId()));
+        Optional.of(expected), janitorDao.retrieveTrackedResource(resource.trackedResourceId()));
   }
 
   @Test
   public void updateResourceState_unknownId() {
-    assertFalse(
+    assertEquals(
+        Optional.empty(),
         janitorDao.updateResourceState(
             TrackedResourceId.create(UUID.randomUUID()), TrackedResourceState.READY));
   }
 
   @Test
-  public void updateResourceForCleaning_onlyReadyExpired() {
-    // This resource is ready to update to cleaning once it has expired.
-    TrackedResource readyResource =
-        newDefaultResource()
-            .trackedResourceState(TrackedResourceState.READY)
-            .expiration(EXPIRATION)
-            .build();
-    // This resource is already cleaning and should not be updated again.
-    TrackedResource expiredCleaningResource =
-        newDefaultResource()
-            .trackedResourceState(TrackedResourceState.CLEANING)
-            .expiration(Instant.EPOCH)
-            .build();
-    janitorDao.createResource(readyResource, ImmutableMap.of());
-    janitorDao.createResource(expiredCleaningResource, ImmutableMap.of());
-
-    String flightId = "foo";
-    assertEquals(
-        Optional.empty(),
-        janitorDao.updateResourceForCleaning(EXPIRATION.minusSeconds(1), flightId));
-    Optional<TrackedResource> updated = janitorDao.updateResourceForCleaning(EXPIRATION, flightId);
-
-    TrackedResource expected =
-        readyResource.toBuilder().trackedResourceState(TrackedResourceState.CLEANING).build();
-    assertTrue(updated.isPresent());
-    assertEquals(expected, updated.get());
-
-    List<JanitorDao.TrackedResourceAndFlight> resourceAndFlights =
-        janitorDao.retrieveResourcesWith(CleanupFlightState.INITIATING, 10);
-    assertThat(
-        resourceAndFlights,
-        Matchers.contains(
-            JanitorDao.TrackedResourceAndFlight.create(
-                expected, CleanupFlight.create(flightId, CleanupFlightState.INITIATING))));
-  }
-
-  @Test
-  public void flightState() {
+  public void retrieveExpiredResourceWith() {
     TrackedResource resource =
         newDefaultResource()
             .trackedResourceState(TrackedResourceState.READY)
             .expiration(EXPIRATION)
             .build();
     janitorDao.createResource(resource, ImmutableMap.of());
-    String flightId = "foo";
-    TrackedResource expected =
-        resource.toBuilder().trackedResourceState(TrackedResourceState.CLEANING).build();
-    assertEquals(janitorDao.updateResourceForCleaning(EXPIRATION, flightId).get(), expected);
 
-    assertTrue(janitorDao.updateFlightState(flightId, CleanupFlightState.IN_FLIGHT));
+    assertEquals(
+        Optional.of(resource),
+        janitorDao.retrieveExpiredResourceWith(EXPIRATION, TrackedResourceState.READY));
+    assertEquals(
+        Optional.empty(),
+        janitorDao.retrieveExpiredResourceWith(EXPIRATION, TrackedResourceState.CLEANING));
+    assertEquals(
+        Optional.empty(),
+        janitorDao.retrieveExpiredResourceWith(
+            EXPIRATION.minusSeconds(1), TrackedResourceState.READY));
+  }
+
+  @Test
+  public void cleanupFlight() {
+    TrackedResource resource = newDefaultResource().build();
+    janitorDao.createResource(resource, ImmutableMap.of());
+    String flightId = "foo";
+    janitorDao.createCleanupFlight(
+        resource.trackedResourceId(),
+        CleanupFlight.create(flightId, CleanupFlightState.INITIATING));
 
     CleanupFlight expectedFlight = CleanupFlight.create(flightId, CleanupFlightState.IN_FLIGHT);
+    assertEquals(
+        Optional.of(expectedFlight),
+        janitorDao.updateFlightState(flightId, CleanupFlightState.IN_FLIGHT));
+
     assertThat(
         janitorDao.retrieveFlights(resource.trackedResourceId()),
         Matchers.contains(expectedFlight));
@@ -184,69 +168,32 @@ public class JanitorDaoTest {
         janitorDao.retrieveFlightState(flightId), Optional.of(CleanupFlightState.IN_FLIGHT));
     assertThat(
         janitorDao.retrieveResourcesWith(CleanupFlightState.IN_FLIGHT, 10),
-        Matchers.contains(JanitorDao.TrackedResourceAndFlight.create(expected, expectedFlight)));
+        Matchers.contains(JanitorDao.TrackedResourceAndFlight.create(resource, expectedFlight)));
     assertThat(
         janitorDao.retrieveResourcesWith(CleanupFlightState.INITIATING, 10), Matchers.empty());
   }
 
   @Test
-  public void getFlightState_noMatchingFlight() {
+  public void getFlightState_unknownFlightId() {
     assertEquals(janitorDao.retrieveFlightState("unknown-flight-id"), Optional.empty());
   }
 
-  public static Map<String, Object> queryTrackedResource(
-      NamedParameterJdbcTemplate jdbcTemplate, CloudResourceUid resourceUid) {
-    String sql =
-        "SELECT id, resource_uid::text, resource_type, creation, expiration, state "
-            + "FROM tracked_resource "
-            + "WHERE resource_uid::jsonb = :resource_uid::jsonb";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("resource_uid", JanitorDao.serialize(resourceUid));
-    return jdbcTemplate.queryForMap(sql, params);
-  }
+  @Test
+  public void retrieveResourceAndFlight() {
+    String flightId = "foo";
+    TrackedResource resource = newDefaultResource().build();
+    CleanupFlight cleanupFlight = CleanupFlight.create(flightId, CleanupFlightState.INITIATING);
 
-  public static List<Map<String, Object>> queryLabel(
-      NamedParameterJdbcTemplate jdbcTemplate, String trackedResourceId) {
+    janitorDao.createResource(resource, ImmutableMap.of());
+    janitorDao.createCleanupFlight(resource.trackedResourceId(), cleanupFlight);
 
-    String sql =
-        "SELECT tracked_resource_id, key, value "
-            + "FROM label "
-            + "WHERE tracked_resource_id = :tracked_resource_id::uuid";
-
-    MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("tracked_resource_id", trackedResourceId);
-    return jdbcTemplate.queryForList(sql, params);
-  }
-
-  private void assertCreateResultMatch(
-      TrackedResourceId trackedResourceId,
-      CloudResourceUid cloudResourceUid,
-      ResourceType resourceType,
-      Instant creation,
-      Instant expiration,
-      Map<String, String> expectedLabels)
-      throws JsonProcessingException {
-    Map<String, Object> actual = queryTrackedResource(jdbcTemplate, cloudResourceUid);
-
-    assertEquals(trackedResourceId.uuid().toString(), (actual.get("id")).toString());
     assertEquals(
-        cloudResourceUid,
-        new ObjectMapper().readValue((String) actual.get("resource_uid"), CloudResourceUid.class));
+        Optional.of(JanitorDao.TrackedResourceAndFlight.create(resource, cleanupFlight)),
+        janitorDao.retrieveResourceAndFlight(flightId));
+  }
 
-    assertEquals(resourceType.toString(), actual.get("resource_type"));
-    assertEquals(creation, ((Timestamp) actual.get("creation")).toInstant());
-    assertEquals(expiration, ((Timestamp) actual.get("expiration")).toInstant());
-
-    assertEquals("READY", actual.get("state"));
-
-    List<Map<String, Object>> actualLabel = queryLabel(jdbcTemplate, actual.get("id").toString());
-
-    // Label
-    assertEquals(expectedLabels.size(), actualLabel.size());
-    Map<String, String> actualLabelMap = new HashMap<>();
-    for (Map<String, Object> map : actualLabel) {
-      actualLabelMap.put(map.get("key").toString(), map.get("value").toString());
-    }
-    assertEquals(expectedLabels, actualLabelMap);
+  @Test
+  public void retrieveResourceAndFlight_unknownFlightId() {
+    assertEquals(Optional.empty(), janitorDao.retrieveResourceAndFlight("unknown-flight-id"));
   }
 }

@@ -12,10 +12,8 @@ import com.google.common.annotations.VisibleForTesting;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
@@ -91,59 +89,61 @@ public class JanitorDao {
   }
 
   /**
-   * Modifies the {@link TrackedResourceState} for a single id. Returns whether there was a resource
-   * for that id.
+   * Modifies the {@link TrackedResourceState} for a single id. Returns the updated TrackedResource,
+   * if one was updated.
    */
   @Transactional(propagation = Propagation.SUPPORTS)
-  public boolean updateResourceState(
+  public Optional<TrackedResource> updateResourceState(
       TrackedResourceId trackedResourceId, TrackedResourceState newState) {
-    String sql = "UPDATE tracked_resource SET state = :state WHERE id = :id;";
+    String sql =
+        "UPDATE tracked_resource SET state = :state WHERE id = :id "
+            + "RETURNING id, resource_uid, creation, expiration, state";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("state", newState.toString())
             .addValue("id", trackedResourceId.uuid());
-    return jdbcTemplate.update(sql, params) == 1;
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER)));
   }
 
   /**
-   * Retrieves and updates a TrackedResource that is ready and has expired by {@code expiredBy} to
-   * {@link TrackedResourceState#CLEANING}. Inserts a new {@link CleanupFlight} for that resource as
-   * initiating.
+   * Returns a single resource with an expiration less than or equal to {@code expiredyBy} in the
+   * given state, if there is such a TrackedResource.
    */
-  // TODO(wchamber): Pull business logic out of this and into the FlightMonitor. Make this into
-  // several functions.
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public Optional<TrackedResource> updateResourceForCleaning(Instant expiredBy, String flightId) {
-    UUID id =
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public Optional<TrackedResource> retrieveExpiredResourceWith(
+      Instant expiredBy, TrackedResourceState state) {
+    String sql =
+        "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource "
+            + "WHERE state = :state and expiration <= :expiration LIMIT 1";
+    return Optional.ofNullable(
         DataAccessUtils.singleResult(
-            jdbcTemplate.queryForList(
-                "SELECT id FROM tracked_resource "
-                    + "WHERE state = :ready and expiration <= :expiration LIMIT 1",
+            jdbcTemplate.query(
+                sql,
                 new MapSqlParameterSource()
-                    .addValue("ready", TrackedResourceState.READY.toString())
+                    .addValue("state", state.toString())
                     .addValue("expiration", expiredBy.atOffset(ZoneOffset.UTC)),
-                UUID.class));
-    if (id == null) {
-      // No resources ready to schedule.
-      return Optional.empty();
-    }
+                TRACKED_RESOURCE_ROW_MAPPER)));
+  }
 
-    TrackedResourceId resourceToClean = TrackedResourceId.create(id);
-    jdbcTemplate.update(
-        "INSERT INTO cleanup_flight (tracked_resource_id, flight_id, flight_state) "
-            + "VALUES (:tracked_resource_id, :flight_id, :initiating)",
-        new MapSqlParameterSource()
-            .addValue("tracked_resource_id", resourceToClean.uuid())
-            .addValue("flight_id", flightId)
-            .addValue("initiating", CleanupFlightState.INITIATING.toString()));
-    return Optional.of(
-        jdbcTemplate.queryForObject(
-            "UPDATE tracked_resource SET state = :cleaning WHERE id = :id "
-                + "RETURNING id, resource_uid, creation, expiration, state",
-            new MapSqlParameterSource()
-                .addValue("cleaning", TrackedResourceState.CLEANING.toString())
-                .addValue("id", resourceToClean.uuid()),
-            TRACKED_RESOURCE_ROW_MAPPER));
+  /** Return the resource and flight associated with the {@code flightId}, if they exist. */
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public Optional<TrackedResourceAndFlight> retrieveResourceAndFlight(String flightId) {
+    String sql =
+        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+            + "cf.flight_id, cf.flight_state FROM tracked_resource tr "
+            + "JOIN cleanup_flight cf ON tr.id = cf.tracked_resource_id "
+            + "WHERE cf.flight_id = :flight_id";
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("flight_id", flightId);
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) ->
+                    TrackedResourceAndFlight.create(
+                        TRACKED_RESOURCE_ROW_MAPPER.mapRow(rs, rowNum),
+                        CLEANUP_FLIGHT_ROW_MAPPER.mapRow(rs, rowNum)))));
   }
 
   /** Returns up to {@code limit} resources with a cleanup flight in the given state. */
@@ -168,6 +168,19 @@ public class JanitorDao {
                 CLEANUP_FLIGHT_ROW_MAPPER.mapRow(rs, rowNum)));
   }
 
+  /** Creates a {@link CleanupFlight} associated with {@code trackedResourceId}. */
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public void createCleanupFlight(
+      TrackedResourceId trackedResourceId, CleanupFlight cleanupFlight) {
+    jdbcTemplate.update(
+        "INSERT INTO cleanup_flight (tracked_resource_id, flight_id, flight_state) "
+            + "VALUES (:tracked_resource_id, :flight_id, :flight_state)",
+        new MapSqlParameterSource()
+            .addValue("tracked_resource_id", trackedResourceId.uuid())
+            .addValue("flight_id", cleanupFlight.flightId())
+            .addValue("flight_state", cleanupFlight.state().toString()));
+  }
+
   /** Retrieve the {@link CleanupFlight}s associated with the tracked resource. */
   @Transactional(propagation = Propagation.SUPPORTS)
   public List<CleanupFlight> retrieveFlights(TrackedResourceId trackedResourceId) {
@@ -188,18 +201,38 @@ public class JanitorDao {
   }
 
   /**
-   * Modifies the {@link CleanupFlightState} of a single flight. Returns whether there was a flight
-   * with the flightId.
+   * Modifies the {@link CleanupFlightState} of a single flight. Returns the updated CleanupFlight,
+   * if one was updated.
    */
   @Transactional(propagation = Propagation.SUPPORTS)
-  public boolean updateFlightState(String flightId, CleanupFlightState flightState) {
+  public Optional<CleanupFlight> updateFlightState(
+      String flightId, CleanupFlightState flightState) {
     String sql =
-        "UPDATE cleanup_flight SET flight_state = :flight_state WHERE flight_id = :flight_id;";
+        "UPDATE cleanup_flight SET flight_state = :flight_state WHERE flight_id = :flight_id "
+            + "RETURNING flight_id, flight_state";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("flight_state", flightState.toString())
             .addValue("flight_id", flightId);
-    return jdbcTemplate.update(sql, params) == 1;
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, CLEANUP_FLIGHT_ROW_MAPPER)));
+  }
+
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public Map<String, String> retrieveLabels(TrackedResourceId trackedResourceId) {
+    String sql =
+        "SELECT key, value FROM label " + "WHERE tracked_resource_id = :tracked_resource_id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("tracked_resource_id", trackedResourceId.uuid());
+    List<AbstractMap.SimpleEntry<String, String>> labels =
+        jdbcTemplate.query(
+            sql,
+            params,
+            (rs, rowNum) ->
+                new AbstractMap.SimpleEntry<>(rs.getString("key"), rs.getString("value")));
+    return labels.stream()
+        .collect(
+            Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
   }
 
   private static final RowMapper<TrackedResource> TRACKED_RESOURCE_ROW_MAPPER =

@@ -3,11 +3,10 @@ package bio.terra.janitor.app.configuration;
 import bio.terra.janitor.app.StartupInitializer;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import org.apache.commons.dbcp2.PoolableConnection;
-import org.apache.commons.dbcp2.PoolingDataSource;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -20,9 +19,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "janitor")
 public class ApplicationConfiguration {
-  // Not a property
-  private PoolingDataSource<PoolableConnection> dataSource;
-
   @Bean("jdbcTemplate")
   public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(JanitorJdbcConfiguration config) {
     return new NamedParameterJdbcTemplate(config.getDataSource());
@@ -34,6 +30,7 @@ public class ApplicationConfiguration {
         .registerModule(new ParameterNamesModule())
         .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule())
+        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
         .setDefaultPropertyInclusion(JsonInclude.Include.NON_ABSENT);
   }
 
