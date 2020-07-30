@@ -1,18 +1,18 @@
 package bio.terra.janitor.app.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.generated.model.CloudResourceUid;
-import bio.terra.generated.model.CreateResourceRequestBody;
-import bio.terra.generated.model.CreatedResource;
-import bio.terra.generated.model.GoogleProjectUid;
+import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import bio.terra.janitor.db.TrackedResourceState;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -42,6 +41,7 @@ public class JanitorApiControllerTest {
 
   @Autowired private MockMvc mvc;
   @Autowired JanitorJdbcConfiguration jdbcConfiguration;
+  @Autowired ObjectMapper objectMapper;
 
   private NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -51,17 +51,17 @@ public class JanitorApiControllerTest {
   }
 
   @Test
-  public void createResourceSuccess() throws Exception {
+  public void createResourceSuccessGettable() throws Exception {
+    CloudResourceUid resourceUid =
+        new CloudResourceUid()
+            .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
     CreateResourceRequestBody body =
         new CreateResourceRequestBody()
-            .resourceUid(
-                new CloudResourceUid()
-                    .googleProjectUid(
-                        new GoogleProjectUid().projectId(UUID.randomUUID().toString())))
+            .resourceUid(resourceUid)
             .timeToLiveInMinutes(TIME_TO_LIVE_MINUTE)
             .labels(DEFAULT_LABELS);
 
-    String response =
+    String createResponse =
         this.mvc
             .perform(
                 post("/api/janitor/v1/resource")
@@ -73,7 +73,29 @@ public class JanitorApiControllerTest {
             .getResponse()
             .getContentAsString();
 
-    assertResourceExists(deserializeCreateResponse(response));
+    CreatedResource createdResource = objectMapper.readValue(createResponse, CreatedResource.class);
+
+    String getResponse =
+        this.mvc
+            .perform(get(String.format("/api/janitor/v1/resource/%s", createdResource.getId())))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(createdResource.getId()))
+            .andExpect(jsonPath("$.state").value(TrackedResourceState.READY.toString()))
+            // Explicitly check that the string format date-time fields are strings since this is
+            // easy to misconfigure with ObjectMappers.
+            .andExpect(jsonPath("$.creation").isString())
+            .andExpect(jsonPath("$.expiration").isString())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    TrackedResourceInfo trackedResourceInfo =
+        objectMapper.readValue(getResponse, TrackedResourceInfo.class);
+    assertEquals(resourceUid, trackedResourceInfo.getResourceUid());
+    assertEquals(
+        Duration.ofMinutes(TIME_TO_LIVE_MINUTE),
+        Duration.between(trackedResourceInfo.getCreation(), trackedResourceInfo.getExpiration()));
+    assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
   }
 
   @Test
@@ -95,16 +117,11 @@ public class JanitorApiControllerTest {
         .andExpect(status().isBadRequest());
   }
 
-  private static CreatedResource deserializeCreateResponse(String jsonResponse)
-      throws JsonProcessingException {
-    return new ObjectMapper().readValue(jsonResponse, CreatedResource.class);
-  }
-
-  private void assertResourceExists(CreatedResource createdResource) {
-    // TODO(yonghao): Use get endpoint once we have that.
-    String sql = "SELECT count(*) from tracked_resource where id = :id";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("id", UUID.fromString(createdResource.getId()));
-    assertEquals(1, jdbcTemplate.queryForMap(sql, params).size());
+  @Test
+  public void getResource_notFound() throws Exception {
+    this.mvc
+        .perform(get(String.format("/api/janitor/v1/resource/not-a-real-id")))
+        .andDo(MockMvcResultHandlers.print())
+        .andExpect(status().isNotFound());
   }
 }
