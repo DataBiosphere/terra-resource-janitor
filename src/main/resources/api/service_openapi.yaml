@@ -73,13 +73,12 @@ paths:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
 
-  # TODO(yonghao): remove temporrary placeholder endpoint
   '/api/janitor/v1/resource/{id}':
     parameters:
       - $ref: '#/components/parameters/Id'
     get:
       description: |
-        Get the resource by id.
+        Get the resource by Janitor UUID.
       operationId: getResource
       tags:
         - janitor
@@ -87,6 +86,8 @@ paths:
         200:
           description: OK
           $ref: '#/components/responses/GetResponse'
+        404:
+          description: Resource not found for the id.
         500:
           description: Get request error
           $ref: '#/components/responses/ErrorResponse'
@@ -96,7 +97,7 @@ components:
     Id:
       name: id
       in: path
-      description: A UUID to used to identify an object in the janitor
+      description: A UUID to used to identify an object in the Janitor
       required: true
       schema:
         type: string
@@ -159,12 +160,32 @@ components:
           type: string
           description: UUID of a newly-created tracked resource
 
-    ResourceDescription:
+    TrackedResourceInfo:
       type: object
+      description: Information about a resource tracked for cleanup.
       properties:
         id:
-          description: The ID of the resource
+          description: The Janitor UUID of the tracked resource.
           type: string
+        resourceUid:
+          description: The CloudResourceUid of the tracked resource.
+          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+        state:
+          description: The state of the tracked resource's cleanup.
+          type: string
+        creation:
+          description: When the Janitor started tracking this resource.
+          type: string
+          format: date-time
+        expiration:
+          description: When the resource expires and can be cleaned up.
+          type: string
+          format: date-time
+        labels:
+          description: The labels for the tracked resource
+          type: object
+          additionalProperties:
+            type: string
 
   responses:
     ErrorResponse:
@@ -193,7 +214,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ResourceDescription'
+            $ref: '#/components/schemas/TrackedResourceInfo'
 
   securitySchemes:
     bearerAuth:

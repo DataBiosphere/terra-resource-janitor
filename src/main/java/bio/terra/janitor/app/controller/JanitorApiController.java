@@ -3,7 +3,7 @@ package bio.terra.janitor.app.controller;
 import bio.terra.generated.controller.JanitorApi;
 import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.generated.model.CreatedResource;
-import bio.terra.generated.model.ResourceDescription;
+import bio.terra.generated.model.TrackedResourceInfo;
 import bio.terra.janitor.service.janitor.JanitorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
@@ -27,8 +27,13 @@ public class JanitorApiController implements JanitorApi {
   }
 
   @Override
-  public ResponseEntity<ResourceDescription> getResource(String id) {
-    return new ResponseEntity<>(new ResourceDescription().id(id), HttpStatus.OK);
+  public ResponseEntity<TrackedResourceInfo> getResource(String id) {
+    Optional<TrackedResourceInfo> resource = janitorService.getResource(id);
+    if (resource.isPresent()) {
+      return new ResponseEntity<>(resource.get(), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
   }
 
   @Override
