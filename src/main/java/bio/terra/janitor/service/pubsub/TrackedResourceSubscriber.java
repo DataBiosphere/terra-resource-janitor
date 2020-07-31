@@ -13,6 +13,7 @@ import com.google.pubsub.v1.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/** Subscribes track resource message and update Janitor record. */
 @Component
 public class TrackedResourceSubscriber {
   private final TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
