@@ -55,13 +55,13 @@ jobs:
             -e "VAULT_ADDR=${VAULT_ADDR}" \
             vault:1.1.0 \
             vault read -format json VAULT_SERVICE_ACCOUNT_PATH \
-            | jq .data > SERVICE_ACCOUNT_FILE &&#
+            | jq -r .data.key | base64 -d > SERVICE_ACCOUNT_FILE &&#
           docker run --rm --cap-add IPC_LOCK \
             -e "VAULT_TOKEN=${{ steps.vault-token-step.outputs.vault-token }}" \
             -e "VAULT_ADDR=${VAULT_ADDR}" \
             vault:1.1.0 \
             vault read -format json VAULT_CLIENT_SERVICE_ACCOUNT_PATH \
-            | jq .data > SERVICE_ACCOUNT_CLIENT_FILE
+            | jq -r .data.key | base64 -d > SERVICE_ACCOUNT_CLIENT_FILE
       - uses: actions/checkout@v2
       - name: Initialize Postgres DB
         env:

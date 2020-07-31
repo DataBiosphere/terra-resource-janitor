@@ -8,14 +8,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
-import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.db.TrackedResourceState;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,15 +37,7 @@ public class JanitorApiControllerTest {
   private static final int TIME_TO_LIVE_MINUTE = 100;
 
   @Autowired private MockMvc mvc;
-  @Autowired JanitorJdbcConfiguration jdbcConfiguration;
   @Autowired ObjectMapper objectMapper;
-
-  private NamedParameterJdbcTemplate jdbcTemplate;
-
-  @BeforeEach
-  public void setup() {
-    jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
-  }
 
   @Test
   public void createResourceSuccessGettable() throws Exception {

@@ -5,8 +5,10 @@ import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.generated.model.GoogleProjectUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
+import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.common.collect.ImmutableMap;
@@ -14,7 +16,6 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
 import java.util.Map;
-import java.util.Properties;
 import java.util.UUID;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +24,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.event.annotation.BeforeTestClass;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @Tag("integration")
@@ -34,11 +34,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @TestPropertySource("classpath:application-integration-test.properties")
 public class TrackResourceIntegrationTest {
   @Autowired private TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
+  @Autowired private TestConfiguration testConfiguration;
+  @Autowired private JanitorDao janitorDao;
 
   private static Publisher publisher;
 
   /** Google Service Account path used to publish message. */
-  private static String CLIENT_SERVICE_ACCOUNT_PATH = "rendered/client-sa.json";
+  private static String CLIENT_SERVICE_ACCOUNT_PATH = "rendered/client-sa-account.json";
 
   private static final int TIME_TO_LIVE_MINUTE = 5;
   private static final Map<String, String> DEFAULT_LABELS =
@@ -52,23 +54,18 @@ public class TrackResourceIntegrationTest {
           .timeToLiveInMinutes(TIME_TO_LIVE_MINUTE)
           .labels(DEFAULT_LABELS);
 
-  //  private TopicName topicName =
-  //      TopicName.of(
-  //          trackResourcePubsubConfiguration.getProjectId(),
-  //          trackResourcePubsubConfiguration.getTopicId());
-
-  @BeforeTestClass
-  public static void setupEnvironment() {
-    // set the environment here
-  }
-
   @BeforeEach
   public void setUp() throws Exception {
     TopicName topicName =
         TopicName.of(
             trackResourcePubsubConfiguration.getProjectId(),
-            trackResourcePubsubConfiguration.getTopicId());
-    publisher = Publisher.newBuilder(topicName).build();
+            testConfiguration.getTrackResourceTopicId());
+    publisher =
+        Publisher.newBuilder(topicName)
+            .setCredentialsProvider(
+                FixedCredentialsProvider.create(
+                    getGoogleCredentialsOrDie(CLIENT_SERVICE_ACCOUNT_PATH)))
+            .build();
   }
 
   @AfterEach
@@ -78,10 +75,6 @@ public class TrackResourceIntegrationTest {
 
   @Test
   public void subscribeTrackResource() throws Exception {
-    Properties props = new Properties();
-
-    System.out.println("hahahahahahaha");;
-    System.out.println(System.getenv());
     ByteString data =
         ByteString.copyFromUtf8(new ObjectMapper().writeValueAsString(TRACK_RESOURCE_MESSAGE));
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());

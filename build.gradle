@@ -145,11 +145,11 @@ task unitTest(type: Test) {
     outputs.upToDateWhen { false }
 }
 
-def googleCredentialsFile = "${projectDir}/src/test/resources/rendered/service-account.json"
+def googleCredentialsFile = "${projectDir}/src/test/resources/rendered/sa-account.json"
 
 task integrationTest(type: Test) {
     // Sets the application Google Credentials.
-    systemProperties = [
+    environment = [
             'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
     ]
     useJUnitPlatform {

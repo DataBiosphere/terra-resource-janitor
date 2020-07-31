@@ -15,7 +15,6 @@ public class TrackResourcePubsubConfiguration {
 
   private String projectId;
 
-  private String topicId;
   private String subscription;
 
   public boolean isPubsubEnabled() {
@@ -24,10 +23,6 @@ public class TrackResourcePubsubConfiguration {
 
   public String getProjectId() {
     return projectId;
-  }
-
-  public String getTopicId() {
-    return topicId;
   }
 
   public String getSubscription() {
@@ -40,10 +35,6 @@ public class TrackResourcePubsubConfiguration {
 
   public void setProjectId(String projectId) {
     this.projectId = projectId;
-  }
-
-  public void setTopicId(String topicId) {
-    this.topicId = topicId;
   }
 
   public void setSubscription(String subscription) {
