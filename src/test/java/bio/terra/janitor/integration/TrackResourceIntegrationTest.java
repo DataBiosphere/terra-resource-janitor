@@ -59,7 +59,7 @@ public class TrackResourceIntegrationTest {
     // set the environment here
     System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", "foo");
     System.out.println("2323232323232");
-    System.out.println(System.getenv());
+    System.out.println(System.getenv().put("GOOGLE_APPLICATION_CREDENTIALS", "foo"));
   }
 
   @BeforeEach
