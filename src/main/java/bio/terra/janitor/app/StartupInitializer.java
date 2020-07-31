@@ -1,7 +1,9 @@
 package bio.terra.janitor.app;
 
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
+import bio.terra.janitor.service.cleanup.FlightScheduler;
 import bio.terra.janitor.service.migirate.MigrateService;
+import bio.terra.janitor.service.stairway.StairwayComponent;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -22,5 +24,11 @@ public final class StartupInitializer {
     } else if (janitorJdbcConfiguration.isUpdateDbOnStart()) {
       migrateService.upgrade(changelogPath, janitorJdbcConfiguration.getDataSource());
     }
+    StairwayComponent stairwayComponent =
+        (StairwayComponent) applicationContext.getBean("stairwayComponent");
+    stairwayComponent.initialize();
+    FlightScheduler flightScheduler =
+        (FlightScheduler) applicationContext.getBean("flightScheduler");
+    flightScheduler.initialize();
   }
 }

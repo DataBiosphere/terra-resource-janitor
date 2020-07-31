@@ -3,20 +3,28 @@ info:
   title: Cloud Resource Janitor
   description: |
     Janitor service to cleanup cloud resources created by Terra CRL.
-  version: 0.0.1
+  version: 0.0.0
 
 # This file has extra dependencies from: https://github.com/DataBiosphere/terra-cloud-resource-lib/blob/master/cloud-resource-schema/src/main/resources/cloud_resources_uid.yaml
 servers:
-- url: /
+  - url: /
+
+security:
+  - googleoauth:
+      - openid
+      - email
+      - profile
+  - bearerAuth: []
 
 paths:
   '/status':
     get:
+      security: []
       description: |
         Returns the operational status of the service
       operationId: serviceStatus
       tags:
-      - unauthenticated
+        - unauthenticated
       responses:
         200:
           description: Service is functional
@@ -25,6 +33,19 @@ paths:
           description: Service is broken
           $ref: '#/components/responses/StatusResponse'
 
+  # TODO(PF-57) configure this to only be callable by Kubernetes in production and to be hooked to Pod termination.
+  '/shutdown':
+    get:
+      description: |
+        Signals that this instance will be shutdown soon. Allows graceful termination to leave less
+        recovery work to be done.  In production, this must be configured to only be callable by Kubernetes.
+      operationId: shutdownRequest
+      tags:
+        - unauthenticated
+      responses:
+        204:
+          description: The service was shutdown successfully
+      security: []
 
   '/api/janitor/v1/resource':
     post:
@@ -52,13 +73,12 @@ paths:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
 
-  # TODO(yonghao): remove temporrary placeholder endpoint
   '/api/janitor/v1/resource/{id}':
     parameters:
-    - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
     get:
       description: |
-        Get the resource by id.
+        Get the resource by Janitor UUID.
       operationId: getResource
       tags:
         - janitor
@@ -66,6 +86,8 @@ paths:
         200:
           description: OK
           $ref: '#/components/responses/GetResponse'
+        404:
+          description: Resource not found for the id.
         500:
           description: Get request error
           $ref: '#/components/responses/ErrorResponse'
@@ -75,7 +97,7 @@ components:
     Id:
       name: id
       in: path
-      description: A UUID to used to identify an object in the janitor
+      description: A UUID to used to identify an object in the Janitor
       required: true
       schema:
         type: string
@@ -116,6 +138,7 @@ components:
       required:
         - resourceUid
         - timeToLiveInMinutes
+        - creation
       properties:
         resourceUid:
           # CloudResourceUid is referred from CRL's cloud-resource-schema.
@@ -137,12 +160,32 @@ components:
           type: string
           description: UUID of a newly-created tracked resource
 
-    ResourceDescription:
+    TrackedResourceInfo:
       type: object
+      description: Information about a resource tracked for cleanup.
       properties:
         id:
-          description: The ID of the resource
+          description: The Janitor UUID of the tracked resource.
           type: string
+        resourceUid:
+          description: The CloudResourceUid of the tracked resource.
+          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+        state:
+          description: The state of the tracked resource's cleanup.
+          type: string
+        creation:
+          description: When the Janitor started tracking this resource.
+          type: string
+          format: date-time
+        expiration:
+          description: When the resource expires and can be cleaned up.
+          type: string
+          format: date-time
+        labels:
+          description: The labels for the tracked resource
+          type: object
+          additionalProperties:
+            type: string
 
   responses:
     ErrorResponse:
@@ -171,4 +214,18 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ResourceDescription'
+            $ref: '#/components/schemas/TrackedResourceInfo'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    authorization:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://accounts.google.com/o/oauth2/auth
+          scopes:
+            openid: open id authorization
+            email: email authorization
+            profile: profile authorization

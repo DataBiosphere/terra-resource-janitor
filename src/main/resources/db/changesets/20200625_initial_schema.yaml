@@ -29,13 +29,13 @@ databaseChangeLog:
                 unique: false
           - column:
               name: creation
-              type: timestamp
+              type: timestamptz
               constraints:
                 nullable: false
                 unique: false
           - column:
               name: expiration
-              type: timestamp
+              type: timestamptz
               constraints:
                 nullable: false
                 unique: false
@@ -43,12 +43,6 @@ databaseChangeLog:
               name: state
               type: text
               remarks: Contains resource state enum('READY', 'CLEANDING', 'DONE', 'ERROR', 'ABANDONED')
-              constraints:
-                nullable: false
-                unique: false
-          - column:
-              name: wait_until
-              type: timestamp
               constraints:
                 nullable: false
                 unique: false
@@ -62,16 +56,43 @@ databaseChangeLog:
                 references: tracked_resource(id)
                 foreignKeyName: fk_tracked_id
                 primaryKey: true
+                unique: false
                 nullable: false
           - column:
               name: key
               type: text
               constraints:
+                primaryKey: true
                 nullable: false
                 unique: false
           - column:
               name: value
               type: text
+              constraints:
+                nullable: false
+                unique: false
+    - createTable:
+        tableName: cleanup_flight
+        columns:
+          - column:
+              name: flight_id
+              type: text
+              constraints:
+                primaryKey: true
+                nullable: false
+                unique: true
+          - column:
+              name: tracked_resource_id
+              type: uuid
+              constraints:
+                references: tracked_resource(id)
+                foreignKeyName: fk_tracked_id
+                unique: false
+                nullable: false
+          - column:
+              name: flight_state
+              type: text
+              remarks: Contains flight state enum('INITIATING', 'IN_FLIGHT', 'FINISHING', 'FATAL', 'FINISHED')
               constraints:
                 nullable: false
                 unique: false

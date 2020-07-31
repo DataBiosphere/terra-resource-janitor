@@ -4,6 +4,8 @@ import bio.terra.generated.controller.UnauthenticatedApi;
 import bio.terra.generated.model.SystemStatus;
 import bio.terra.generated.model.SystemStatusSystems;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
+import bio.terra.janitor.service.cleanup.FlightScheduler;
+import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Connection;
 import java.util.Optional;
@@ -17,27 +19,54 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class UnauthenticatedApiController implements UnauthenticatedApi {
   private final NamedParameterJdbcTemplate jdbcTemplate;
+  private final StairwayComponent stairwayComponent;
+  private final FlightScheduler flightScheduler;
 
   @Autowired
-  UnauthenticatedApiController(JanitorJdbcConfiguration jdbcConfiguration) {
+  UnauthenticatedApiController(
+      JanitorJdbcConfiguration jdbcConfiguration,
+      StairwayComponent stairwayComponent,
+      FlightScheduler flightScheduler) {
     this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
+    this.stairwayComponent = stairwayComponent;
+    this.flightScheduler = flightScheduler;
   }
 
   @Override
   public ResponseEntity<SystemStatus> serviceStatus() {
-    if (jdbcTemplate.getJdbcTemplate().execute((Connection connection) -> connection.isValid(0))) {
-      return new ResponseEntity<>(
-          new SystemStatus()
-              .ok(true)
-              .putSystemsItem("postgres", new SystemStatusSystems().ok(true)),
-          HttpStatus.OK);
+    SystemStatus systemStatus = new SystemStatus();
+
+    final boolean postgresOk =
+        jdbcTemplate.getJdbcTemplate().execute((Connection connection) -> connection.isValid(0));
+    systemStatus.putSystemsItem("postgres", new SystemStatusSystems().ok(postgresOk));
+
+    StairwayComponent.Status stairwayStatus = stairwayComponent.getStatus();
+    final boolean stairwayOk = stairwayStatus.equals(StairwayComponent.Status.OK);
+    systemStatus.putSystemsItem(
+        "stairway",
+        new SystemStatusSystems().ok(stairwayOk).addMessagesItem(stairwayStatus.toString()));
+
+    systemStatus.ok(postgresOk && stairwayOk);
+    if (systemStatus.isOk()) {
+      return new ResponseEntity<>(systemStatus, HttpStatus.OK);
     } else {
-      return new ResponseEntity<>(
-          new SystemStatus()
-              .ok(false)
-              .putSystemsItem("postgres", new SystemStatusSystems().ok(false)),
-          HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(systemStatus, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /** The service will shutdown soon. Halt anything we'd rather not interrupt. */
+  @Override
+  public ResponseEntity<Void> shutdownRequest() {
+    try {
+      flightScheduler.shutdown();
+      if (!stairwayComponent.shutdown()) {
+        // Stairway shutdown did not complete. Return an error so the caller knows that.
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    } catch (InterruptedException ex) {
+      return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
+    }
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   /** Required if using Swagger-CodeGen, but actually we don't need this. */
