@@ -24,6 +24,7 @@ public class TrackedResourceSubscriber {
 
     System.out.println("~~~~~~~~~~~~");
     System.out.println("!!!!!!!!!!!!!!!!!!!!!");
+    System.out.println(System.getenv());
     createTrackedResourceSubscriber(
         trackResourcePubsubConfiguration.getProjectId(),
         trackResourcePubsubConfiguration.getSubscription(),

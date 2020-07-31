@@ -37,6 +37,9 @@ public class TrackResourceIntegrationTest {
 
   private static Publisher publisher;
 
+  /** Google Service Account path used to publish message. */
+  private static String CLIENT_SERVICE_ACCOUNT_PATH = "rendered/client-sa.json";
+
   private static final int TIME_TO_LIVE_MINUTE = 5;
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value222222222222");
@@ -57,9 +60,6 @@ public class TrackResourceIntegrationTest {
   @BeforeTestClass
   public static void setupEnvironment() {
     // set the environment here
-    System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", "foo");
-    System.out.println("2323232323232");
-    System.out.println(System.getenv().put("GOOGLE_APPLICATION_CREDENTIALS", "foo"));
   }
 
   @BeforeEach
@@ -69,9 +69,6 @@ public class TrackResourceIntegrationTest {
             trackResourcePubsubConfiguration.getProjectId(),
             trackResourcePubsubConfiguration.getTopicId());
     publisher = Publisher.newBuilder(topicName).build();
-
-    System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", "foo");
-    System.out.println(System.getenv());
   }
 
   @AfterEach
@@ -82,12 +79,8 @@ public class TrackResourceIntegrationTest {
   @Test
   public void subscribeTrackResource() throws Exception {
     Properties props = new Properties();
-    props.setProperty("GOOGLE_APPLICATION_CREDENTIALS", "foo");
 
-    System.out.println("hahahahahahaha");
-    System.out.println(
-        GoogleCredentials.getApplicationDefault().refreshAccessToken().getTokenValue());
-    System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", "foo");
+    System.out.println("hahahahahahaha");;
     System.out.println(System.getenv());
     ByteString data =
         ByteString.copyFromUtf8(new ObjectMapper().writeValueAsString(TRACK_RESOURCE_MESSAGE));
