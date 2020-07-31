@@ -1,8 +1,6 @@
 package bio.terra.janitor.service.janitor;
 
-import bio.terra.generated.model.CreateResourceRequestBody;
-import bio.terra.generated.model.CreatedResource;
-import bio.terra.generated.model.TrackedResourceInfo;
+import bio.terra.generated.model.*;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.db.TrackedResource;
 import bio.terra.janitor.db.TrackedResourceId;
@@ -11,6 +9,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,6 +57,19 @@ public class JanitorService {
     }
     Map<String, String> labels = janitorDao.retrieveLabels(trackedResourceId);
     return Optional.of(createInfo(resource.get(), labels));
+  }
+
+  /** Retrieves the resources with the {@link CloudResourceUid}. */
+  public TrackedResourceInfoList getResources(CloudResourceUid cloudResourceUid) {
+    List<JanitorDao.TrackedResourceAndLabels> resourcesWithLabels =
+        janitorDao.retrieveResourcesWith(cloudResourceUid);
+    TrackedResourceInfoList resourceList = new TrackedResourceInfoList();
+    resourcesWithLabels.stream()
+        .map(
+            resourceWithLabels ->
+                createInfo(resourceWithLabels.trackedResource(), resourceWithLabels.labels()))
+        .forEach(resourceList::addResourcesItem);
+    return resourceList;
   }
 
   private static TrackedResourceInfo createInfo(
