@@ -42,7 +42,7 @@ public class TrackResourceIntegrationTest {
   @Autowired private TestConfiguration testConfiguration;
   @Autowired private JanitorDao janitorDao;
 
-  private static Publisher publisher;
+  private Publisher publisher;
 
   /** Google Service Account path used to publish message. */
   private static String CLIENT_SERVICE_ACCOUNT_PATH = "rendered/client-sa-account.json";

@@ -10,13 +10,13 @@ on:
     branches: [ '**' ]
 env:
   VAULT_ADDR: https://clotho.broadinstitute.org:8200
-  VAULT_SERVICE_ACCOUNT_PATH: secret/dsde/terra/kernel/integration/yyu/crl_janitor/app-sa
-  VAULT_CLIENT_SERVICE_ACCOUNT_PATH: secret/dsde/terra/kernel/integration/yyu/crl_janitor/client-sa
+  VAULT_SERVICE_ACCOUNT_PATH: secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/app-sa
+  VAULT_CLIENT_SERVICE_ACCOUNT_PATH: secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/client-sa
   # Where to store the retrieved service accounts credentials for Google integration tests.
   SERVICE_ACCOUNT_FILE: src/test/resources/rendered/sa-account.json
   SERVICE_ACCOUNT_CLIENT_FILE: src/test/resources/rendered/client-sa-account.json
 jobs:
-  build-and-test:
+  unit-test:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -83,9 +83,6 @@ jobs:
       - name: Run unit tests
         id: unit-test
         run: ./gradlew unitTest --scan
-      - name: Run integration tests
-        id: integration-test
-        run: ./gradlew integrationTest --scan
       - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v1
