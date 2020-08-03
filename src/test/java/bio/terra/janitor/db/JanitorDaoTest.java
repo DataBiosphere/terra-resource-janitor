@@ -86,6 +86,7 @@ public class JanitorDaoTest {
 
     assertEquals(
         Optional.of(resource), janitorDao.retrieveTrackedResource(resource.trackedResourceId()));
+    assertEquals(Optional.of(resource), janitorDao.retrieveTrackedResource(cloudResourceUid));
     assertEquals(DEFAULT_LABELS, janitorDao.retrieveLabels(resource.trackedResourceId()));
     String resourceType =
         jdbcTemplate.queryForObject(

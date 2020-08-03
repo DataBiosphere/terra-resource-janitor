@@ -43,7 +43,6 @@ public class JanitorDao {
     String sql =
         "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
             + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state)";
-
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("id", resource.trackedResourceId().uuid())
@@ -84,6 +83,18 @@ public class JanitorDao {
             + "WHERE id = :id";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", trackedResourceId.uuid());
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER)));
+  }
+
+  /** Returns the {@link TrackedResource} for a {@link CloudResourceUid} if there is one. */
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public Optional<TrackedResource> retrieveTrackedResource(CloudResourceUid cloudResourceUid) {
+    String sql =
+        "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource tr "
+            + "WHERE resource_uid::jsonb = :resource_uid::jsonb";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("resource_uid", serialize(cloudResourceUid));
     return Optional.ofNullable(
         DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER)));
   }

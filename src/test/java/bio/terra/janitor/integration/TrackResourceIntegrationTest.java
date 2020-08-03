@@ -1,11 +1,15 @@
 package bio.terra.janitor.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.generated.model.GoogleProjectUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.TrackedResource;
+import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -15,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
+import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.*;
@@ -78,7 +83,15 @@ public class TrackResourceIntegrationTest {
     ByteString data =
         ByteString.copyFromUtf8(new ObjectMapper().writeValueAsString(TRACK_RESOURCE_MESSAGE));
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
-    Thread.sleep(1000);
+    Thread.sleep(5000);
+
+    TrackedResource trackedResourceInfo = janitorDao.retrieveTrackedResource(RESOURCE_UID).get();
+
+    assertEquals(RESOURCE_UID, trackedResourceInfo.cloudResourceUid());
+    assertEquals(
+        Duration.ofMinutes(TIME_TO_LIVE_MINUTE),
+        Duration.between(trackedResourceInfo.creation(), trackedResourceInfo.expiration()));
+    assertEquals(TrackedResourceState.READY, trackedResourceInfo.trackedResourceState());
   }
 
   private static ServiceAccountCredentials getGoogleCredentialsOrDie(String serviceAccountPath) {
