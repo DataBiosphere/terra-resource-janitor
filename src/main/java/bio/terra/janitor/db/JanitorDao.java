@@ -179,7 +179,7 @@ public class JanitorDao {
     String sql =
         "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
             + "l.key, l.value FROM tracked_resource tr "
-            + "JOIN label l ON tr.id = l.tracked_resource_id "
+            + "LEFT JOIN label l ON tr.id = l.tracked_resource_id "
             + "WHERE tr.resource_uid = :cloud_resource_uid::jsonb";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("cloud_resource_uid", serialize(cloudResourceUid));
@@ -287,7 +287,12 @@ public class JanitorDao {
           resourceBuilder.trackedResource(TRACKED_RESOURCE_ROW_MAPPER.mapRow(rs, rowNum));
           resources.put(id, resourceBuilder);
         }
-        resourceBuilder.labelsBuilder().put(rs.getString("key"), rs.getString("value"));
+        String labelKey = rs.getString("key");
+        String labelValue = rs.getString("value");
+        if (labelKey != null) {
+          // Label may be null from left join for a resource with no labels.
+          resourceBuilder.labelsBuilder().put(labelKey, labelValue);
+        }
         ++rowNum;
       }
       return resources.values().stream()
@@ -341,6 +346,11 @@ public class JanitorDao {
     public abstract TrackedResource trackedResource();
 
     public abstract ImmutableMap<String, String> labels();
+
+    public static TrackedResourceAndLabels create(
+        TrackedResource trackedResource, ImmutableMap<String, String> labels) {
+      return builder().trackedResource(trackedResource).labels(labels).build();
+    }
 
     public static Builder builder() {
       return new AutoValue_JanitorDao_TrackedResourceAndLabels.Builder();

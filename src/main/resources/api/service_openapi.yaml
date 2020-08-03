@@ -157,14 +157,6 @@ components:
                 items:
                   type: string
 
-    GetResourcesRequestBody:
-      type: object
-      required:
-        - resourceUid
-      properties:
-        resourceUid:
-          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
-
     CreateResourceRequestBody:
       type: object
       required:

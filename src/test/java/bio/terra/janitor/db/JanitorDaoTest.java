@@ -179,6 +179,43 @@ public class JanitorDaoTest {
   }
 
   @Test
+  public void retrieveResourcesWithLabels() {
+    CloudResourceUid resourceUid1 =
+        new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId("project1"));
+    CloudResourceUid resourceUid2 =
+        new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId("project2"));
+
+    TrackedResource resource1 = newDefaultResource().cloudResourceUid(resourceUid1).build();
+    TrackedResource resource2 = newDefaultResource().cloudResourceUid(resourceUid1).build();
+    TrackedResource resource3 = newDefaultResource().cloudResourceUid(resourceUid1).build();
+    ImmutableMap<String, String> labels1 = ImmutableMap.of("a", "x", "b", "y");
+    ImmutableMap<String, String> labels2 = ImmutableMap.of("a", "x");
+    ImmutableMap<String, String> labels3 = ImmutableMap.of();
+    janitorDao.createResource(resource1, labels1);
+    janitorDao.createResource(resource2, labels2);
+    janitorDao.createResource(resource3, labels3);
+    TrackedResource otherUidResource = newDefaultResource().cloudResourceUid(resourceUid2).build();
+    ImmutableMap<String, String> otherLabels = ImmutableMap.of("a", "b");
+    janitorDao.createResource(otherUidResource, otherLabels);
+
+    assertThat(
+        janitorDao.retrieveResourcesWith(resourceUid2),
+        Matchers.containsInAnyOrder(
+            JanitorDao.TrackedResourceAndLabels.create(otherUidResource, otherLabels)));
+    assertThat(
+        janitorDao.retrieveResourcesWith(resourceUid1),
+        Matchers.containsInAnyOrder(
+            JanitorDao.TrackedResourceAndLabels.create(resource1, labels1),
+            JanitorDao.TrackedResourceAndLabels.create(resource2, labels2),
+            JanitorDao.TrackedResourceAndLabels.create(resource3, labels3)));
+
+    assertThat(
+        janitorDao.retrieveResourcesWith(
+            new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId("project3"))),
+        Matchers.empty());
+  }
+
+  @Test
   public void retrieveResourceAndFlight() {
     String flightId = "foo";
     TrackedResource resource = newDefaultResource().build();
