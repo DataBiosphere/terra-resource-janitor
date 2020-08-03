@@ -77,6 +77,7 @@ For Broad engineer, DB_NAME and USER_NAME can be found in vault.
 ```
 docker run -e VAULT_TOKEN=$(cat ~/.vault-token) -it broadinstitute/dsde-toolbox:dev vault read secret/dsde/terra/kernel/integration/{$NAMESPACE}/crl_janitor/postgres/{db-creds|stairway-db-creds}
 ```
+The db instance name can be also found under `...crl_janitor/postgres/instance` in vault.
 
 Note that you must stop the local postgres first to free the 5432 port.
 See [this document](https://cloud.google.com/sql/docs/postgres/connect-admin-proxy) for more details.
