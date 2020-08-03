@@ -176,6 +176,6 @@ public class JanitorApiControllerTest {
         resourceInfoList.getResources().stream()
             .map(TrackedResourceInfo::getId)
             .collect(Collectors.toList()),
-        Matchers.contains(id1, id2));
+        Matchers.containsInAnyOrder(id1, id2));
   }
 }
