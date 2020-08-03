@@ -62,7 +62,6 @@ jobs:
             vault:1.1.0 \
             vault read -format json $VAULT_CLIENT_SERVICE_ACCOUNT_PATH \
             | jq -r .data.key | base64 -d > $SERVICE_ACCOUNT_CLIENT_FILE
-      - uses: actions/checkout@v2
       - name: Initialize Postgres DB
         env:
           PGPASSWORD: postgres
