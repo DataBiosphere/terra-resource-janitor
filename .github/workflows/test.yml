@@ -83,6 +83,9 @@ jobs:
       - name: Run unit tests
         id: unit-test
         run: ./gradlew unitTest --scan
+      - name: Run integration tests
+        id: integration-test
+        run: ./gradlew integrationTest --scan
       - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v1
