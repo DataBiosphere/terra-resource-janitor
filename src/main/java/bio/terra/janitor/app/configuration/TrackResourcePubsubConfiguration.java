@@ -11,14 +11,14 @@ import org.springframework.stereotype.Component;
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "pubsub.track-resource")
 public class TrackResourcePubsubConfiguration {
-  private boolean pubsubEnabled;
+  private boolean enabled;
 
   private String projectId;
 
   private String subscription;
 
-  public boolean isPubsubEnabled() {
-    return pubsubEnabled;
+  public boolean isEnabled() {
+    return enabled;
   }
 
   public String getProjectId() {
@@ -29,8 +29,8 @@ public class TrackResourcePubsubConfiguration {
     return subscription;
   }
 
-  public void setPubsubEnabled(boolean pubsubEnabled) {
-    this.pubsubEnabled = pubsubEnabled;
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
   }
 
   public void setProjectId(String projectId) {

@@ -4,18 +4,23 @@ import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.exception.InvalidMessageException;
 import bio.terra.janitor.service.janitor.JanitorService;
+import bio.terra.janitor.service.migirate.MigrateService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.pubsub.v1.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/** Subscribes track resource message and update Janitor record. */
+/** Subscribes to tracked resource topic to update the Janitor database for new tracked resources. */
 @Component
 public class TrackedResourceSubscriber {
+  private Logger logger = LoggerFactory.getLogger(TrackedResourceSubscriber.class);
+
   private final TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
   private final JanitorService janitorService;
 
@@ -28,38 +33,34 @@ public class TrackedResourceSubscriber {
   }
 
   public void initialize() {
-    if (!trackResourcePubsubConfiguration.isPubsubEnabled()) {
+    logger.info("Track resource pub/sub enabled: " + trackResourcePubsubConfiguration.isEnabled());
+
+    if (!trackResourcePubsubConfiguration.isEnabled()) {
       return;
     }
 
-    createTrackedResourceSubscriber(
-        trackResourcePubsubConfiguration.getProjectId(),
-        trackResourcePubsubConfiguration.getSubscription());
-  }
-
-  private void createTrackedResourceSubscriber(String projectId, String subscriptionId) {
     ProjectSubscriptionName subscriptionName =
-        ProjectSubscriptionName.of(projectId, subscriptionId);
+            ProjectSubscriptionName.of(trackResourcePubsubConfiguration.getProjectId(), trackResourcePubsubConfiguration.getSubscription());
 
     // Instantiate an asynchronous message receiver.
     MessageReceiver receiver =
-        (PubsubMessage message, AckReplyConsumer consumer) -> {
-          // Handle incoming message, then always ack the received message.
-          try {
-            CreateResourceRequestBody body =
-                new ObjectMapper()
-                    .readValue(message.getData().toStringUtf8(), CreateResourceRequestBody.class);
-            janitorService.createResource(body);
-          } catch (JsonProcessingException e) {
-            throw new InvalidMessageException(
-                "Invalid track resource pubsub message: " + message.toString(), e);
-          } finally {
-            consumer.ack();
-          }
-        };
+            (PubsubMessage message, AckReplyConsumer consumer) -> {
+              // Handle incoming message, then always ack the received message.
+              try {
+                CreateResourceRequestBody body =
+                        new ObjectMapper()
+                                .readValue(message.getData().toStringUtf8(), CreateResourceRequestBody.class);
+                janitorService.createResource(body);
+              } catch (JsonProcessingException e) {
+                throw new InvalidMessageException(
+                        "Invalid track resource pubsub message: " + message.toString(), e);
+              } finally {
+                // TODO(yonghao): Add dead letter queue to handle failed operations.
+                consumer.ack();
+              }
+            };
 
     Subscriber subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
-    // Start the subscriber.
     subscriber.startAsync().awaitRunning();
   }
 }
