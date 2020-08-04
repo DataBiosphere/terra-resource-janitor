@@ -1,14 +1,13 @@
 package bio.terra.janitor.app.controller;
 
 import bio.terra.generated.controller.JanitorApi;
-import bio.terra.generated.model.CreateResourceRequestBody;
-import bio.terra.generated.model.CreatedResource;
-import bio.terra.generated.model.TrackedResourceInfo;
+import bio.terra.generated.model.*;
 import bio.terra.janitor.service.janitor.JanitorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +33,12 @@ public class JanitorApiController implements JanitorApi {
     } else {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+  }
+
+  @Override
+  public ResponseEntity<TrackedResourceInfoList> getResources(
+      @NotNull @Valid CloudResourceUid cloudResourceUid) {
+    return new ResponseEntity<>(janitorService.getResources(cloudResourceUid), HttpStatus.OK);
   }
 
   @Override

@@ -1,5 +1,6 @@
 package bio.terra.janitor.app.controller;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -14,6 +15,8 @@ import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -112,5 +115,65 @@ public class JanitorApiControllerTest {
         .perform(get(String.format("/api/janitor/v1/resource/not-a-real-id")))
         .andDo(MockMvcResultHandlers.print())
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void getResources() throws Exception {
+    CloudResourceUid resourceUid =
+        new CloudResourceUid()
+            .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
+    CreateResourceRequestBody body1 =
+        new CreateResourceRequestBody()
+            .resourceUid(resourceUid)
+            .timeToLiveInMinutes(TIME_TO_LIVE_MINUTE)
+            .labels(DEFAULT_LABELS);
+    CreateResourceRequestBody body2 =
+        new CreateResourceRequestBody()
+            .resourceUid(resourceUid)
+            .timeToLiveInMinutes(TIME_TO_LIVE_MINUTE)
+            .labels(DEFAULT_LABELS);
+
+    String createResponse1 =
+        this.mvc
+            .perform(
+                post("/api/janitor/v1/resource")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(new ObjectMapper().writeValueAsString(body1)))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String createResponse2 =
+        this.mvc
+            .perform(
+                post("/api/janitor/v1/resource")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(new ObjectMapper().writeValueAsString(body2)))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String id1 = objectMapper.readValue(createResponse1, CreatedResource.class).getId();
+    String id2 = objectMapper.readValue(createResponse2, CreatedResource.class).getId();
+
+    String getResponse =
+        this.mvc
+            .perform(
+                get("/api/janitor/v1/resource")
+                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resourceUid)))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    TrackedResourceInfoList resourceInfoList =
+        objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+    assertThat(
+        resourceInfoList.getResources().stream()
+            .map(TrackedResourceInfo::getId)
+            .collect(Collectors.toList()),
+        Matchers.containsInAnyOrder(id1, id2));
   }
 }

@@ -61,6 +61,27 @@ You can now push to the specified environment by running
 skaffold run
 ```
 
+## Connecting psql client using the Cloud SQL Proxy:
+Follow [Installing this instruction](https://cloud.google.com/sql/docs/mysql/sql-proxy#macos-64-bit)
+to install Cloud SQL Proxy 
+
+Go to cloud console to get the instance name you want to connect to, then start the proxy:
+```
+./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:5432
+```
+Start the client session
+```
+psql "host=127.0.0.1 sslmode=disable dbname=<DB_NAME> user=<USER_NAME>"
+```
+For Broad engineer, DB_NAME and USER_NAME can be found in vault. 
+```
+docker run -e VAULT_TOKEN=$(cat ~/.vault-token) -it broadinstitute/dsde-toolbox:dev vault read secret/dsde/terra/kernel/integration/{$NAMESPACE}/crl_janitor/postgres/{db-creds|stairway-db-creds}
+```
+The db instance name can be also found under `...crl_janitor/postgres/instance` in vault.
+
+Note that you must stop the local postgres first to free the 5432 port.
+See [this document](https://cloud.google.com/sql/docs/postgres/connect-admin-proxy) for more details.
+
 ## Testing
 
 ### Unit tests
