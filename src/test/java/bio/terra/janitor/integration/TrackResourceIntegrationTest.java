@@ -1,19 +1,18 @@
 package bio.terra.janitor.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.generated.model.CloudResourceUid;
-import bio.terra.generated.model.CreateResourceRequestBody;
-import bio.terra.generated.model.GoogleProjectUid;
+import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.db.JanitorDao;
-import bio.terra.janitor.db.TrackedResource;
+import bio.terra.janitor.db.TrackedResourceAndLabels;
 import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
@@ -30,6 +29,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 @Tag("integration")
 @ExtendWith(SpringExtension.class)
@@ -40,16 +41,14 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class TrackResourceIntegrationTest {
   @Autowired private TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
   @Autowired private TestConfiguration testConfiguration;
-  @Autowired private JanitorDao janitorDao;
+  @Autowired private MockMvc mvc;
+  @Autowired ObjectMapper objectMapper;
 
   private Publisher publisher;
 
-  /** Google Service Account path used to publish message. */
-  private static String CLIENT_SERVICE_ACCOUNT_PATH = "rendered/client-sa-account.json";
-
   private static final int TIME_TO_LIVE_MINUTE = 5;
   private static final Map<String, String> DEFAULT_LABELS =
-      ImmutableMap.of("key1", "value1", "key2", "value222222222222");
+      ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final CloudResourceUid RESOURCE_UID =
       new CloudResourceUid()
           .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
@@ -69,7 +68,7 @@ public class TrackResourceIntegrationTest {
         Publisher.newBuilder(topicName)
             .setCredentialsProvider(
                 FixedCredentialsProvider.create(
-                    getGoogleCredentialsOrDie(CLIENT_SERVICE_ACCOUNT_PATH)))
+                    testConfiguration.getClientGoogleCredentialsOrDie()))
             .build();
   }
 
@@ -85,22 +84,26 @@ public class TrackResourceIntegrationTest {
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
     Thread.sleep(5000);
 
-    TrackedResource trackedResourceInfo = janitorDao.retrieveTrackedResource(RESOURCE_UID).get();
+    String getResponse =
+        this.mvc
+            .perform(
+                get("/api/janitor/v1/resource")
+                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(RESOURCE_UID)))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
-    assertEquals(RESOURCE_UID, trackedResourceInfo.cloudResourceUid());
+    TrackedResourceInfoList resourceInfoList =
+        objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+    assertEquals(1, resourceInfoList.getResources().size());
+    TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
+    assertEquals(RESOURCE_UID, trackedResourceInfo.getResourceUid());
     assertEquals(
         Duration.ofMinutes(TIME_TO_LIVE_MINUTE),
-        Duration.between(trackedResourceInfo.creation(), trackedResourceInfo.expiration()));
-    assertEquals(TrackedResourceState.READY, trackedResourceInfo.trackedResourceState());
-  }
-
-  private static ServiceAccountCredentials getGoogleCredentialsOrDie(String serviceAccountPath) {
-    try {
-      return ServiceAccountCredentials.fromStream(
-          Thread.currentThread().getContextClassLoader().getResourceAsStream(serviceAccountPath));
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "Unable to load GoogleCredentials from " + serviceAccountPath + "\n", e);
-    }
+        Duration.between(trackedResourceInfo.getCreation(), trackedResourceInfo.getExpiration()));
+    assertEquals(TrackedResourceState.READY.name(), trackedResourceInfo.getState());
+    assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
   }
 }
