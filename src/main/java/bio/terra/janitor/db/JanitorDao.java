@@ -46,6 +46,7 @@ public class JanitorDao {
     String sql =
         "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
             + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state)";
+
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("id", resource.trackedResourceId().uuid())
