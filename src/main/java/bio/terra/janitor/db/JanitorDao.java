@@ -87,18 +87,6 @@ public class JanitorDao {
         DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER)));
   }
 
-  /** Returns the {@link TrackedResource} for a {@link CloudResourceUid} if there is one. */
-  @Transactional(propagation = Propagation.SUPPORTS)
-  public Optional<TrackedResource> retrieveTrackedResource(CloudResourceUid cloudResourceUid) {
-    String sql =
-        "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource tr "
-            + "WHERE resource_uid::jsonb = :resource_uid::jsonb";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("resource_uid", serialize(cloudResourceUid));
-    return Optional.ofNullable(
-        DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER)));
-  }
-
   /**
    * Modifies the {@link TrackedResourceState} for a single id. Returns the updated TrackedResource,
    * if one was updated.
