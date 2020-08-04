@@ -1,16 +1,12 @@
 package bio.terra.janitor.service.janitor;
 
 import bio.terra.generated.model.*;
-import bio.terra.janitor.db.JanitorDao;
-import bio.terra.janitor.db.TrackedResource;
-import bio.terra.janitor.db.TrackedResourceId;
-import bio.terra.janitor.db.TrackedResourceState;
+import bio.terra.janitor.db.*;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,35 +47,30 @@ public class JanitorService {
       return Optional.empty();
     }
     TrackedResourceId trackedResourceId = TrackedResourceId.create(uuid);
-    Optional<TrackedResource> resource = janitorDao.retrieveTrackedResource(trackedResourceId);
-    if (!resource.isPresent()) {
-      return Optional.empty();
-    }
-    Map<String, String> labels = janitorDao.retrieveLabels(trackedResourceId);
-    return Optional.of(createInfo(resource.get(), labels));
+    Optional<TrackedResourceAndLabels> resourceAndLabels =
+        janitorDao.retrieveResourceAndLabels(trackedResourceId);
+    return resourceAndLabels.map(JanitorService::createInfo);
   }
 
   /** Retrieves the resources with the {@link CloudResourceUid}. */
   public TrackedResourceInfoList getResources(CloudResourceUid cloudResourceUid) {
-    List<JanitorDao.TrackedResourceAndLabels> resourcesWithLabels =
+    List<TrackedResourceAndLabels> resourcesWithLabels =
         janitorDao.retrieveResourcesWith(cloudResourceUid);
     TrackedResourceInfoList resourceList = new TrackedResourceInfoList();
     resourcesWithLabels.stream()
-        .map(
-            resourceWithLabels ->
-                createInfo(resourceWithLabels.trackedResource(), resourceWithLabels.labels()))
+        .map(resourceWithLabels -> createInfo(resourceWithLabels))
         .forEach(resourceList::addResourcesItem);
     return resourceList;
   }
 
-  private static TrackedResourceInfo createInfo(
-      TrackedResource resource, Map<String, String> labels) {
+  private static TrackedResourceInfo createInfo(TrackedResourceAndLabels resourceAndLabels) {
+    TrackedResource resource = resourceAndLabels.trackedResource();
     return new TrackedResourceInfo()
         .id(resource.trackedResourceId().toString())
         .resourceUid(resource.cloudResourceUid())
         .state(resource.trackedResourceState().toString())
         .creation(OffsetDateTime.ofInstant(resource.creation(), ZoneOffset.UTC))
         .expiration(OffsetDateTime.ofInstant(resource.expiration(), ZoneOffset.UTC))
-        .labels(labels);
+        .labels(resourceAndLabels.labels());
   }
 }

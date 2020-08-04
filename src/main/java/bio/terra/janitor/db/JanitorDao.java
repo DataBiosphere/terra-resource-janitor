@@ -7,9 +7,7 @@ import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -149,6 +147,24 @@ public class JanitorDao {
                     TrackedResourceAndFlight.create(
                         TRACKED_RESOURCE_ROW_MAPPER.mapRow(rs, rowNum),
                         CLEANUP_FLIGHT_ROW_MAPPER.mapRow(rs, rowNum)))));
+  }
+
+  /**
+   * Return the resource and labels associated with the {@code trackedResourceId}, if they exist.
+   */
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public Optional<TrackedResourceAndLabels> retrieveResourceAndLabels(
+      TrackedResourceId trackedResourceId) {
+    String sql =
+        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+            + "l.key, l.value FROM tracked_resource tr "
+            + "LEFT JOIN label l ON tr.id = l.tracked_resource_id "
+            + "WHERE tr.id = :id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("id", trackedResourceId.uuid());
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(sql, params, new TrackedResourceAndLabelsExtractor())));
   }
 
   /** Returns up to {@code limit} resources with a cleanup flight in the given state. */
@@ -324,48 +340,6 @@ public class JanitorDao {
       return new ObjectMapper().readValue(resource, CloudResourceUid.class);
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to deserialize CloudResourceUid: " + resource);
-    }
-  }
-
-  /** A {@link TrackedResource} with the {@link CleanupFlight} associated with it. */
-  @AutoValue
-  public abstract static class TrackedResourceAndFlight {
-    public abstract TrackedResource trackedResource();
-
-    public abstract CleanupFlight cleanupFlight();
-
-    public static TrackedResourceAndFlight create(
-        TrackedResource trackedResource, CleanupFlight cleanupFlight) {
-      return new AutoValue_JanitorDao_TrackedResourceAndFlight(trackedResource, cleanupFlight);
-    }
-  }
-
-  /** A {@link TrackedResource} and the labels associated with it. */
-  @AutoValue
-  public abstract static class TrackedResourceAndLabels {
-    public abstract TrackedResource trackedResource();
-
-    public abstract ImmutableMap<String, String> labels();
-
-    public static TrackedResourceAndLabels create(
-        TrackedResource trackedResource, ImmutableMap<String, String> labels) {
-      return builder().trackedResource(trackedResource).labels(labels).build();
-    }
-
-    public static Builder builder() {
-      return new AutoValue_JanitorDao_TrackedResourceAndLabels.Builder();
-    }
-
-    /** A builder for {@link TrackedResourceAndLabels}. */
-    @AutoValue.Builder
-    public abstract static class Builder {
-      public abstract Builder trackedResource(TrackedResource trackedResource);
-
-      public abstract Builder labels(ImmutableMap<String, String> labels);
-
-      public abstract ImmutableMap.Builder<String, String> labelsBuilder();
-
-      public abstract TrackedResourceAndLabels build();
     }
   }
 }

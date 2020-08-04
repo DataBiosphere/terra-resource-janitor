@@ -87,6 +87,9 @@ public class JanitorDaoTest {
     assertEquals(
         Optional.of(resource), janitorDao.retrieveTrackedResource(resource.trackedResourceId()));
     assertEquals(DEFAULT_LABELS, janitorDao.retrieveLabels(resource.trackedResourceId()));
+    assertEquals(
+        Optional.of(TrackedResourceAndLabels.create(resource, DEFAULT_LABELS)),
+        janitorDao.retrieveResourceAndLabels(resource.trackedResourceId()));
     String resourceType =
         jdbcTemplate.queryForObject(
             "SELECT resource_type FROM tracked_resource WHERE id = :id",
@@ -100,6 +103,30 @@ public class JanitorDaoTest {
     assertEquals(
         Optional.empty(),
         janitorDao.retrieveTrackedResource(TrackedResourceId.create(UUID.randomUUID())));
+  }
+
+  @Test
+  public void retrieveLabels_noLabels() {
+    TrackedResource resource = newDefaultResource().build();
+    janitorDao.createResource(resource, ImmutableMap.of());
+    assertThat(
+        janitorDao.retrieveLabels(resource.trackedResourceId()).entrySet(), Matchers.empty());
+  }
+
+  @Test
+  public void retrieveResourceAndLabels_noLabels() {
+    TrackedResource resource = newDefaultResource().build();
+    janitorDao.createResource(resource, ImmutableMap.of());
+    assertEquals(
+        Optional.of(TrackedResourceAndLabels.create(resource, ImmutableMap.of())),
+        janitorDao.retrieveResourceAndLabels(resource.trackedResourceId()));
+  }
+
+  @Test
+  public void retrieveResourceAndLabels_unknownId() {
+    assertEquals(
+        Optional.empty(),
+        janitorDao.retrieveResourceAndLabels(TrackedResourceId.create(UUID.randomUUID())));
   }
 
   @Test
@@ -168,7 +195,7 @@ public class JanitorDaoTest {
         janitorDao.retrieveFlightState(flightId), Optional.of(CleanupFlightState.IN_FLIGHT));
     assertThat(
         janitorDao.retrieveResourcesWith(CleanupFlightState.IN_FLIGHT, 10),
-        Matchers.contains(JanitorDao.TrackedResourceAndFlight.create(resource, expectedFlight)));
+        Matchers.contains(TrackedResourceAndFlight.create(resource, expectedFlight)));
     assertThat(
         janitorDao.retrieveResourcesWith(CleanupFlightState.INITIATING, 10), Matchers.empty());
   }
@@ -201,13 +228,13 @@ public class JanitorDaoTest {
     assertThat(
         janitorDao.retrieveResourcesWith(resourceUid2),
         Matchers.containsInAnyOrder(
-            JanitorDao.TrackedResourceAndLabels.create(otherUidResource, otherLabels)));
+            TrackedResourceAndLabels.create(otherUidResource, otherLabels)));
     assertThat(
         janitorDao.retrieveResourcesWith(resourceUid1),
         Matchers.containsInAnyOrder(
-            JanitorDao.TrackedResourceAndLabels.create(resource1, labels1),
-            JanitorDao.TrackedResourceAndLabels.create(resource2, labels2),
-            JanitorDao.TrackedResourceAndLabels.create(resource3, labels3)));
+            TrackedResourceAndLabels.create(resource1, labels1),
+            TrackedResourceAndLabels.create(resource2, labels2),
+            TrackedResourceAndLabels.create(resource3, labels3)));
 
     assertThat(
         janitorDao.retrieveResourcesWith(
@@ -225,7 +252,7 @@ public class JanitorDaoTest {
     janitorDao.createCleanupFlight(resource.trackedResourceId(), cleanupFlight);
 
     assertEquals(
-        Optional.of(JanitorDao.TrackedResourceAndFlight.create(resource, cleanupFlight)),
+        Optional.of(TrackedResourceAndFlight.create(resource, cleanupFlight)),
         janitorDao.retrieveResourceAndFlight(flightId));
   }
 
