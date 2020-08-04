@@ -72,6 +72,27 @@ paths:
         500:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
+    get:
+      description: |
+        Return tracked resources matching the request filters
+      operationId: getResources
+      tags:
+        - janitor
+      parameters:
+        - name: cloudResourceUid
+          in: query
+          description: The cloud resource uid of the tracked resources.
+          required: true
+          schema:
+            $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+      responses:
+        200:
+          description: OK
+          $ref: '#/components/responses/GetResourcesResponse'
+        403:
+          description: Permission denied
+          $ref: '#/components/responses/ErrorResponse'
+
 
   '/api/janitor/v1/resource/{id}':
     parameters:
@@ -85,7 +106,10 @@ paths:
       responses:
         200:
           description: OK
-          $ref: '#/components/responses/GetResponse'
+          $ref: '#/components/responses/GetResourceResponse'
+        403:
+          description: Permission denied
+          $ref: '#/components/responses/ErrorResponse'
         404:
           description: Resource not found for the id.
         500:
@@ -187,6 +211,15 @@ components:
           additionalProperties:
             type: string
 
+    TrackedResourceInfoList:
+      type: object
+      description: A list of tracked resources.
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackedResourceInfo'
+
   responses:
     ErrorResponse:
       description: common error response
@@ -209,12 +242,19 @@ components:
           schema:
             $ref: '#/components/schemas/CreatedResource'
 
-    GetResponse:
-      description: Response to Get calls
+    GetResourceResponse:
+      description: Response to getResource calls
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/TrackedResourceInfo'
+
+    GetResourcesResponse:
+      description: Response to getResources calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TrackedResourceInfoList'
 
   securitySchemes:
     bearerAuth:

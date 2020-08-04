@@ -7,15 +7,18 @@ import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.DataAccessUtils;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -146,6 +149,24 @@ public class JanitorDao {
                         CLEANUP_FLIGHT_ROW_MAPPER.mapRow(rs, rowNum)))));
   }
 
+  /**
+   * Return the resource and labels associated with the {@code trackedResourceId}, if they exist.
+   */
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public Optional<TrackedResourceAndLabels> retrieveResourceAndLabels(
+      TrackedResourceId trackedResourceId) {
+    String sql =
+        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+            + "l.key, l.value FROM tracked_resource tr "
+            + "LEFT JOIN label l ON tr.id = l.tracked_resource_id "
+            + "WHERE tr.id = :id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("id", trackedResourceId.uuid());
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(sql, params, new TrackedResourceAndLabelsExtractor())));
+  }
+
   /** Returns up to {@code limit} resources with a cleanup flight in the given state. */
   @Transactional(propagation = Propagation.SUPPORTS)
   public List<TrackedResourceAndFlight> retrieveResourcesWith(
@@ -166,6 +187,19 @@ public class JanitorDao {
             TrackedResourceAndFlight.create(
                 TRACKED_RESOURCE_ROW_MAPPER.mapRow(rs, rowNum),
                 CLEANUP_FLIGHT_ROW_MAPPER.mapRow(rs, rowNum)));
+  }
+
+  /** Returns {@link TrackedResourceAndLabels} with a matching {@link CloudResourceUid}. */
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public List<TrackedResourceAndLabels> retrieveResourcesWith(CloudResourceUid cloudResourceUid) {
+    String sql =
+        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+            + "l.key, l.value FROM tracked_resource tr "
+            + "LEFT JOIN label l ON tr.id = l.tracked_resource_id "
+            + "WHERE tr.resource_uid = :cloud_resource_uid::jsonb";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("cloud_resource_uid", serialize(cloudResourceUid));
+    return jdbcTemplate.query(sql, params, new TrackedResourceAndLabelsExtractor());
   }
 
   /** Creates a {@link CleanupFlight} associated with {@code trackedResourceId}. */
@@ -251,6 +285,39 @@ public class JanitorDao {
               rs.getString("flight_id"), CleanupFlightState.valueOf(rs.getString("flight_state")));
 
   /**
+   * A {@link ResultSetExtractor} for extracting the results of a join of the one resource to many
+   * labels relationship.
+   */
+  private static class TrackedResourceAndLabelsExtractor
+      implements ResultSetExtractor<List<TrackedResourceAndLabels>> {
+    @Override
+    public List<TrackedResourceAndLabels> extractData(ResultSet rs)
+        throws SQLException, DataAccessException {
+      Map<TrackedResourceId, TrackedResourceAndLabels.Builder> resources = new HashMap<>();
+      int rowNum = 0;
+      while (rs.next()) {
+        TrackedResourceId id = TrackedResourceId.create(rs.getObject("id", UUID.class));
+        TrackedResourceAndLabels.Builder resourceBuilder = resources.get(id);
+        if (resourceBuilder == null) {
+          resourceBuilder = TrackedResourceAndLabels.builder();
+          resourceBuilder.trackedResource(TRACKED_RESOURCE_ROW_MAPPER.mapRow(rs, rowNum));
+          resources.put(id, resourceBuilder);
+        }
+        String labelKey = rs.getString("key");
+        String labelValue = rs.getString("value");
+        if (labelKey != null) {
+          // Label may be null from left join for a resource with no labels.
+          resourceBuilder.labelsBuilder().put(labelKey, labelValue);
+        }
+        ++rowNum;
+      }
+      return resources.values().stream()
+          .map(TrackedResourceAndLabels.Builder::build)
+          .collect(Collectors.toList());
+    }
+  }
+
+  /**
    * Serializes {@link CloudResourceUid} into json format string.
    *
    * <p>It only contains non null fields and should not be changed since this is how the database
@@ -273,19 +340,6 @@ public class JanitorDao {
       return new ObjectMapper().readValue(resource, CloudResourceUid.class);
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to deserialize CloudResourceUid: " + resource);
-    }
-  }
-
-  /** A {@link TrackedResource} with the {@link CleanupFlight} associated with it. */
-  @AutoValue
-  public abstract static class TrackedResourceAndFlight {
-    public abstract TrackedResource trackedResource();
-
-    public abstract CleanupFlight cleanupFlight();
-
-    public static TrackedResourceAndFlight create(
-        TrackedResource trackedResource, CleanupFlight cleanupFlight) {
-      return new AutoValue_JanitorDao_TrackedResourceAndFlight(trackedResource, cleanupFlight);
     }
   }
 }
