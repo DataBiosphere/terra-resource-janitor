@@ -10,6 +10,7 @@ import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.pubsub.v1.*;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +54,10 @@ public class TrackedResourceSubscriber {
             CreateResourceRequestBody body =
                 new ObjectMapper()
                     .readValue(message.getData().toStringUtf8(), CreateResourceRequestBody.class);
-            janitorService.createResource(body);
+            janitorService.createResourceWithCreation(
+                body,
+                Instant.ofEpochSecond(
+                    message.getPublishTime().getSeconds(), message.getPublishTime().getSeconds()));
           } catch (JsonProcessingException e) {
             throw new InvalidMessageException(
                 "Invalid track resource pubsub message: " + message.toString(), e);

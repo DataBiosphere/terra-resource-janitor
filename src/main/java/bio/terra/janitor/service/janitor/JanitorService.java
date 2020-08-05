@@ -24,6 +24,12 @@ public class JanitorService {
 
   public CreatedResource createResource(CreateResourceRequestBody body) {
     Instant creationTime = Instant.now();
+    return createResourceWithCreation(body, creationTime);
+  }
+
+  /** Creates resources with given creation time. */
+  public CreatedResource createResourceWithCreation(
+      CreateResourceRequestBody body, Instant creationTime) {
     TrackedResource resource =
         TrackedResource.builder()
             .trackedResourceId(TrackedResourceId.create(UUID.randomUUID()))

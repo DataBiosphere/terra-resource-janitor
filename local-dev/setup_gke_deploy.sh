@@ -9,8 +9,8 @@ set -e
 # Required input
 ENV=$1
 # Optional input
-TERRA_HELM_BRANCH=${2:-master}
-TERRA_HELMFILE_BRANCH=${3:-master}
+TERRA_HELM_BRANCH=${2:-yyu-PF-61}
+TERRA_HELMFILE_BRANCH=${3:-yyu-PF-64}
 
 # Clone Helm chart and helmfile repos
 rm -rf terra-helm

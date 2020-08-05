@@ -7,8 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
-import bio.terra.janitor.db.JanitorDao;
-import bio.terra.janitor.db.TrackedResourceAndLabels;
 import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;

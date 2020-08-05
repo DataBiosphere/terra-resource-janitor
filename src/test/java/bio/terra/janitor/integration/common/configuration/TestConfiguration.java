@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class TestConfiguration {
   private String trackResourceTopicId;
 
-  private String clientSaPath;
+  private String clientServiceAccountPath;
 
   public String getTrackResourceTopicId() {
     return trackResourceTopicId;
@@ -22,20 +22,27 @@ public class TestConfiguration {
     this.trackResourceTopicId = trackResourceTopicId;
   }
 
-  public String getClientSaPath() {
-    return clientSaPath;
+  public String getClientServiceAccountPath() {
+    return clientServiceAccountPath;
   }
 
-  public void setClientSaPath(String clientSaPath) {
-    this.clientSaPath = clientSaPath;
+  public void setClientServiceAccountPath(String clientServiceAccountPath) {
+    this.clientServiceAccountPath = clientServiceAccountPath;
   }
 
+  /**
+   * Janitor Client {@link ServiceAccountCredentials} which has permission to publish message to
+   * Janitor.
+   */
   public ServiceAccountCredentials getClientGoogleCredentialsOrDie() {
     try {
       return ServiceAccountCredentials.fromStream(
-          Thread.currentThread().getContextClassLoader().getResourceAsStream(clientSaPath));
+          Thread.currentThread()
+              .getContextClassLoader()
+              .getResourceAsStream(clientServiceAccountPath));
     } catch (Exception e) {
-      throw new RuntimeException("Unable to load GoogleCredentials from " + clientSaPath + "\n", e);
+      throw new RuntimeException(
+          "Unable to load GoogleCredentials from " + clientServiceAccountPath, e);
     }
   }
 }
