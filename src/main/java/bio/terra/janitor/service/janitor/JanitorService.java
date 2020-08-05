@@ -38,6 +38,7 @@ public class JanitorService {
             .creation(creationTime)
             .expiration(creationTime.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES))
             .build();
+
     // TODO(yonghao): Solution for handling duplicate CloudResourceUid.
     janitorDao.createResource(resource, body.getLabels());
     return new CreatedResource().id(resource.trackedResourceId().toString());

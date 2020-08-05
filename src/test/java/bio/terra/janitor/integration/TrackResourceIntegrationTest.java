@@ -80,6 +80,7 @@ public class TrackResourceIntegrationTest {
     ByteString data =
         ByteString.copyFromUtf8(new ObjectMapper().writeValueAsString(TRACK_RESOURCE_MESSAGE));
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
+
     Thread.sleep(5000);
 
     String getResponse =

@@ -57,7 +57,7 @@ public class TrackedResourceSubscriber {
             janitorService.createResourceWithCreation(
                 body,
                 Instant.ofEpochSecond(
-                    message.getPublishTime().getSeconds(), message.getPublishTime().getSeconds()));
+                    message.getPublishTime().getSeconds(), message.getPublishTime().getNanos()));
           } catch (JsonProcessingException e) {
             throw new InvalidMessageException(
                 "Invalid track resource pubsub message: " + message.toString(), e);
