@@ -99,5 +99,3 @@ Stop the local postgres:
 ```
 local-dev/run_postgres.sh stop
 ```
-
-## 

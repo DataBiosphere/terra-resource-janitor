@@ -6,5 +6,5 @@ export DATABASE_NAME=testdb
 export STAIRWAY_DATABASE_USER=dbuser_stairway
 export STAIRWAY_DATABASE_USER_PASSWORD=dbpwd_stairway
 export STAIRWAY_DATABASE_NAME=testdb_stairway
-
+export TRACK_RESOURCE_PUBSUB_ENABLED=false
 ./gradlew bootRun
