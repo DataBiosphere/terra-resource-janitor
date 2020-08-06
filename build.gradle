@@ -50,6 +50,7 @@ dependencies {
     implementation 'bio.terra:stairway:0.0.20'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema', version: crlSchemaVersion
     implementation group: 'com.google.cloud', name: 'google-cloud-pubsub', version: '1.104.1'
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.11.2")
 
     // -- Swagger CodeGen dependencies --
     swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.20'

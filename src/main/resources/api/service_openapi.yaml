@@ -172,10 +172,14 @@ components:
           type: object
           additionalProperties:
             type: string
-        timeToLiveInMinutes:
-          description: How long created resources should live (at least) before being cleaned up in minutes.
-          type: integer
-          format: int32
+        creation:
+          description: The resource creation time
+          type: string
+          format: 'date-time'
+        expiration:
+          description: The resource expiration time
+          type: string
+          format: 'date-time'
 
     CreatedResource:
       type: object

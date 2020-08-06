@@ -16,12 +16,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
-import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -40,11 +42,16 @@ public class TrackResourceIntegrationTest {
   @Autowired private TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
   @Autowired private TestConfiguration testConfiguration;
   @Autowired private MockMvc mvc;
-  @Autowired ObjectMapper objectMapper;
+
+  @Autowired
+  @Qualifier("objectMapper")
+  private ObjectMapper objectMapper;
 
   private Publisher publisher;
 
-  private static final int TIME_TO_LIVE_MINUTE = 5;
+  private static final OffsetDateTime CREATION = OffsetDateTime.now(ZoneOffset.UTC);
+  private static final OffsetDateTime EXPIRATION =
+      OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(10);
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final CloudResourceUid RESOURCE_UID =
@@ -53,7 +60,8 @@ public class TrackResourceIntegrationTest {
   private static final CreateResourceRequestBody TRACK_RESOURCE_MESSAGE =
       new CreateResourceRequestBody()
           .resourceUid(RESOURCE_UID)
-          .timeToLiveInMinutes(TIME_TO_LIVE_MINUTE)
+          .creation(CREATION)
+          .expiration(EXPIRATION)
           .labels(DEFAULT_LABELS);
 
   @BeforeEach
@@ -78,7 +86,7 @@ public class TrackResourceIntegrationTest {
   @Test
   public void subscribeTrackResource() throws Exception {
     ByteString data =
-        ByteString.copyFromUtf8(new ObjectMapper().writeValueAsString(TRACK_RESOURCE_MESSAGE));
+        ByteString.copyFromUtf8(objectMapper.writeValueAsString(TRACK_RESOURCE_MESSAGE));
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
     Thread.sleep(5000);
@@ -99,9 +107,8 @@ public class TrackResourceIntegrationTest {
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
     assertEquals(RESOURCE_UID, trackedResourceInfo.getResourceUid());
-    assertEquals(
-        Duration.ofMinutes(TIME_TO_LIVE_MINUTE),
-        Duration.between(trackedResourceInfo.getCreation(), trackedResourceInfo.getExpiration()));
+    assertEquals(CREATION, trackedResourceInfo.getCreation());
+    assertEquals(EXPIRATION, trackedResourceInfo.getExpiration());
     assertEquals(TrackedResourceState.READY.name(), trackedResourceInfo.getState());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
   }
