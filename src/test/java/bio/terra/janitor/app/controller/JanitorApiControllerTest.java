@@ -12,7 +12,8 @@ import bio.terra.janitor.app.Main;
 import bio.terra.janitor.db.TrackedResourceState;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -37,10 +39,15 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 public class JanitorApiControllerTest {
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
-  private static final int TIME_TO_LIVE_MINUTE = 100;
+  private static final OffsetDateTime CREATION = OffsetDateTime.now(ZoneOffset.UTC);
+  private static final OffsetDateTime EXPIRATION =
+      OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(10);
 
   @Autowired private MockMvc mvc;
-  @Autowired ObjectMapper objectMapper;
+
+  @Autowired
+  @Qualifier("objectMapper")
+  private ObjectMapper objectMapper;
 
   @Test
   public void createResourceSuccessGettable() throws Exception {
@@ -50,7 +57,8 @@ public class JanitorApiControllerTest {
     CreateResourceRequestBody body =
         new CreateResourceRequestBody()
             .resourceUid(resourceUid)
-            .timeToLiveInMinutes(TIME_TO_LIVE_MINUTE)
+            .creation(CREATION)
+            .expiration(EXPIRATION)
             .labels(DEFAULT_LABELS);
 
     String createResponse =
@@ -58,7 +66,7 @@ public class JanitorApiControllerTest {
             .perform(
                 post("/api/janitor/v1/resource")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsString(body)))
+                    .content(objectMapper.writeValueAsString(body)))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
             .andReturn()
@@ -84,9 +92,8 @@ public class JanitorApiControllerTest {
     TrackedResourceInfo trackedResourceInfo =
         objectMapper.readValue(getResponse, TrackedResourceInfo.class);
     assertEquals(resourceUid, trackedResourceInfo.getResourceUid());
-    assertEquals(
-        Duration.ofMinutes(TIME_TO_LIVE_MINUTE),
-        Duration.between(trackedResourceInfo.getCreation(), trackedResourceInfo.getExpiration()));
+    assertEquals(CREATION, trackedResourceInfo.getCreation());
+    assertEquals(EXPIRATION, trackedResourceInfo.getExpiration());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
   }
 
@@ -97,14 +104,15 @@ public class JanitorApiControllerTest {
     CreateResourceRequestBody body =
         new CreateResourceRequestBody()
             .resourceUid(cloudResourceUid)
-            .timeToLiveInMinutes(TIME_TO_LIVE_MINUTE)
+            .creation(CREATION)
+            .expiration(EXPIRATION)
             .labels(DEFAULT_LABELS);
 
     this.mvc
         .perform(
             post("/api/janitor/v1/resource")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(body)))
+                .content(objectMapper.writeValueAsString(body)))
         .andDo(MockMvcResultHandlers.print())
         .andExpect(status().isBadRequest());
   }
@@ -125,12 +133,14 @@ public class JanitorApiControllerTest {
     CreateResourceRequestBody body1 =
         new CreateResourceRequestBody()
             .resourceUid(resourceUid)
-            .timeToLiveInMinutes(TIME_TO_LIVE_MINUTE)
+            .creation(CREATION)
+            .expiration(EXPIRATION)
             .labels(DEFAULT_LABELS);
     CreateResourceRequestBody body2 =
         new CreateResourceRequestBody()
             .resourceUid(resourceUid)
-            .timeToLiveInMinutes(TIME_TO_LIVE_MINUTE)
+            .creation(CREATION)
+            .expiration(EXPIRATION)
             .labels(DEFAULT_LABELS);
 
     String createResponse1 =
@@ -138,7 +148,7 @@ public class JanitorApiControllerTest {
             .perform(
                 post("/api/janitor/v1/resource")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsString(body1)))
+                    .content(objectMapper.writeValueAsString(body1)))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
             .andReturn()
@@ -149,7 +159,7 @@ public class JanitorApiControllerTest {
             .perform(
                 post("/api/janitor/v1/resource")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsString(body2)))
+                    .content(objectMapper.writeValueAsString(body2)))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
             .andReturn()

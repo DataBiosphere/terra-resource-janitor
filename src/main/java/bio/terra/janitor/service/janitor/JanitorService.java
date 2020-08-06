@@ -2,10 +2,8 @@ package bio.terra.janitor.service.janitor;
 
 import bio.terra.generated.model.*;
 import bio.terra.janitor.db.*;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,20 +21,13 @@ public class JanitorService {
   }
 
   public CreatedResource createResource(CreateResourceRequestBody body) {
-    Instant creationTime = Instant.now();
-    return createResourceWithCreation(body, creationTime);
-  }
-
-  /** Creates resources with given creation time. */
-  public CreatedResource createResourceWithCreation(
-      CreateResourceRequestBody body, Instant creationTime) {
     TrackedResource resource =
         TrackedResource.builder()
             .trackedResourceId(TrackedResourceId.create(UUID.randomUUID()))
             .trackedResourceState(TrackedResourceState.READY)
             .cloudResourceUid(body.getResourceUid())
-            .creation(creationTime)
-            .expiration(creationTime.plus(body.getTimeToLiveInMinutes(), ChronoUnit.MINUTES))
+            .creation(body.getCreation().toInstant())
+            .expiration(body.getExpiration().toInstant())
             .build();
 
     // TODO(yonghao): Solution for handling duplicate CloudResourceUid.
