@@ -1,14 +1,14 @@
 package bio.terra.janitor.service.stackdriver;
 
-import io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
+import bio.terra.janitor.app.configuration.StackdriverConfiguration;
 import io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
 import java.io.IOException;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/** A component for setting up stackdriver stats exporting. */
 @Component
 public class StatsExporter {
   private final Logger logger = LoggerFactory.getLogger(StatsExporter.class);
@@ -21,14 +21,12 @@ public class StatsExporter {
   }
 
   public void initialize() {
-    Optional<StackdriverStatsConfiguration> statsConfiguration =
-        stackdriverConfiguration.createStatsConfiguration();
-    if (!statsConfiguration.isPresent()) {
-      logger.info("Stackdriver stats disabled.");
+    logger.info("Stackdriver stats enabled: {}.", stackdriverConfiguration.isEnabled());
+    if (!stackdriverConfiguration.isEnabled()) {
       return;
     }
     try {
-      StackdriverStatsExporter.createAndRegister(statsConfiguration.get());
+      StackdriverStatsExporter.createAndRegister();
     } catch (IOException e) {
       throw new RuntimeException("Unable to initialize Stackdriver stats exporting.", e);
     }
