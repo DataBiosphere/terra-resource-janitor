@@ -103,10 +103,10 @@ class FlightManager {
    * Stairway, e.g {@link #submitFlight(Instant)}.
    */
   public int recoverUnsubmittedFlights(int limit) {
-    List<JanitorDao.TrackedResourceAndFlight> resourceAndFlights =
+    List<TrackedResourceAndFlight> resourceAndFlights =
         janitorDao.retrieveResourcesWith(CleanupFlightState.INITIATING, limit);
     int submissions = 0;
-    for (JanitorDao.TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
+    for (TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
       String flightId = resourceAndFlight.cleanupFlight().flightId();
       try {
         // If there is some flight state, then the flight has been submitted successfully and does
@@ -156,10 +156,10 @@ class FlightManager {
    * <p>This function assumes that it is not running concurrently with itself.
    */
   public int updateCompletedFlights(int limit) {
-    List<JanitorDao.TrackedResourceAndFlight> resourceAndFlights =
+    List<TrackedResourceAndFlight> resourceAndFlights =
         janitorDao.retrieveResourcesWith(CleanupFlightState.FINISHING, limit);
     int completedFlights = 0;
-    for (JanitorDao.TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
+    for (TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
       Stopwatch stopwatch = Stopwatch.createStarted();
       boolean flightCompleted = completeFlight(resourceAndFlight);
       MetricsHelper.recordCompletionDuration(
@@ -175,7 +175,7 @@ class FlightManager {
    * Completes the flight if Stairway has finished the flight non-fatally. Returns whether we were
    * able to update the state of the resource and flight successfully for the completed flight.
    */
-  private boolean completeFlight(JanitorDao.TrackedResourceAndFlight resourceAndFlight) {
+  private boolean completeFlight(TrackedResourceAndFlight resourceAndFlight) {
     String flightId = resourceAndFlight.cleanupFlight().flightId();
     FlightState flightState;
     try {
@@ -290,7 +290,7 @@ class FlightManager {
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   private void updateFatalCleanupState(String flightId) throws UnexpectedCleanupStateException {
-    Optional<JanitorDao.TrackedResourceAndFlight> resourceAndFlight =
+    Optional<TrackedResourceAndFlight> resourceAndFlight =
         janitorDao.retrieveResourceAndFlight(flightId);
     if (!resourceAndFlight.isPresent()) {
       throw new UnexpectedCleanupStateException(

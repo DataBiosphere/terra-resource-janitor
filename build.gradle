@@ -52,6 +52,7 @@ dependencies {
 
     implementation 'bio.terra:stairway:0.0.20'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema', version: crlSchemaVersion
+    implementation group: 'com.google.cloud', name: 'google-cloud-pubsub', version: '1.104.1'
 
     // -- Swagger CodeGen dependencies --
     swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.20'
@@ -60,6 +61,7 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+    testImplementation 'com.google.auth:google-auth-library-oauth2-http:0.20.0'
 }
 
 // Exclude the Spring logger, so everything will use SLF4J
@@ -144,3 +146,18 @@ task unitTest(type: Test) {
     outputs.upToDateWhen { false }
 }
 
+def googleCredentialsFile = "${projectDir}/src/test/resources/rendered/sa-account.json"
+
+task integrationTest(type: Test) {
+    // Sets the application Google Credentials.
+    environment = [
+            'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+    ]
+    useJUnitPlatform {
+        includeTags "integration"
+    }
+    testLogging {
+        events = ["passed", "failed", "skipped", "started"]
+    }
+    outputs.upToDateWhen { false }
+}

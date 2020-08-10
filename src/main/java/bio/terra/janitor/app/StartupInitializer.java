@@ -4,6 +4,7 @@ import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.service.cleanup.FlightScheduler;
 import bio.terra.janitor.service.migirate.MigrateService;
 import bio.terra.janitor.service.stackdriver.StatsExporter;
+import bio.terra.janitor.service.pubsub.TrackedResourceSubscriber;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import org.springframework.context.ApplicationContext;
 
@@ -27,7 +28,15 @@ public final class StartupInitializer {
     } else if (janitorJdbcConfiguration.isUpdateDbOnStart()) {
       migrateService.upgrade(changelogPath, janitorJdbcConfiguration.getDataSource());
     }
+    StairwayComponent stairwayComponent =
+        (StairwayComponent) applicationContext.getBean("stairwayComponent");
+    stairwayComponent.initialize();
+    FlightScheduler flightScheduler =
+        (FlightScheduler) applicationContext.getBean("flightScheduler");
+    flightScheduler.initialize();
+
     applicationContext.getBean("stairwayComponent", StairwayComponent.class).initialize();
     applicationContext.getBean("flightScheduler", FlightScheduler.class).initialize();
+    applicationContext.getBean("trackedResourceSubscriber", TrackedResourceSubscriber.class);
   }
 }
