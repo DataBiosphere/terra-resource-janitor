@@ -30,6 +30,8 @@ public final class StartupInitializer {
     }
     applicationContext.getBean("stairwayComponent", StairwayComponent.class).initialize();
     applicationContext.getBean("flightScheduler", FlightScheduler.class).initialize();
-    applicationContext.getBean("trackedResourceSubscriber", TrackedResourceSubscriber.class);
+    applicationContext
+        .getBean("trackedResourceSubscriber", TrackedResourceSubscriber.class)
+        .initialize();
   }
 }
