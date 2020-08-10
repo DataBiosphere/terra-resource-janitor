@@ -28,13 +28,6 @@ public final class StartupInitializer {
     } else if (janitorJdbcConfiguration.isUpdateDbOnStart()) {
       migrateService.upgrade(changelogPath, janitorJdbcConfiguration.getDataSource());
     }
-    StairwayComponent stairwayComponent =
-        (StairwayComponent) applicationContext.getBean("stairwayComponent");
-    stairwayComponent.initialize();
-    FlightScheduler flightScheduler =
-        (FlightScheduler) applicationContext.getBean("flightScheduler");
-    flightScheduler.initialize();
-
     applicationContext.getBean("stairwayComponent", StairwayComponent.class).initialize();
     applicationContext.getBean("flightScheduler", FlightScheduler.class).initialize();
     applicationContext.getBean("trackedResourceSubscriber", TrackedResourceSubscriber.class);
