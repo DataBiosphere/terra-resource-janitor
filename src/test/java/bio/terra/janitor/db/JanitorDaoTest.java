@@ -260,4 +260,52 @@ public class JanitorDaoTest {
   public void retrieveResourceAndFlight_unknownFlightId() {
     assertEquals(Optional.empty(), janitorDao.retrieveResourceAndFlight("unknown-flight-id"));
   }
+
+  @Test
+  public void retrieveResourceCounts() {
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.READY).build(),
+        ImmutableMap.of("client", "c1", "foo", "bar"));
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.READY).build(),
+        ImmutableMap.of("client", "c1"));
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.READY).build(),
+        ImmutableMap.of("client", "c2"));
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.CLEANING).build(),
+        ImmutableMap.of("client", "c1"));
+    // No client label, but unrelated label.
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.CLEANING).build(),
+        ImmutableMap.of("foo", "baz"));
+    // No labels at all.
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.CLEANING).build(),
+        ImmutableMap.of());
+
+    assertThat(
+        janitorDao.retrieveResourceCounts(),
+        Matchers.containsInAnyOrder(
+            ResourceStateCount.builder()
+                .count(2)
+                .trackedResourceState(TrackedResourceState.READY)
+                .clientId("c1")
+                .build(),
+            ResourceStateCount.builder()
+                .count(1)
+                .trackedResourceState(TrackedResourceState.READY)
+                .clientId("c2")
+                .build(),
+            ResourceStateCount.builder()
+                .count(1)
+                .trackedResourceState(TrackedResourceState.CLEANING)
+                .clientId("c1")
+                .build(),
+            ResourceStateCount.builder()
+                .count(2)
+                .trackedResourceState(TrackedResourceState.CLEANING)
+                .clientId("")
+                .build()));
+  }
 }
