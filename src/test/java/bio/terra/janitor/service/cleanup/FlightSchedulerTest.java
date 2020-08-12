@@ -81,7 +81,8 @@ public class FlightSchedulerTest {
             newPrimaryConfiguration(),
             stairwayComponent,
             janitorDao,
-            new FlightSubmissionFactoryImpl());
+            new FlightSubmissionFactoryImpl(),
+            janitorDao1);
     flightScheduler.initialize();
 
     TrackedResource resource = newReadyExpiredResource(Instant.now());
@@ -99,7 +100,8 @@ public class FlightSchedulerTest {
         trackedResource ->
             FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap());
     flightScheduler =
-        new FlightScheduler(newPrimaryConfiguration(), stairwayComponent, janitorDao, fatalFactory);
+        new FlightScheduler(
+            newPrimaryConfiguration(), stairwayComponent, janitorDao, fatalFactory, janitorDao1);
     flightScheduler.initialize();
 
     TrackedResource resource = newReadyExpiredResource(Instant.now());

@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.generated.model.CloudResourceUid;
+import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.generated.model.GoogleProjectUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
@@ -275,6 +276,14 @@ public class JanitorDaoTest {
     janitorDao.createResource(
         newDefaultResource().trackedResourceState(TrackedResourceState.CLEANING).build(),
         ImmutableMap.of("client", "c1"));
+    janitorDao.createResource(
+        newDefaultResource()
+            .trackedResourceState(TrackedResourceState.READY)
+            .cloudResourceUid(
+                new CloudResourceUid()
+                    .googleBucketUid(new GoogleBucketUid().bucketName("my-bucket-name")))
+            .build(),
+        ImmutableMap.of("client", "c1"));
     // No client label, but unrelated label.
     janitorDao.createResource(
         newDefaultResource().trackedResourceState(TrackedResourceState.CLEANING).build(),
@@ -287,25 +296,35 @@ public class JanitorDaoTest {
     assertThat(
         janitorDao.retrieveResourceCounts(),
         Matchers.containsInAnyOrder(
-            ResourceStateCount.builder()
+            ResourceKindCount.builder()
                 .count(2)
                 .trackedResourceState(TrackedResourceState.READY)
-                .clientId("c1")
+                .resourceType(ResourceType.GOOGLE_PROJECT)
+                .client("c1")
                 .build(),
-            ResourceStateCount.builder()
+            ResourceKindCount.builder()
                 .count(1)
                 .trackedResourceState(TrackedResourceState.READY)
-                .clientId("c2")
+                .resourceType(ResourceType.GOOGLE_PROJECT)
+                .client("c2")
                 .build(),
-            ResourceStateCount.builder()
+            ResourceKindCount.builder()
                 .count(1)
                 .trackedResourceState(TrackedResourceState.CLEANING)
-                .clientId("c1")
+                .resourceType(ResourceType.GOOGLE_BUCKET)
+                .client("c1")
                 .build(),
-            ResourceStateCount.builder()
+            ResourceKindCount.builder()
+                .count(1)
+                .trackedResourceState(TrackedResourceState.CLEANING)
+                .resourceType(ResourceType.GOOGLE_PROJECT)
+                .client("c1")
+                .build(),
+            ResourceKindCount.builder()
                 .count(2)
                 .trackedResourceState(TrackedResourceState.CLEANING)
-                .clientId("")
+                .resourceType(ResourceType.GOOGLE_PROJECT)
+                .client("")
                 .build()));
   }
 }

@@ -36,6 +36,9 @@ public class PrimaryConfiguration {
   /** How many fatal flights to process for completion at a time. */
   private int fatalFlightCompletionLimit = 1000;
 
+  /** How often to record the counts of the different resources in the database. */
+  private Duration recordResourceCountPeriod = Duration.ofMinutes(10);
+
   public boolean isSchedulerEnabled() {
     return schedulerEnabled;
   }
@@ -64,6 +67,10 @@ public class PrimaryConfiguration {
     return fatalFlightCompletionLimit;
   }
 
+  public Duration getRecordResourceCountPeriod() {
+    return recordResourceCountPeriod;
+  }
+
   public void setSchedulerEnabled(boolean schedulerEnabled) {
     this.schedulerEnabled = schedulerEnabled;
   }
@@ -90,5 +97,9 @@ public class PrimaryConfiguration {
 
   public void setFatalFlightCompletionPeriod(Duration fatalFlightCompletionPeriod) {
     this.fatalFlightCompletionPeriod = fatalFlightCompletionPeriod;
+  }
+
+  public void setRecordResourceCountPeriod(Duration recordResourceCountPeriod) {
+    this.recordResourceCountPeriod = recordResourceCountPeriod;
   }
 }

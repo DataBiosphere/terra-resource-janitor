@@ -2,6 +2,7 @@ package bio.terra.janitor.db;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
+import bio.terra.janitor.common.ResourceType;
 import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -272,22 +273,22 @@ public class JanitorDao {
   }
 
   /**
-   * Retrieve {@link ResourceStateCount}s for all of the states of tracked resources in the
-   * database.
+   * Retrieve {@link ResourceKindCount}s for all of the states of tracked resources in the database.
    */
-  public List<ResourceStateCount> retrieveResourceCounts() {
+  public List<ResourceKindCount> retrieveResourceCounts() {
     String sql =
-        "SELECT count(*) as count, tr.state, "
-            + " (SELECT value FROM label WHERE tracked_resource_id =  tr.id and key = :client_key) as client "
+        "SELECT count(*) as count, tr.state, tr.resource_type, "
+            + "(SELECT value FROM label WHERE tracked_resource_id =  tr.id and key = :client_key) as client "
             + "FROM tracked_resource tr GROUP BY tr.state, client";
     return jdbcTemplate.query(
         sql,
         new MapSqlParameterSource().addValue("client_key", CLIENT_LABEL_KEY),
         (rs, rowNum) ->
-            ResourceStateCount.builder()
+            ResourceKindCount.builder()
                 .count(rs.getInt("count"))
                 .trackedResourceState(TrackedResourceState.valueOf(rs.getString("state")))
-                .clientId(rs.getString("client") == null ? "" : rs.getString("client"))
+                .resourceType(ResourceType.valueOf(rs.getString("resource_type")))
+                .client(rs.getString("client") == null ? "" : rs.getString("client"))
                 .build());
   }
 

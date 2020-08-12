@@ -1,5 +1,6 @@
 package bio.terra.janitor.service.cleanup;
 
+import bio.terra.janitor.db.ResourceKindCount;
 import com.google.common.collect.ImmutableList;
 import io.opencensus.stats.*;
 import io.opencensus.tags.*;
@@ -16,9 +17,15 @@ class MetricsHelper {
   private static final Tagger TAGGER = Tags.getTagger();
   private static final StatsRecorder STATS_RECORDER = Stats.getStatsRecorder();
 
-  private static final TagKey KEY_SUCCESS = TagKey.create("success");
+  private static final TagKey SUCCESS_KEY = TagKey.create("success");
+  private static final TagKey RESOURCE_STATE_KEY = TagKey.create("resource_state");
+  private static final TagKey RESOURCE_TYPE_KEY = TagKey.create("resource_type");
+  private static final TagKey CLIENT_KEY = TagKey.create("client");
+
   /** Unit string for millisecond. */
   private static final String MILLISECOND = "ms";
+  /** Unit string for count. */
+  private static final String COUNT = "1";
 
   private static final Measure.MeasureDouble SUBMISSION_DURATION =
       Measure.MeasureDouble.create(
@@ -31,6 +38,9 @@ class MetricsHelper {
           PREFIX + "/fatal_update_duration",
           "Duration of a cleanup flight fatal update.",
           MILLISECOND);
+  private static final Measure.MeasureLong TRACKED_RESOURCE_COUNT =
+      Measure.MeasureLong.create(
+          PREFIX + "tracked_resource_count", "Counts of te number of tracked resources.", COUNT);
 
   /**
    * This bucketing is our first pass guess at what might be interesting to see for durations. It is
@@ -49,21 +59,28 @@ class MetricsHelper {
           "The distribution of durations for flight submissions",
           SUBMISSION_DURATION,
           DURATION_DISTRIBUTION,
-          ImmutableList.of(KEY_SUCCESS));
+          ImmutableList.of(SUCCESS_KEY));
   private static final View COMPLETION_DURATION_VIEW =
       View.create(
           View.Name.create(PREFIX + "/completion_duration"),
           "The distribution of durations for flight completions",
           COMPLETION_DURATION,
           DURATION_DISTRIBUTION,
-          ImmutableList.of(KEY_SUCCESS));
+          ImmutableList.of(SUCCESS_KEY));
   private static final View FATAL_UPDATE_DURATION_VIEW =
       View.create(
           View.Name.create(PREFIX + "/fatal_update_duration"),
           "The distribution of durations for flight fatal updates",
           FATAL_UPDATE_DURATION,
           DURATION_DISTRIBUTION,
-          ImmutableList.of(KEY_SUCCESS));
+          ImmutableList.of(SUCCESS_KEY));
+  private static final View TRACKED_RESOURCE_COUNT_VIEW =
+      View.create(
+          View.Name.create(PREFIX + "/tracked_resource_count"),
+          "The count of tracked resources",
+          TRACKED_RESOURCE_COUNT,
+          Aggregation.LastValue.create(),
+          ImmutableList.of(RESOURCE_STATE_KEY, RESOURCE_TYPE_KEY, CLIENT_KEY));
 
   private static final ImmutableList<View> VIEWS =
       ImmutableList.of(
@@ -81,7 +98,7 @@ class MetricsHelper {
     TagContext tctx =
         TAGGER
             .emptyBuilder()
-            .putLocal(KEY_SUCCESS, TagValue.create(Boolean.valueOf(flightSubmitted).toString()))
+            .putLocal(SUCCESS_KEY, TagValue.create(Boolean.valueOf(flightSubmitted).toString()))
             .build();
     STATS_RECORDER.newMeasureMap().put(SUBMISSION_DURATION, duration.toMillis()).record(tctx);
   }
@@ -91,7 +108,7 @@ class MetricsHelper {
     TagContext tctx =
         TAGGER
             .emptyBuilder()
-            .putLocal(KEY_SUCCESS, TagValue.create(Boolean.valueOf(flightCompleted).toString()))
+            .putLocal(SUCCESS_KEY, TagValue.create(Boolean.valueOf(flightCompleted).toString()))
             .build();
     STATS_RECORDER.newMeasureMap().put(COMPLETION_DURATION, duration.toMillis()).record(tctx);
   }
@@ -103,8 +120,20 @@ class MetricsHelper {
     TagContext tctx =
         TAGGER
             .emptyBuilder()
-            .putLocal(KEY_SUCCESS, TagValue.create(Boolean.valueOf(flightUpdated).toString()))
+            .putLocal(SUCCESS_KEY, TagValue.create(Boolean.valueOf(flightUpdated).toString()))
             .build();
     STATS_RECORDER.newMeasureMap().put(FATAL_UPDATE_DURATION, duration.toMillis()).record(tctx);
+  }
+
+  /** Records the latest count of {@link ResourceKindCount}. */
+  public static void recordResourceKindCount(ResourceKindCount count) {
+    TagContext tctx =
+        TAGGER
+            .emptyBuilder()
+            .putLocal(RESOURCE_STATE_KEY, TagValue.create(count.trackedResourceState().toString()))
+            .putLocal(RESOURCE_TYPE_KEY, TagValue.create(count.resourceType().toString()))
+            .putLocal(CLIENT_KEY, TagValue.create(count.client()))
+            .build();
+    STATS_RECORDER.newMeasureMap().put(TRACKED_RESOURCE_COUNT, count.count()).record(tctx);
   }
 }
