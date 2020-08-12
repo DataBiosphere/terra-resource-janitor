@@ -279,7 +279,7 @@ public class JanitorDao {
     String sql =
         "SELECT count(*) as count, tr.state, tr.resource_type, "
             + "(SELECT value FROM label WHERE tracked_resource_id =  tr.id and key = :client_key) as client "
-            + "FROM tracked_resource tr GROUP BY tr.state, client";
+            + "FROM tracked_resource tr GROUP BY tr.state, tr.resource_type, client";
     return jdbcTemplate.query(
         sql,
         new MapSqlParameterSource().addValue("client_key", CLIENT_LABEL_KEY),

@@ -310,7 +310,7 @@ public class JanitorDaoTest {
                 .build(),
             ResourceKindCount.builder()
                 .count(1)
-                .trackedResourceState(TrackedResourceState.CLEANING)
+                .trackedResourceState(TrackedResourceState.READY)
                 .resourceType(ResourceType.GOOGLE_BUCKET)
                 .client("c1")
                 .build(),

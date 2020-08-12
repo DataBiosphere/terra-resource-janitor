@@ -26,19 +26,18 @@ public class FlightScheduler {
 
   private final PrimaryConfiguration primaryConfiguration;
   private final StairwayComponent stairwayComponent;
-  private final FlightManager flightManager;
   private final JanitorDao janitorDao;
+  private final FlightManager flightManager;
 
   @Autowired
   public FlightScheduler(
       PrimaryConfiguration primaryConfiguration,
       StairwayComponent stairwayComponent,
       JanitorDao janitorDao,
-      FlightSubmissionFactory submissionFactory,
-      JanitorDao janitorDao1) {
+      FlightSubmissionFactory submissionFactory) {
     this.primaryConfiguration = primaryConfiguration;
+    this.janitorDao = janitorDao;
     this.stairwayComponent = stairwayComponent;
-    this.janitorDao = janitorDao1;
     flightManager = new FlightManager(stairwayComponent.get(), janitorDao, submissionFactory);
   }
 
