@@ -1,10 +1,10 @@
 package bio.terra.janitor.service.cleanup;
 
+import bio.terra.janitor.common.ResourceType;
+import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.db.TrackedResource;
-import bio.terra.janitor.service.cleanup.flight.FinalCleanupStep;
-import bio.terra.janitor.service.cleanup.flight.InitialCleanupStep;
-import bio.terra.janitor.service.cleanup.flight.UnsupportedCleanupStep;
+import bio.terra.janitor.service.cleanup.flight.*;
 import bio.terra.stairway.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -14,8 +14,16 @@ import org.springframework.stereotype.Component;
 public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
   @Override
   public FlightSubmission createSubmission(TrackedResource trackedResource) {
-    // TODO(wchamber): Add different flights and cleanup steps for each cloud resource type.
-    return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
+    ResourceType resourceType =
+        new ResourceTypeVisitor().accept(trackedResource.cloudResourceUid());
+    FlightMap flightMap = new FlightMap();
+    flightMap.put(FlightMapKeys.TRACKED_RESOURCE, trackedResource);
+    switch (resourceType) {
+      case GOOGLE_BUCKET:
+        return FlightSubmission.create(GoogleBucketCleanupFlight.class, flightMap);
+      default:
+        return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
+    }
   }
 
   /**
@@ -29,6 +37,18 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
           ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
       addStep(new InitialCleanupStep(janitorDao));
       addStep(new UnsupportedCleanupStep());
+      addStep(new FinalCleanupStep(janitorDao));
+    }
+  }
+
+  /** A Flight to cleanup a GoogleBucket. */
+  public static class GoogleBucketCleanupFlight extends Flight {
+    public GoogleBucketCleanupFlight(FlightMap inputParameters, Object applicationContext) {
+      super(inputParameters, applicationContext);
+      JanitorDao janitorDao =
+          ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
+      addStep(new InitialCleanupStep(janitorDao));
+      addStep(new GoogleBucketCleanupStep());
       addStep(new FinalCleanupStep(janitorDao));
     }
   }

@@ -3,20 +3,26 @@ package bio.terra.janitor.service.cleanup;
 import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
 import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.cloudres.google.storage.BucketCow;
+import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.janitor.app.Main;
+import bio.terra.janitor.common.configuration.TestConfiguration;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.service.cleanup.flight.*;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
+import com.google.cloud.storage.BucketInfo;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +46,9 @@ public class FlightManagerTest {
 
   @Autowired StairwayComponent stairwayComponent;
   @Autowired JanitorDao janitorDao;
+  @Autowired TestConfiguration testConfiguration;
+
+  private StorageCow storageCow;
 
   private static TrackedResource newResourceForCleaning() {
     return TrackedResource.builder()
@@ -48,6 +57,17 @@ public class FlightManagerTest {
         .cloudResourceUid(
             new CloudResourceUid()
                 .googleBucketUid(new GoogleBucketUid().bucketName(UUID.randomUUID().toString())))
+        .creation(CREATION)
+        .expiration(EXPIRATION)
+        .build();
+  }
+
+  private static TrackedResource newBucketForCleaning(String bucketName) {
+    return TrackedResource.builder()
+        .trackedResourceId(TrackedResourceId.create(UUID.randomUUID()))
+        .trackedResourceState(TrackedResourceState.READY)
+        .cloudResourceUid(
+            new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName)))
         .creation(CREATION)
         .expiration(EXPIRATION)
         .build();
@@ -68,8 +88,26 @@ public class FlightManagerTest {
     throw new InterruptedException("Flight did not complete in time.");
   }
 
+  @BeforeEach
+  public void setUp() throws Exception {
+    storageCow =
+        new StorageCow(
+            testConfiguration.getCrlClientConfig(),
+            StorageOptions.newBuilder()
+                .setProjectId(testConfiguration.getResourceProjectId())
+                .build());
+  }
+
   @Test
   public void scheduleAndCompleteFlight() throws Exception {
+    // Creates bucket and verify.
+    String bucketName = UUID.randomUUID().toString();
+    assertNull(storageCow.get(bucketName));
+    storageCow.create(BucketInfo.of(bucketName));
+    BucketCow createdBucket = storageCow.create(BucketInfo.of(bucketName));
+    assertEquals(bucketName, createdBucket.getBucketInfo().getName());
+    assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
+
     FlightManager manager =
         new FlightManager(
             stairwayComponent.get(),
@@ -77,7 +115,7 @@ public class FlightManagerTest {
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     OkCleanupFlight.class, new FlightMap()));
-    TrackedResource resource = newResourceForCleaning();
+    TrackedResource resource = newBucketForCleaning(bucketName);
     janitorDao.createResource(resource, ImmutableMap.of());
 
     Optional<String> flightId = manager.submitFlight(EXPIRATION);

@@ -58,11 +58,15 @@ class FlightManager {
    */
   public Optional<String> submitFlight(Instant expiredBy) {
     String flightId = stairway.createFlightId();
+    logger.info("flightId: " + flightId);
     Optional<TrackedResource> resource = updateResourceForCleaning(expiredBy, flightId);
+
     if (!resource.isPresent()) {
+      logger.info("no resource!!!!!");
       // No resource to schedule.
       return Optional.empty();
     }
+    logger.info("resource: " + resource.get().cloudResourceUid());
     // If submission fails, it will be recovered later.
     submitToStairway(flightId, resource.get());
     return Optional.of(flightId);
