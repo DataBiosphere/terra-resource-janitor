@@ -161,8 +161,8 @@ components:
       type: object
       required:
         - resourceUid
-        - timeToLiveInMinutes
         - creation
+        - expiration
       properties:
         resourceUid:
           # CloudResourceUid is referred from CRL's cloud-resource-schema.
@@ -176,10 +176,12 @@ components:
           description: The resource creation time
           type: string
           format: 'date-time'
+          example: '2020-01-13T12:59:26+00:00'
         expiration:
           description: The resource expiration time
           type: string
           format: 'date-time'
+          example: '2020-01-14T12:59:26+00:00'
 
     CreatedResource:
       type: object
