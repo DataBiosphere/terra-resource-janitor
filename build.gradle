@@ -33,6 +33,9 @@ repositories {
 def crlSchemaVersion = "0.0.2-SNAPSHOT"
 
 dependencies {
+    implementation 'io.opencensus:opencensus-api:0.26.0'
+    implementation 'io.opencensus:opencensus-impl:0.26.0'
+    implementation 'io.opencensus:opencensus-exporter-stats-stackdriver:0.26.0'
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jdbc'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'

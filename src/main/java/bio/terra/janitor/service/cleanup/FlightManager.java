@@ -5,8 +5,11 @@ import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
+import com.google.common.base.Stopwatch;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Isolation;
@@ -57,6 +60,7 @@ class FlightManager {
    * to be submitted to Stairway.
    */
   public Optional<String> submitFlight(Instant expiredBy) {
+    Stopwatch stopwatch = Stopwatch.createStarted();
     String flightId = stairway.createFlightId();
     logger.info("flightId: " + flightId);
     Optional<TrackedResource> resource = updateResourceForCleaning(expiredBy, flightId);
@@ -68,7 +72,10 @@ class FlightManager {
     }
     logger.info("resource: " + resource.get().cloudResourceUid());
     // If submission fails, it will be recovered later.
-    submitToStairway(flightId, resource.get());
+    boolean submissionSuccessful = submitToStairway(flightId, resource.get());
+    // Only record duration of submission if there was something to attempt to schedule.
+    MetricsHelper.recordSubmissionDuration(
+        Duration.ofNanos(stopwatch.elapsed(TimeUnit.NANOSECONDS)), submissionSuccessful);
     return Optional.of(flightId);
   }
 
@@ -157,7 +164,11 @@ class FlightManager {
         janitorDao.retrieveResourcesWith(CleanupFlightState.FINISHING, limit);
     int completedFlights = 0;
     for (TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
-      if (completeFlight(resourceAndFlight)) {
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      boolean flightCompleted = completeFlight(resourceAndFlight);
+      MetricsHelper.recordCompletionDuration(
+          Duration.ofNanos(stopwatch.elapsed(TimeUnit.NANOSECONDS)), flightCompleted);
+      if (flightCompleted) {
         ++completedFlights;
       }
     }
@@ -245,7 +256,11 @@ class FlightManager {
     }
     int completedFlights = 0;
     for (FlightState flight : flights) {
-      if (updateFatalFlight(flight.getFlightId())) {
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      boolean flightCompleted = updateFatalFlight(flight.getFlightId());
+      MetricsHelper.recordFatalUpdateDuration(
+          Duration.ofNanos(stopwatch.elapsed(TimeUnit.NANOSECONDS)), flightCompleted);
+      if (flightCompleted) {
         ++completedFlights;
       }
     }
