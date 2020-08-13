@@ -84,7 +84,10 @@ class MetricsHelper {
 
   private static final ImmutableList<View> VIEWS =
       ImmutableList.of(
-          SUBMISSION_DURATION_VIEW, COMPLETION_DURATION_VIEW, FATAL_UPDATE_DURATION_VIEW);
+          SUBMISSION_DURATION_VIEW,
+          COMPLETION_DURATION_VIEW,
+          FATAL_UPDATE_DURATION_VIEW,
+          TRACKED_RESOURCE_COUNT_VIEW);
 
   // Register all views
   static {
