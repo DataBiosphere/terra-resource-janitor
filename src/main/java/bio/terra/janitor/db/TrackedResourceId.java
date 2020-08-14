@@ -14,7 +14,7 @@ import java.util.UUID;
 @JsonDeserialize(builder = AutoValue_TrackedResourceId.Builder.class)
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.WRAPPER_ARRAY)
 public abstract class TrackedResourceId {
-  @JsonProperty("setUuid")
+  @JsonProperty("uuid")
   public abstract UUID uuid();
 
   public static TrackedResourceId create(UUID id) {
