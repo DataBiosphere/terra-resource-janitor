@@ -1,6 +1,7 @@
 package bio.terra.janitor.service.cleanup;
 
 import bio.terra.janitor.db.ResourceKindCount;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.opencensus.stats.*;
 import io.opencensus.tags.*;
@@ -11,8 +12,8 @@ import java.util.Arrays;
 class MetricsHelper {
   private MetricsHelper() {}
 
-  public static final String PREFIX = "terra/janitor/cleanup";
-  public static final ViewManager VIEW_MANAGER = Stats.getViewManager();
+  private static final String PREFIX = "terra/janitor/cleanup";
+  @VisibleForTesting static final ViewManager VIEW_MANAGER = Stats.getViewManager();
 
   private static final Tagger TAGGER = Tags.getTagger();
   private static final StatsRecorder STATS_RECORDER = Stats.getStatsRecorder();
@@ -74,7 +75,9 @@ class MetricsHelper {
           FATAL_UPDATE_DURATION,
           DURATION_DISTRIBUTION,
           ImmutableList.of(SUCCESS_KEY));
-  private static final View TRACKED_RESOURCE_COUNT_VIEW =
+
+  @VisibleForTesting
+  static final View TRACKED_RESOURCE_COUNT_VIEW =
       View.create(
           View.Name.create(PREFIX + "/tracked_resource_count"),
           "The count of tracked resources",
