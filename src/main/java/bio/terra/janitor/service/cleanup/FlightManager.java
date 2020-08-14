@@ -63,7 +63,6 @@ class FlightManager {
     Stopwatch stopwatch = Stopwatch.createStarted();
     String flightId = stairway.createFlightId();
     Optional<TrackedResource> resource = updateResourceForCleaning(expiredBy, flightId);
-
     if (!resource.isPresent()) {
       // No resource to schedule.
       return Optional.empty();
