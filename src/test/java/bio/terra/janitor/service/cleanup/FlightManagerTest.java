@@ -90,10 +90,13 @@ public class FlightManagerTest {
 
   @BeforeEach
   public void setUp() throws Exception {
+    System.out.println("~~~~~~~~");
+    System.out.println(testConfiguration.getResourceProjectId());
     storageCow =
         new StorageCow(
             testConfiguration.getCrlClientConfig(),
             StorageOptions.newBuilder()
+                .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
                 .setProjectId(testConfiguration.getResourceProjectId())
                 .build());
   }
@@ -103,10 +106,13 @@ public class FlightManagerTest {
     // Creates bucket and verify.
     String bucketName = UUID.randomUUID().toString();
     assertNull(storageCow.get(bucketName));
-    storageCow.create(BucketInfo.of(bucketName));
     BucketCow createdBucket = storageCow.create(BucketInfo.of(bucketName));
     assertEquals(bucketName, createdBucket.getBucketInfo().getName());
     assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
+
+    TrackedResource resource = newBucketForCleaning(bucketName);
+    FlightMap flightMap = new FlightMap();
+    flightMap.put(FlightMapKeys.TRACKED_RESOURCE, resource);
 
     FlightManager manager =
         new FlightManager(
@@ -114,8 +120,8 @@ public class FlightManagerTest {
             janitorDao,
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
-                    OkCleanupFlight.class, new FlightMap()));
-    TrackedResource resource = newBucketForCleaning(bucketName);
+                    FlightSubmissionFactoryImpl.GoogleBucketCleanupFlight.class, flightMap));
+
     janitorDao.createResource(resource, ImmutableMap.of());
 
     Optional<String> flightId = manager.submitFlight(EXPIRATION);
@@ -135,6 +141,9 @@ public class FlightManagerTest {
     // No more work to be done once the flight is completed.
     assertFalse(manager.submitFlight(EXPIRATION).isPresent());
     assertEquals(0, manager.updateCompletedFlights(10));
+
+    // Resource is removed
+    assertNull(storageCow.get(bucketName));
   }
 
   @Test

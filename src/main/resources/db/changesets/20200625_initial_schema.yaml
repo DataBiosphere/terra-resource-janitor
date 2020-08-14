@@ -10,7 +10,7 @@ databaseChangeLog:
         columns:
           - column:
               name: id
-              type: uuid
+              type: setUuid
               constraints:
                 primaryKey: true
                 nullable: false
@@ -51,7 +51,7 @@ databaseChangeLog:
         columns:
           - column:
               name: tracked_resource_id
-              type: uuid
+              type: setUuid
               constraints:
                 references: tracked_resource(id)
                 foreignKeyName: fk_tracked_id
@@ -83,7 +83,7 @@ databaseChangeLog:
                 unique: true
           - column:
               name: tracked_resource_id
-              type: uuid
+              type: setUuid
               constraints:
                 references: tracked_resource(id)
                 foreignKeyName: fk_tracked_id
@@ -101,7 +101,7 @@ databaseChangeLog:
         columns:
           - column:
               name: tracked_resource_id
-              type: uuid
+              type: setUuid
               constraints:
                 references: tracked_resource(id)
                 foreignKeyName: fk_tracked_id

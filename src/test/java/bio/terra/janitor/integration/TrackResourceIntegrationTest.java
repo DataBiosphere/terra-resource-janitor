@@ -69,7 +69,7 @@ public class TrackResourceIntegrationTest {
     TopicName topicName =
         TopicName.of(
             trackResourcePubsubConfiguration.getProjectId(),
-            testConfiguration.getTrackResourceTopicId());
+            testConfiguration.getProdTrackResourceTopicId());
     publisher =
         Publisher.newBuilder(topicName)
             .setCredentialsProvider(

@@ -19,38 +19,18 @@ public class TestConfiguration {
   public static Duration RESOURCE_TIME_TO_LIVE = Duration.ofMinutes(30);
 
   private String resourceProjectId;
-  private String trackResourceTopicId;
-  private String clientServiceAccountPath;
-  private String crlClientCredentialFilePath;
-  private String janitorPubsubProjectId;
-  private String janitorTopicId;
+  private String prodTrackResourceTopicId;
+  private String prodCrlClientCredentialFilePath;
 
-  public String getTrackResourceTopicId() {
-    return trackResourceTopicId;
+  private String resourceCredentialFilePath;
+  private String prodTrackResourceProjectId;
+
+  public void setProdCrlClientCredentialFilePath(String prodCrlClientCredentialFilePath) {
+    this.prodCrlClientCredentialFilePath = prodCrlClientCredentialFilePath;
   }
 
-  public void setTrackResourceTopicId(String trackResourceTopicId) {
-    this.trackResourceTopicId = trackResourceTopicId;
-  }
-
-  public String getClientServiceAccountPath() {
-    return clientServiceAccountPath;
-  }
-
-  public void setClientServiceAccountPath(String clientServiceAccountPath) {
-    this.clientServiceAccountPath = clientServiceAccountPath;
-  }
-
-  public void setCrlClientCredentialFilePath(String crlClientCredentialFilePath) {
-    this.crlClientCredentialFilePath = crlClientCredentialFilePath;
-  }
-
-  public void setJanitorPubsubProjectId(String janitorPubsubProjectId) {
-    this.janitorPubsubProjectId = janitorPubsubProjectId;
-  }
-
-  public void setJanitorTopicId(String janitorTopicId) {
-    this.janitorTopicId = janitorTopicId;
+  public void setProdTrackResourceProjectId(String prodTrackResourceProjectId) {
+    this.prodTrackResourceProjectId = prodTrackResourceProjectId;
   }
 
   public String getResourceProjectId() {
@@ -61,12 +41,16 @@ public class TestConfiguration {
     this.resourceProjectId = resourceProjectId;
   }
 
-  /**
-   * Janitor Client {@link ServiceAccountCredentials} which has permission to publish message to
-   * Janitor.
-   */
-  public ServiceAccountCredentials getClientGoogleCredentialsOrDie() {
-    return getGoogleCredentialsOrDie(clientServiceAccountPath);
+  public String getProdTrackResourceTopicId() {
+    return prodTrackResourceTopicId;
+  }
+
+  public void setProdTrackResourceTopicId(String prodTrackResourceTopicId) {
+    this.prodTrackResourceTopicId = prodTrackResourceTopicId;
+  }
+
+  public void setResourceCredentialFilePath(String resourceCredentialFilePath) {
+    this.resourceCredentialFilePath = resourceCredentialFilePath;
   }
 
   /** Creates {@link ClientConfig} for using CRL in test. */
@@ -77,12 +61,28 @@ public class TestConfiguration {
     CleanupConfig cleanupConfig =
         CleanupConfig.builder()
             .setCleanupId("janitor-test")
-            .setJanitorProjectId(janitorPubsubProjectId)
+            .setJanitorProjectId(prodTrackResourceProjectId)
             .setTimeToLive(RESOURCE_TIME_TO_LIVE)
-            .setJanitorTopicName(janitorTopicId)
-            .setCredentials(getGoogleCredentialsOrDie(crlClientCredentialFilePath))
+            .setJanitorTopicName(prodTrackResourceTopicId)
+            .setCredentials(getGoogleCredentialsOrDie(prodCrlClientCredentialFilePath))
             .build();
     clientConfigBuilder.setCleanupConfig(cleanupConfig);
     return clientConfigBuilder.build();
+  }
+
+  /**
+   * {@link ServiceAccountCredentials} which has permission to publish message to Janitor prod
+   * instance.
+   */
+  public ServiceAccountCredentials getClientGoogleCredentialsOrDie() {
+    return getGoogleCredentialsOrDie(prodCrlClientCredentialFilePath);
+  }
+
+  /**
+   * Janitor Client {@link ServiceAccountCredentials} which has permission to access cloud resources
+   * in test.
+   */
+  public ServiceAccountCredentials getResourceAccessGoogleCredentialsOrDie() {
+    return getGoogleCredentialsOrDie(resourceCredentialFilePath);
   }
 }
