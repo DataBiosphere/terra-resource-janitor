@@ -12,6 +12,8 @@ class CleanupTestUtils {
       throws InterruptedException {
     int numPolls = 0;
     while (numPolls < maxNumPolls) {
+      System.out.println("~~~~~~!!!!!");
+      System.out.println(condition.get());
       TimeUnit.MILLISECONDS.sleep(period.toMillis());
       if (condition.get()) {
         return;

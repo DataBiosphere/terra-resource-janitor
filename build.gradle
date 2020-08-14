@@ -136,16 +136,17 @@ sourceSets.main.java.srcDir "${openapiTargetDir}/src/main/java"
 ideaModule.dependsOn swaggerSources.server.code
 // end of OpenAPI Server Generation
 
-test {
-    useJUnitPlatform()
-}
 def googleCredentialsFile = "${projectDir}/src/test/resources/rendered/sa-account.json"
 
-task unitTest(type: Test) {
+test {
     // Sets the application Google Credentials.
     environment = [
             'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
     ]
+    useJUnitPlatform()
+}
+
+task unitTest(type: Test) {
     useJUnitPlatform {
         includeTags 'unit'
     }
@@ -156,10 +157,6 @@ task unitTest(type: Test) {
 }
 
 task integrationTest(type: Test) {
-    // Sets the application Google Credentials.
-    environment = [
-            'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
-    ]
     useJUnitPlatform {
         includeTags "integration"
     }

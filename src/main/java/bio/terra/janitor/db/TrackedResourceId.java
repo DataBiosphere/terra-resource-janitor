@@ -18,7 +18,7 @@ public abstract class TrackedResourceId {
   public abstract UUID uuid();
 
   public static TrackedResourceId create(UUID id) {
-    return new AutoValue_TrackedResourceId.Builder().setUuid(id).build();
+    return new AutoValue_TrackedResourceId.Builder().uuid(id).build();
   }
 
   @Override
@@ -30,7 +30,7 @@ public abstract class TrackedResourceId {
   @AutoValue.Builder
   @JsonPOJOBuilder(withPrefix = "")
   public abstract static class Builder {
-    public abstract Builder setUuid(UUID value);
+    public abstract Builder uuid(UUID value);
 
     public abstract TrackedResourceId build();
   }

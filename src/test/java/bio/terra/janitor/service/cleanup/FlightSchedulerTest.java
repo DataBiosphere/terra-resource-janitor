@@ -1,16 +1,23 @@
 package bio.terra.janitor.service.cleanup;
 
 import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+import bio.terra.cloudres.google.storage.BucketCow;
+import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.PrimaryConfiguration;
+import bio.terra.janitor.common.configuration.TestConfiguration;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.service.cleanup.flight.FatalStep;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import com.google.cloud.storage.BucketInfo;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.Instant;
@@ -36,6 +43,20 @@ public class FlightSchedulerTest {
   private FlightScheduler flightScheduler;
   @Autowired JanitorDao janitorDao;
   @Autowired StairwayComponent stairwayComponent;
+  @Autowired TestConfiguration testConfiguration;
+
+  private StorageCow storageCow;
+
+  @BeforeEach
+  public void setUp() throws Exception {
+    storageCow =
+        new StorageCow(
+            testConfiguration.getCrlClientConfig(),
+            StorageOptions.newBuilder()
+                .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
+                .setProjectId(testConfiguration.getResourceProjectId())
+                .build());
+  }
 
   @AfterEach
   public void tearDown() {
@@ -55,12 +76,11 @@ public class FlightSchedulerTest {
   }
 
   /** Returns a new {@link TrackedResource} that is ready for cleanup {@code expiredBy}. */
-  private TrackedResource newReadyExpiredResource(Instant expiredBy) {
+  private TrackedResource newReadyExpiredResource(CloudResourceUid resource, Instant expiredBy) {
     return TrackedResource.builder()
         .trackedResourceId(TrackedResourceId.create(UUID.randomUUID()))
         .trackedResourceState(TrackedResourceState.READY)
-        .cloudResourceUid(
-            new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName("foo")))
+        .cloudResourceUid(resource)
         .creation(expiredBy)
         .expiration(expiredBy)
         .build();
@@ -75,7 +95,19 @@ public class FlightSchedulerTest {
   }
 
   @Test
-  public void resourceScheduledForCleanup() throws Exception {
+  public void resourceScheduledForCleanup_googleBucket() throws Exception {
+    // Creates bucket and verify.
+    String bucketName = UUID.randomUUID().toString();
+    assertNull(storageCow.get(bucketName));
+    BucketCow createdBucket = storageCow.create(BucketInfo.of(bucketName));
+    assertEquals(bucketName, createdBucket.getBucketInfo().getName());
+    assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
+
+    TrackedResource resource =
+        newReadyExpiredResource(
+            new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName)),
+            Instant.now());
+
     flightScheduler =
         new FlightScheduler(
             newPrimaryConfiguration(),
@@ -84,13 +116,15 @@ public class FlightSchedulerTest {
             new FlightSubmissionFactoryImpl());
     flightScheduler.initialize();
 
-    TrackedResource resource = newReadyExpiredResource(Instant.now());
     janitorDao.createResource(resource, ImmutableMap.of());
 
     pollUntil(
-        () -> resourceStateIs(resource.trackedResourceId(), TrackedResourceState.ERROR),
+        () -> resourceStateIs(resource.trackedResourceId(), TrackedResourceState.DONE),
         Duration.ofSeconds(1),
         10);
+
+    // Resource is removed
+    assertNull(storageCow.get(bucketName));
   }
 
   @Test
@@ -102,7 +136,10 @@ public class FlightSchedulerTest {
         new FlightScheduler(newPrimaryConfiguration(), stairwayComponent, janitorDao, fatalFactory);
     flightScheduler.initialize();
 
-    TrackedResource resource = newReadyExpiredResource(Instant.now());
+    TrackedResource resource =
+        newReadyExpiredResource(
+            new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName("foo")),
+            Instant.now());
     janitorDao.createResource(resource, ImmutableMap.of());
 
     pollUntil(
