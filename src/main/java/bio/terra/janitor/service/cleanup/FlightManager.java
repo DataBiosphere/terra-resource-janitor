@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -66,7 +67,8 @@ class FlightManager {
     Stopwatch stopwatch = Stopwatch.createStarted();
     String flightId = stairway.createFlightId();
     Optional<TrackedResource> resource =
-        transactionTemplate.execute(status -> updateResourceForCleaning(expiredBy, flightId));
+        transactionTemplate.execute(
+            status -> updateResourceForCleaning(expiredBy, flightId, status));
     if (!resource.isPresent()) {
       // No resource to schedule.
       return Optional.empty();
@@ -84,9 +86,11 @@ class FlightManager {
    * {@link TrackedResourceState#CLEANING}. Inserts a new {@link CleanupFlight} for that resource as
    * initiating.
    *
-   * <p>This should be done as a part of a transaction.
+   * <p>This should be done as a part of a transaction. The TransactionStatus is unused, but a part
+   * of the signature as a reminder.
    */
-  private Optional<TrackedResource> updateResourceForCleaning(Instant expiredBy, String flightId) {
+  private Optional<TrackedResource> updateResourceForCleaning(
+      Instant expiredBy, String flightId, TransactionStatus unused) {
     Optional<TrackedResource> resource =
         janitorDao.retrieveExpiredResourceWith(expiredBy, TrackedResourceState.READY);
     if (!resource.isPresent()) {
@@ -200,33 +204,32 @@ class FlightManager {
       return false;
     }
     return transactionTemplate.execute(
-        status -> {
-          boolean updateSuccess =
-              updateFinishedCleanupState(
-                  resourceAndFlight.trackedResource().trackedResourceId(),
-                  flightId,
-                  endCleaningState);
-          if (!updateSuccess) {
-            status.setRollbackOnly();
-          }
-          return updateSuccess;
-        });
+        status ->
+            updateFinishedCleanupState(
+                resourceAndFlight.trackedResource().trackedResourceId(),
+                flightId,
+                endCleaningState,
+                status));
   }
 
   /**
-   * Update the TrackedResourceState and CleanupFlightState for the finishing flight.
+   * Update the TrackedResourceState and CleanupFlightState for the finishing flight. Returns
+   * whether the update was successful.
    *
-   * <p>This should be done as a part of a transaction. Returns whether the transaction should be
-   * committed.
+   * <p>This should be done as a part of a transaction.
    */
   private boolean updateFinishedCleanupState(
-      TrackedResourceId trackedResourceId, String flightId, TrackedResourceState endCleaningState) {
+      TrackedResourceId trackedResourceId,
+      String flightId,
+      TrackedResourceState endCleaningState,
+      TransactionStatus transactionStatus) {
     // Retrieve the TrackedResource within this transaction to ensure no one else is abandoning or
     // duplicating it while we finish it.
     Optional<TrackedResource> resource = janitorDao.retrieveTrackedResource(trackedResourceId);
     if (!resource.isPresent()) {
       logger.error(
           "Unable to find tracked_resource with id {} while finishing flight.", trackedResourceId);
+      transactionStatus.setRollbackOnly();
       return false;
     }
     TrackedResourceState resourceState = resource.get().trackedResourceState();
@@ -237,6 +240,7 @@ class FlightManager {
       // The resource should not have moved from CLEANING to any other state while there was a
       // flight working on it.
       logger.error("Unexpected TrackedResourceState {} while finishing flight.", resourceState);
+      transactionStatus.setRollbackOnly();
       return false;
     }
     // We assume no one else is modifying the CleanupFlightState while we do this.
@@ -274,14 +278,7 @@ class FlightManager {
   }
 
   private boolean updateFatalFlight(String flightId) {
-    if (!transactionTemplate.execute(
-        status -> {
-          boolean updateSuccess = updateFatalCleanupState(flightId);
-          if (!updateSuccess) {
-            status.setRollbackOnly();
-          }
-          return updateSuccess;
-        })) {
+    if (!transactionTemplate.execute(status -> updateFatalCleanupState(flightId, status))) {
       return false;
     }
     try {
@@ -298,17 +295,18 @@ class FlightManager {
   }
 
   /**
-   * Update the TrackedResourceState and CleanupFlightState for the fatal flight.
+   * Update the TrackedResourceState and CleanupFlightState for the fatal flight. Returns whether
+   * the update was successful.
    *
-   * <p>This should be done as a part of a transaction. Returns whether the transaction should be
-   * committed.
+   * <p>This should be done as a part of a transaction.
    */
-  private boolean updateFatalCleanupState(String flightId) {
+  private boolean updateFatalCleanupState(String flightId, TransactionStatus transactionStatus) {
     Optional<TrackedResourceAndFlight> resourceAndFlight =
         janitorDao.retrieveResourceAndFlight(flightId);
     if (!resourceAndFlight.isPresent()) {
       logger.error(
           "Unable to find tracked_resource for flight id {} while finishing fatal.", flightId);
+      transactionStatus.setRollbackOnly();
       return false;
     }
     TrackedResourceState resourceState =
@@ -327,6 +325,7 @@ class FlightManager {
         && !resourceState.equals(TrackedResourceState.DUPLICATED)) {
       logger.error(
           "Unexpected TrackedResourceState {} while finishing fatal flight.", resourceState);
+      transactionStatus.setRollbackOnly();
       return false;
     }
     janitorDao.updateFlightState(flightId, CleanupFlightState.FATAL);
