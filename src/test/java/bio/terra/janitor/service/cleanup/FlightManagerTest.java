@@ -27,6 +27,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Tag("unit")
 @ExtendWith(SpringExtension.class)
@@ -40,6 +41,12 @@ public class FlightManagerTest {
 
   @Autowired StairwayComponent stairwayComponent;
   @Autowired JanitorDao janitorDao;
+  @Autowired TransactionTemplate transactionTemplate;
+
+  private FlightManager createFlightManager(FlightSubmissionFactory submissionFactory) {
+    return new FlightManager(
+        stairwayComponent.get(), janitorDao, transactionTemplate, submissionFactory);
+  }
 
   private static TrackedResource newResourceForCleaning() {
     return TrackedResource.builder()
@@ -71,9 +78,7 @@ public class FlightManagerTest {
   @Test
   public void scheduleAndCompleteFlight() throws Exception {
     FlightManager manager =
-        new FlightManager(
-            stairwayComponent.get(),
-            janitorDao,
+        createFlightManager(
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     OkCleanupFlight.class, new FlightMap()));
@@ -103,9 +108,7 @@ public class FlightManagerTest {
   public void scheduleFlight_nothingReady() {
     // No resources for cleaning inserted.
     FlightManager manager =
-        new FlightManager(
-            stairwayComponent.get(),
-            janitorDao,
+        createFlightManager(
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     OkCleanupFlight.class, new FlightMap()));
@@ -115,9 +118,7 @@ public class FlightManagerTest {
   @Test
   public void recoverUnsubmittedFlights_unsubmittedFlight() throws Exception {
     FlightManager manager =
-        new FlightManager(
-            stairwayComponent.get(),
-            janitorDao,
+        createFlightManager(
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     OkCleanupFlight.class, new FlightMap()));
@@ -151,9 +152,7 @@ public class FlightManagerTest {
     // Use the LatchBeforeCleanupFlight to ensure that the CleanupFlightState is not modified before
     // this test calls recoverUnsubmittedFlights.
     FlightManager manager =
-        new FlightManager(
-            stairwayComponent.get(),
-            janitorDao,
+        createFlightManager(
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     LatchBeforeCleanupFlight.class, inputMap));
@@ -178,9 +177,7 @@ public class FlightManagerTest {
   @Test
   public void updateCompletedFlights_nothingComplete() {
     FlightManager manager =
-        new FlightManager(
-            stairwayComponent.get(),
-            janitorDao,
+        createFlightManager(
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     OkCleanupFlight.class, new FlightMap()));
@@ -190,9 +187,7 @@ public class FlightManagerTest {
   @Test
   public void updateCompletedFlights_errorFlight() throws Exception {
     FlightManager manager =
-        new FlightManager(
-            stairwayComponent.get(),
-            janitorDao,
+        createFlightManager(
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     ErrorCleanupFlight.class, new FlightMap()));
@@ -217,9 +212,7 @@ public class FlightManagerTest {
     LatchStep.createLatch(inputMap, latchKey);
 
     FlightManager manager =
-        new FlightManager(
-            stairwayComponent.get(),
-            janitorDao,
+        createFlightManager(
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     LatchAfterCleanupFlight.class, inputMap));
@@ -256,9 +249,7 @@ public class FlightManagerTest {
     LatchStep.createLatch(inputMap, latchKey);
 
     FlightManager manager =
-        new FlightManager(
-            stairwayComponent.get(),
-            janitorDao,
+        createFlightManager(
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     LatchAfterCleanupFlight.class, inputMap));
@@ -320,9 +311,7 @@ public class FlightManagerTest {
   @Test
   public void updateFatalFlight() throws Exception {
     FlightManager manager =
-        new FlightManager(
-            stairwayComponent.get(),
-            janitorDao,
+        createFlightManager(
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     FatalFlight.class, new FlightMap()));
@@ -349,9 +338,7 @@ public class FlightManagerTest {
     LatchStep.createLatch(inputMap, latchKey);
 
     FlightManager manager =
-        new FlightManager(
-            stairwayComponent.get(),
-            janitorDao,
+        createFlightManager(
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     LatchBeforeFatalFlight.class, inputMap));
