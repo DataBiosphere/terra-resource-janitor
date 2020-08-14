@@ -147,6 +147,10 @@ test {
 }
 
 task unitTest(type: Test) {
+    // Sets the application Google Credentials.
+    environment = [
+            'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+    ]
     useJUnitPlatform {
         includeTags 'unit'
     }
@@ -157,6 +161,10 @@ task unitTest(type: Test) {
 }
 
 task integrationTest(type: Test) {
+    // Sets the application Google Credentials.
+    environment = [
+            'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+    ]
     useJUnitPlatform {
         includeTags "integration"
     }
