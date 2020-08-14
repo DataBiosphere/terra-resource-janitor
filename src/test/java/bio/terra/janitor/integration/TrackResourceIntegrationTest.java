@@ -7,8 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
-import bio.terra.janitor.common.configuration.TestConfiguration;
 import bio.terra.janitor.db.TrackedResourceState;
+import bio.terra.janitor.integration.common.configuration.IntegrationTestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.pubsub.v1.Publisher;
@@ -40,7 +40,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 @TestPropertySource("classpath:application-integration-test.properties")
 public class TrackResourceIntegrationTest {
   @Autowired private TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
-  @Autowired private TestConfiguration testConfiguration;
+  @Autowired private IntegrationTestConfiguration integrationTestConfiguration;
   @Autowired private MockMvc mvc;
 
   @Autowired
@@ -69,12 +69,12 @@ public class TrackResourceIntegrationTest {
     TopicName topicName =
         TopicName.of(
             trackResourcePubsubConfiguration.getProjectId(),
-            testConfiguration.getProdTrackResourceTopicId());
+            integrationTestConfiguration.getTrackResourceTopicId());
     publisher =
         Publisher.newBuilder(topicName)
             .setCredentialsProvider(
                 FixedCredentialsProvider.create(
-                    testConfiguration.getClientGoogleCredentialsOrDie()))
+                    integrationTestConfiguration.getClientGoogleCredentialsOrDie()))
             .build();
   }
 

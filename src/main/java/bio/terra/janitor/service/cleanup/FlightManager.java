@@ -62,15 +62,12 @@ class FlightManager {
   public Optional<String> submitFlight(Instant expiredBy) {
     Stopwatch stopwatch = Stopwatch.createStarted();
     String flightId = stairway.createFlightId();
-    logger.info("flightId: " + flightId);
     Optional<TrackedResource> resource = updateResourceForCleaning(expiredBy, flightId);
 
     if (!resource.isPresent()) {
-      logger.info("no resource!!!!!");
       // No resource to schedule.
       return Optional.empty();
     }
-    logger.info("resource: " + resource.get().cloudResourceUid());
     // If submission fails, it will be recovered later.
     boolean submissionSuccessful = submitToStairway(flightId, resource.get());
     // Only record duration of submission if there was something to attempt to schedule.
