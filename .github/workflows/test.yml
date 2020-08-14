@@ -50,7 +50,7 @@ jobs:
       - name: Grant execute permission for render_config
         run: chmod +x render_config.sh
       - name: Render configuration for tests
-        run: ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+        run: ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
       - name: Initialize Postgres DB
         env:
           PGPASSWORD: postgres
