@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /** The FlightScheduler runs the {@link FlightManager} periodically to clean resources. */
 // TODO add metrics.
@@ -34,11 +35,14 @@ public class FlightScheduler {
       PrimaryConfiguration primaryConfiguration,
       StairwayComponent stairwayComponent,
       JanitorDao janitorDao,
+      TransactionTemplate transactionTemplate,
       FlightSubmissionFactory submissionFactory) {
     this.primaryConfiguration = primaryConfiguration;
     this.janitorDao = janitorDao;
     this.stairwayComponent = stairwayComponent;
-    flightManager = new FlightManager(stairwayComponent.get(), janitorDao, submissionFactory);
+    flightManager =
+        new FlightManager(
+            stairwayComponent.get(), janitorDao, transactionTemplate, submissionFactory);
   }
 
   /**

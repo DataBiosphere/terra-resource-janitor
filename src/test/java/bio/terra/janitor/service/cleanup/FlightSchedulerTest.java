@@ -26,6 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Tag("unit")
 @ExtendWith(SpringExtension.class)
@@ -39,6 +40,18 @@ public class FlightSchedulerTest {
   private FlightScheduler flightScheduler;
   @Autowired JanitorDao janitorDao;
   @Autowired StairwayComponent stairwayComponent;
+  @Autowired TransactionTemplate transactionTemplate;
+
+  private void initializeScheduler(FlightSubmissionFactory submissionFactory) {
+    flightScheduler =
+        new FlightScheduler(
+            newPrimaryConfiguration(),
+            stairwayComponent,
+            janitorDao,
+            transactionTemplate,
+            submissionFactory);
+    flightScheduler.initialize();
+  }
 
   @AfterEach
   public void tearDown() {
@@ -80,13 +93,7 @@ public class FlightSchedulerTest {
 
   @Test
   public void resourceScheduledForCleanup() throws Exception {
-    flightScheduler =
-        new FlightScheduler(
-            newPrimaryConfiguration(),
-            stairwayComponent,
-            janitorDao,
-            new FlightSubmissionFactoryImpl());
-    flightScheduler.initialize();
+    initializeScheduler(new FlightSubmissionFactoryImpl());
 
     TrackedResource resource = newReadyExpiredResource(Instant.now());
     janitorDao.createResource(resource, ImmutableMap.of());
@@ -102,9 +109,7 @@ public class FlightSchedulerTest {
     FlightSubmissionFactory fatalFactory =
         trackedResource ->
             FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap());
-    flightScheduler =
-        new FlightScheduler(newPrimaryConfiguration(), stairwayComponent, janitorDao, fatalFactory);
-    flightScheduler.initialize();
+    initializeScheduler(fatalFactory);
 
     TrackedResource resource = newReadyExpiredResource(Instant.now());
     janitorDao.createResource(resource, ImmutableMap.of());
