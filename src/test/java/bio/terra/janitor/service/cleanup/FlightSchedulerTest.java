@@ -125,15 +125,9 @@ public class FlightSchedulerTest {
     TrackedResource resource = newReadyExpiredResource(Instant.now());
     janitorDao.createResource(resource, ImmutableMap.of());
 
-    flightScheduler =
-        new FlightScheduler(
-            newPrimaryConfiguration(),
-            stairwayComponent,
-            janitorDao,
-            trackedResource ->
-                FlightSubmissionFactory.FlightSubmission.create(
-                    FatalFlight.class, new FlightMap()));
-    flightScheduler.initialize();
+    initializeScheduler(
+        trackedResource ->
+            FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap()));
 
     sleepForMetricsExport();
 
