@@ -131,6 +131,43 @@ public class JanitorDao {
                     .addValue("expiration", expiredBy.atOffset(ZoneOffset.UTC)),
                 TRACKED_RESOURCE_ROW_MAPPER)));
   }
+  
+  /** Returns the tracked reosurces matching the {@code filter}. */
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public List<TrackedResource> retrieveResourcesMatching(TrackedResourceFilter filter) {
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    String whereClause = toSqlWhereClause(filter, params);
+    String sql =
+    "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource WHERE " + whereClause +";";
+    return jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER);
+  }
+
+  /**
+   * Returns the tracked resource with the {@link CloudResourceUid} and not in one of the {@code
+   * forbiddenStates}.
+   *
+   * @param cloudResourceUid What CloudResourceUid to retrieve.
+   * @param forbidddenStates What {@link TrackedResourceState} to retrieved resources cannot have.
+   */
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public List<TrackedResource> retrieveResourcesMatching(
+      CloudResourceUid cloudResourceUid, Set<TrackedResourceState> forbidddenStates) {
+    String statesWhereSql = "";
+    if (!forbidddenStates.isEmpty()) {
+      statesWhereSql = " AND state NOT IN(:forbidden_states) ";
+    }
+    String sql =
+        "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource "
+            + "WHERE resource_uid = :cloud_resource_uid::jsonb"
+            + statesWhereSql
+            + ";";
+    return jdbcTemplate.query(
+        sql,
+        new MapSqlParameterSource()
+            .addValue("cloud_resource_uid", serialize(cloudResourceUid))
+            .addValue("forbidden_states", forbidddenStates),
+        TRACKED_RESOURCE_ROW_MAPPER);
+  }
 
   /** Return the resource and flight associated with the {@code flightId}, if they exist. */
   @Transactional(propagation = Propagation.SUPPORTS)
@@ -338,6 +375,31 @@ public class JanitorDao {
           .map(TrackedResourceAndLabels.Builder::build)
           .collect(Collectors.toList());
     }
+  }
+
+  /** Returns a SQL where clause for the filters, populating the {@code} params with the corresponding values. */
+  private static String toSqlWhereClause(TrackedResourceFilter filter, MapSqlParameterSource params) {
+    if (filter.equals(TrackedResourceFilter.builder().build())) {
+      return "TRUE";
+    }
+    List<String> clauses = new ArrayList<>();
+    if (!filter.allowedStates().isEmpty()) {
+      clauses.add("state IN(:filter_allowed_states)");
+      params.addValue("filter_allowed_states", filter.allowedStates());
+    }
+    if (!filter.forbiddenStates().isEmpty()) {
+      clauses.add("state NOT IN(:filter_forbidden_states");
+      params.addValue("filter_forbidden_states", filter.forbiddenStates());
+    }
+    if (filter.cloudResourceUid().isPresent()) {
+      clauses.add("resource_uid = :filter_cloud_resource_uid::jsonb");
+      params.addValue("filter_cloud_resource_uid", serialize(filter.cloudResourceUid().get()));
+    }
+    if (filter.expiredBy().isPresent()) {
+      clauses.add("expiration <= :filters_expired_by");
+      params.addValue("filters_expired_by", filter.expiredBy().get());
+    }
+    return clauses.stream().collect(Collectors.joining(" AND ", "(", ")"));
   }
 
   /**
