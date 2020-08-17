@@ -30,12 +30,13 @@ public class TestConfiguration {
   /** pubsub topic id to publish track resource to Janitor prod env(tools) */
   private String prodTrackResourceTopicId;
 
-  /** Credential file path to be able to pubish message to Janitor. */
-  private String janitorClientCredentialFilePath;
+  /** Credential file path to be able to pubish message to Janitor test env(toolsalpha). */
+  private String janitorClientServiceAccountPath;
+
+  /** Credential file path to be able to pubish message to Janitor prod env(tools). */
+  private String prodJanitorClientCredentialFilePath;
 
   private String resourceCredentialFilePath;
-
-  private String clientServiceAccountPath;
 
   public String getTrackResourceTopicId() {
     return trackResourceTopicId;
@@ -46,15 +47,15 @@ public class TestConfiguration {
   }
 
   public String getClientServiceAccountPath() {
-    return clientServiceAccountPath;
+    return janitorClientServiceAccountPath;
   }
 
-  public void setClientServiceAccountPath(String clientServiceAccountPath) {
-    this.clientServiceAccountPath = clientServiceAccountPath;
+  public void setJanitorClientServiceAccountPath(String janitorClientServiceAccountPath) {
+    this.janitorClientServiceAccountPath = janitorClientServiceAccountPath;
   }
 
-  public void setJanitorClientCredentialFilePath(String janitorClientCredentialFilePath) {
-    this.janitorClientCredentialFilePath = janitorClientCredentialFilePath;
+  public void setProdJanitorClientCredentialFilePath(String prodJanitorClientCredentialFilePath) {
+    this.prodJanitorClientCredentialFilePath = prodJanitorClientCredentialFilePath;
   }
 
   public void setProdTrackResourceProjectId(String prodTrackResourceProjectId) {
@@ -86,7 +87,7 @@ public class TestConfiguration {
    * Janitor.
    */
   public ServiceAccountCredentials getClientGoogleCredentialsOrDie() {
-    return getGoogleCredentialsOrDie(clientServiceAccountPath);
+    return getGoogleCredentialsOrDie(janitorClientServiceAccountPath);
   }
 
   /** Creates {@link ClientConfig} for using CRL in test. */
@@ -100,7 +101,7 @@ public class TestConfiguration {
             .setJanitorProjectId(prodTrackResourceProjectId)
             .setTimeToLive(RESOURCE_TIME_TO_LIVE)
             .setJanitorTopicName(prodTrackResourceTopicId)
-            .setCredentials(getGoogleCredentialsOrDie(janitorClientCredentialFilePath))
+            .setCredentials(getGoogleCredentialsOrDie(prodJanitorClientCredentialFilePath))
             .build();
     clientConfigBuilder.setCleanupConfig(cleanupConfig);
     return clientConfigBuilder.build();

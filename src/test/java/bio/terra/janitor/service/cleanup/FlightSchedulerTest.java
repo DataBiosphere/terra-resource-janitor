@@ -93,7 +93,9 @@ public class FlightSchedulerTest {
 
   @Test
   public void resourceScheduledForCleanup() throws Exception {
-    initializeScheduler(new FlightSubmissionFactoryImpl());
+    initializeScheduler(
+        trackedResource ->
+            FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap()));
 
     TrackedResource resource = newReadyExpiredResource(Instant.now());
     janitorDao.createResource(resource, ImmutableMap.of());
