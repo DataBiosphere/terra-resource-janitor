@@ -18,6 +18,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** Step to cleanup Google Bucket resource. */
 public class GoogleBucketCleanupStep implements Step {
   private Logger logger = LoggerFactory.getLogger(GoogleBucketCleanupStep.class);
 

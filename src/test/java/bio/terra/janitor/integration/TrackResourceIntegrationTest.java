@@ -85,16 +85,6 @@ public class TrackResourceIntegrationTest {
     publisher.shutdown();
   }
 
-  private PrimaryConfiguration newPrimaryConfiguration() {
-    PrimaryConfiguration primaryConfiguration = new PrimaryConfiguration();
-    primaryConfiguration.setSchedulerEnabled(true);
-    primaryConfiguration.setFlightCompletionPeriod(Duration.ofSeconds(2));
-    primaryConfiguration.setFlightSubmissionPeriod(Duration.ofSeconds(2));
-    primaryConfiguration.setFatalFlightCompletionPeriod(Duration.ofSeconds(2));
-    primaryConfiguration.setRecordResourceCountPeriod(Duration.ofSeconds(2));
-    return primaryConfiguration;
-  }
-
   @Test
   public void subscribeAndCleanupResource_googleBucket() throws Exception {
     // Creates bucket and verify.
