@@ -1,6 +1,8 @@
 package bio.terra.janitor.service.cleanup;
 
 import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
+import static bio.terra.janitor.service.cleanup.CleanupTestUtils.sleepForMetricsExport;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleBucketUid;
@@ -15,6 +17,7 @@ import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +67,7 @@ public class FlightSchedulerTest {
     primaryConfiguration.setFlightCompletionPeriod(Duration.ofSeconds(2));
     primaryConfiguration.setFlightSubmissionPeriod(Duration.ofSeconds(2));
     primaryConfiguration.setFatalFlightCompletionPeriod(Duration.ofSeconds(2));
+    primaryConfiguration.setRecordResourceCountPeriod(Duration.ofSeconds(2));
     return primaryConfiguration;
   }
 
@@ -114,6 +118,25 @@ public class FlightSchedulerTest {
         () -> resourceStateIs(resource.trackedResourceId(), TrackedResourceState.ERROR),
         Duration.ofSeconds(1),
         10);
+  }
+
+  @Test
+  public void recordResourceCount() throws Exception {
+    TrackedResource resource = newReadyExpiredResource(Instant.now());
+    janitorDao.createResource(resource, ImmutableMap.of());
+
+    initializeScheduler(
+        trackedResource ->
+            FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap()));
+
+    sleepForMetricsExport();
+
+    assertThat(
+        MetricsHelper.VIEW_MANAGER
+            .getView(MetricsHelper.TRACKED_RESOURCE_COUNT_VIEW.getName())
+            .getAggregationMap()
+            .size(),
+        Matchers.greaterThan(0));
   }
 
   /** A {@link Flight} that ends fatally. */

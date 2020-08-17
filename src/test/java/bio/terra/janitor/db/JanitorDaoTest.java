@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.generated.model.CloudResourceUid;
+import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.generated.model.GoogleProjectUid;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
@@ -259,5 +260,71 @@ public class JanitorDaoTest {
   @Test
   public void retrieveResourceAndFlight_unknownFlightId() {
     assertEquals(Optional.empty(), janitorDao.retrieveResourceAndFlight("unknown-flight-id"));
+  }
+
+  @Test
+  public void retrieveResourceCounts() {
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.READY).build(),
+        ImmutableMap.of("client", "c1", "foo", "bar"));
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.READY).build(),
+        ImmutableMap.of("client", "c1"));
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.READY).build(),
+        ImmutableMap.of("client", "c2"));
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.CLEANING).build(),
+        ImmutableMap.of("client", "c1"));
+    janitorDao.createResource(
+        newDefaultResource()
+            .trackedResourceState(TrackedResourceState.READY)
+            .cloudResourceUid(
+                new CloudResourceUid()
+                    .googleBucketUid(new GoogleBucketUid().bucketName("my-bucket-name")))
+            .build(),
+        ImmutableMap.of("client", "c1"));
+    // No client label, but unrelated label.
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.CLEANING).build(),
+        ImmutableMap.of("foo", "baz"));
+    // No labels at all.
+    janitorDao.createResource(
+        newDefaultResource().trackedResourceState(TrackedResourceState.CLEANING).build(),
+        ImmutableMap.of());
+
+    assertThat(
+        janitorDao.retrieveResourceCounts(),
+        Matchers.containsInAnyOrder(
+            ResourceKindCount.builder()
+                .count(2)
+                .trackedResourceState(TrackedResourceState.READY)
+                .resourceType(ResourceType.GOOGLE_PROJECT)
+                .client("c1")
+                .build(),
+            ResourceKindCount.builder()
+                .count(1)
+                .trackedResourceState(TrackedResourceState.READY)
+                .resourceType(ResourceType.GOOGLE_PROJECT)
+                .client("c2")
+                .build(),
+            ResourceKindCount.builder()
+                .count(1)
+                .trackedResourceState(TrackedResourceState.READY)
+                .resourceType(ResourceType.GOOGLE_BUCKET)
+                .client("c1")
+                .build(),
+            ResourceKindCount.builder()
+                .count(1)
+                .trackedResourceState(TrackedResourceState.CLEANING)
+                .resourceType(ResourceType.GOOGLE_PROJECT)
+                .client("c1")
+                .build(),
+            ResourceKindCount.builder()
+                .count(2)
+                .trackedResourceState(TrackedResourceState.CLEANING)
+                .resourceType(ResourceType.GOOGLE_PROJECT)
+                .client("")
+                .build()));
   }
 }

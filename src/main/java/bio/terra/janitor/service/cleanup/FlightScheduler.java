@@ -2,9 +2,11 @@ package bio.terra.janitor.service.cleanup;
 
 import bio.terra.janitor.app.configuration.PrimaryConfiguration;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.ResourceKindCount;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -21,10 +23,11 @@ public class FlightScheduler {
   private Logger logger = LoggerFactory.getLogger(FlightScheduler.class);
 
   /** Only need as many threads as we have scheduled tasks. */
-  private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(3);
+  private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(4);
 
   private final PrimaryConfiguration primaryConfiguration;
   private final StairwayComponent stairwayComponent;
+  private final JanitorDao janitorDao;
   private final FlightManager flightManager;
 
   @Autowired
@@ -35,6 +38,7 @@ public class FlightScheduler {
       TransactionTemplate transactionTemplate,
       FlightSubmissionFactory submissionFactory) {
     this.primaryConfiguration = primaryConfiguration;
+    this.janitorDao = janitorDao;
     this.stairwayComponent = stairwayComponent;
     flightManager =
         new FlightManager(
@@ -69,6 +73,11 @@ public class FlightScheduler {
         this::completeFatalFlights,
         /* initialDelay= */ 0,
         /* period= */ primaryConfiguration.getFatalFlightCompletionPeriod().toMillis(),
+        TimeUnit.MILLISECONDS);
+    executor.scheduleAtFixedRate(
+        this::recordResourceCount,
+        /* initialDelay= */ 0,
+        /* period= */ primaryConfiguration.getRecordResourceCountPeriod().toMillis(),
         TimeUnit.MILLISECONDS);
   }
 
@@ -115,6 +124,13 @@ public class FlightScheduler {
     int completedFlights =
         flightManager.updateFatalFlights(primaryConfiguration.getFatalFlightCompletionLimit());
     logger.info("Done completing {} fatal flights.", completedFlights);
+  }
+
+  private void recordResourceCount() {
+    logger.info("Beginning recording resource counts.");
+    List<ResourceKindCount> counts = janitorDao.retrieveResourceCounts();
+    counts.forEach(MetricsHelper::recordResourceKindCount);
+    logger.info("Done recording resource counts.");
   }
 
   public void shutdown() {
