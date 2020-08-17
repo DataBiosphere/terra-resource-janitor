@@ -2,6 +2,7 @@ package bio.terra.janitor.db;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
+import bio.terra.janitor.common.ResourceType;
 import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class JanitorDao {
   private final NamedParameterJdbcTemplate jdbcTemplate;
+  /** The labels key used to distinguish janitor clients. */
+  private static final String CLIENT_LABEL_KEY = "client";
 
   @Autowired
   public JanitorDao(JanitorJdbcConfiguration jdbcConfiguration) {
@@ -267,6 +270,26 @@ public class JanitorDao {
     return labels.stream()
         .collect(
             Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+  }
+
+  /**
+   * Retrieve {@link ResourceKindCount}s for all of the states of tracked resources in the database.
+   */
+  public List<ResourceKindCount> retrieveResourceCounts() {
+    String sql =
+        "SELECT count(*) as count, tr.state, tr.resource_type, "
+            + "(SELECT value FROM label WHERE tracked_resource_id =  tr.id and key = :client_key) as client "
+            + "FROM tracked_resource tr GROUP BY tr.state, tr.resource_type, client";
+    return jdbcTemplate.query(
+        sql,
+        new MapSqlParameterSource().addValue("client_key", CLIENT_LABEL_KEY),
+        (rs, rowNum) ->
+            ResourceKindCount.builder()
+                .count(rs.getInt("count"))
+                .trackedResourceState(TrackedResourceState.valueOf(rs.getString("state")))
+                .resourceType(ResourceType.valueOf(rs.getString("resource_type")))
+                .client(rs.getString("client") == null ? "" : rs.getString("client"))
+                .build());
   }
 
   private static final RowMapper<TrackedResource> TRACKED_RESOURCE_ROW_MAPPER =
