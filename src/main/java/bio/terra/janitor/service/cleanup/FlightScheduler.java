@@ -105,6 +105,7 @@ public class FlightScheduler {
    */
   private void scheduleFlights() {
     logger.info("Beginning scheduling flights.");
+    System.out.println("~~~~~!!!!!!!!!!!!!!!");
     int flightsScheduled = 0;
     while (flightManager.submitFlight(Instant.now()).isPresent()) {
       ++flightsScheduled;

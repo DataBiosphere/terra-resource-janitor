@@ -44,12 +44,12 @@ public class FlightSchedulerTest {
 
   private void initializeScheduler(FlightSubmissionFactory submissionFactory) {
     flightScheduler =
-            new FlightScheduler(
-                    newPrimaryConfiguration(),
-                    stairwayComponent,
-                    janitorDao,
-                    transactionTemplate,
-                    submissionFactory);
+        new FlightScheduler(
+            newPrimaryConfiguration(),
+            stairwayComponent,
+            janitorDao,
+            transactionTemplate,
+            submissionFactory);
     flightScheduler.initialize();
   }
 
@@ -74,21 +74,21 @@ public class FlightSchedulerTest {
   /** Returns a new {@link TrackedResource} that is ready for cleanup {@code expiredBy}. */
   private TrackedResource newReadyExpiredResource(Instant expiredBy) {
     return TrackedResource.builder()
-            .trackedResourceId(TrackedResourceId.create(UUID.randomUUID()))
-            .trackedResourceState(TrackedResourceState.READY)
-            .cloudResourceUid(
-                    new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName("foo")))
-            .creation(expiredBy)
-            .expiration(expiredBy)
-            .build();
+        .trackedResourceId(TrackedResourceId.create(UUID.randomUUID()))
+        .trackedResourceState(TrackedResourceState.READY)
+        .cloudResourceUid(
+            new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName("foo")))
+        .creation(expiredBy)
+        .expiration(expiredBy)
+        .build();
   }
 
   private boolean resourceStateIs(TrackedResourceId id, TrackedResourceState expectedState) {
     return janitorDao
-            .retrieveTrackedResource(id)
-            .get()
-            .trackedResourceState()
-            .equals(expectedState);
+        .retrieveTrackedResource(id)
+        .get()
+        .trackedResourceState()
+        .equals(expectedState);
   }
 
   @Test
@@ -99,25 +99,25 @@ public class FlightSchedulerTest {
     janitorDao.createResource(resource, ImmutableMap.of());
 
     pollUntil(
-            () -> resourceStateIs(resource.trackedResourceId(), TrackedResourceState.ERROR),
-            Duration.ofSeconds(1),
-            10);
+        () -> resourceStateIs(resource.trackedResourceId(), TrackedResourceState.ERROR),
+        Duration.ofSeconds(1),
+        10);
   }
 
   @Test
   public void fatalCleanupCompleted() throws Exception {
     FlightSubmissionFactory fatalFactory =
-            trackedResource ->
-                    FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap());
+        trackedResource ->
+            FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap());
     initializeScheduler(fatalFactory);
 
     TrackedResource resource = newReadyExpiredResource(Instant.now());
     janitorDao.createResource(resource, ImmutableMap.of());
 
     pollUntil(
-            () -> resourceStateIs(resource.trackedResourceId(), TrackedResourceState.ERROR),
-            Duration.ofSeconds(1),
-            10);
+        () -> resourceStateIs(resource.trackedResourceId(), TrackedResourceState.ERROR),
+        Duration.ofSeconds(1),
+        10);
   }
 
   @Test
@@ -126,17 +126,17 @@ public class FlightSchedulerTest {
     janitorDao.createResource(resource, ImmutableMap.of());
 
     initializeScheduler(
-            trackedResource ->
-                    FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap()));
+        trackedResource ->
+            FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap()));
 
     sleepForMetricsExport();
 
     assertThat(
-            MetricsHelper.VIEW_MANAGER
-                    .getView(MetricsHelper.TRACKED_RESOURCE_COUNT_VIEW.getName())
-                    .getAggregationMap()
-                    .size(),
-            Matchers.greaterThan(0));
+        MetricsHelper.VIEW_MANAGER
+            .getView(MetricsHelper.TRACKED_RESOURCE_COUNT_VIEW.getName())
+            .getAggregationMap()
+            .size(),
+        Matchers.greaterThan(0));
   }
 
   /** A {@link Flight} that ends fatally. */

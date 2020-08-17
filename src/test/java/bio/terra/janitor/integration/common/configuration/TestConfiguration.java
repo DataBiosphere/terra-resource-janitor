@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 /** Configs in integration test. */
 @Component
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "integration-test")
-public class IntegrationTestConfiguration {
+@ConfigurationProperties(prefix = "test")
+public class TestConfiguration {
   /** How long to keep the resource before the 'prod' Janitor do the cleanup. */
   public static Duration RESOURCE_TIME_TO_LIVE = Duration.ofMinutes(30);
 
@@ -30,8 +30,8 @@ public class IntegrationTestConfiguration {
   /** pubsub topic id to publish track resource to Janitor prod env(tools) */
   private String prodTrackResourceTopicId;
 
-  /** Credential file path to be able to pubish message to Janitor Prod env */
-  private String prodCrlClientCredentialFilePath;
+  /** Credential file path to be able to pubish message to Janitor. */
+  private String janitorClientCredentialFilePath;
 
   private String resourceCredentialFilePath;
 
@@ -53,8 +53,8 @@ public class IntegrationTestConfiguration {
     this.clientServiceAccountPath = clientServiceAccountPath;
   }
 
-  public void setProdCrlClientCredentialFilePath(String prodCrlClientCredentialFilePath) {
-    this.prodCrlClientCredentialFilePath = prodCrlClientCredentialFilePath;
+  public void setJanitorClientCredentialFilePath(String janitorClientCredentialFilePath) {
+    this.janitorClientCredentialFilePath = janitorClientCredentialFilePath;
   }
 
   public void setProdTrackResourceProjectId(String prodTrackResourceProjectId) {
@@ -100,7 +100,7 @@ public class IntegrationTestConfiguration {
             .setJanitorProjectId(prodTrackResourceProjectId)
             .setTimeToLive(RESOURCE_TIME_TO_LIVE)
             .setJanitorTopicName(prodTrackResourceTopicId)
-            .setCredentials(getGoogleCredentialsOrDie(prodCrlClientCredentialFilePath))
+            .setCredentials(getGoogleCredentialsOrDie(janitorClientCredentialFilePath))
             .build();
     clientConfigBuilder.setCleanupConfig(cleanupConfig);
     return clientConfigBuilder.build();
