@@ -37,6 +37,7 @@ public class ApplicationConfiguration {
 
   @Bean("crlClientConfig")
   public ClientConfig clientConfig() {
+    // Janitor only uses CRL Cows to delete resources. Cleanup is not needed.
     return ClientConfig.Builder.newBuilder().setClient("terra-crl-janitor").build();
   }
 

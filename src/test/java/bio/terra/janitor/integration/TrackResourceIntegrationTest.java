@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
@@ -14,7 +13,6 @@ import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.pubsub.v1.Publisher;
-import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
@@ -88,8 +86,6 @@ public class TrackResourceIntegrationTest {
     // Creates bucket and verify.
     String bucketName = UUID.randomUUID().toString();
     assertNull(storageCow.get(bucketName));
-    BucketCow createdBucket = storageCow.create(BucketInfo.of(bucketName));
-    assertEquals(bucketName, createdBucket.getBucketInfo().getName());
     assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
 
     OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
@@ -129,7 +125,7 @@ public class TrackResourceIntegrationTest {
     assertNull(storageCow.get(bucketName));
   }
 
-  /** Returns a new {@link CreateResourceRequestBody} that is ready for cleanup. */
+  /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
   private CreateResourceRequestBody newExpiredCreateResourceMessage(
       CloudResourceUid resource, OffsetDateTime now) {
     return new CreateResourceRequestBody()

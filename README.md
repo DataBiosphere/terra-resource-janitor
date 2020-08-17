@@ -14,7 +14,7 @@ done by multiple instances should be confined to the primary.
 
 ## Configs Rendering
 Local Testing and Github Action tests require credentials to be able to call GCP, run
-``` render-config.sh``` first to local testing. It generates:
+``` local-dev/render-config.sh``` first for local testing. It generates:
 * A Google Service Account Secret to create/delete cloud resources in test.
 * A Google Service Account Secret to publish message to 'prod' Janitor instance.
 * A Google Service Account Secret to publish message to 'test' Janitor instance.

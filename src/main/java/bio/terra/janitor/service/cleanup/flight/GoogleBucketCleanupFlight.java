@@ -16,8 +16,9 @@ public class GoogleBucketCleanupFlight extends Flight {
     ClientConfig clientConfig =
         ((ApplicationContext) applicationContext).getBean("crlClientConfig", ClientConfig.class);
     addStep(new InitialCleanupStep(janitorDao));
-    // Retry every 180 seconds for 5 times.
-    RetryRuleFixedInterval retryRule = new RetryRuleFixedInterval(180, 5);
+
+    RetryRuleFixedInterval retryRule =
+        new RetryRuleFixedInterval(/* intervalSeconds =*/ 180, /* maxCount =*/ 5);
 
     addStep(new GoogleBucketCleanupStep(clientConfig, janitorDao), retryRule);
     addStep(new FinalCleanupStep(janitorDao));

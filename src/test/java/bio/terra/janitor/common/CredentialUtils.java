@@ -11,7 +11,7 @@ public class CredentialUtils {
           Thread.currentThread().getContextClassLoader().getResourceAsStream(serviceAccountPath));
     } catch (Exception e) {
       throw new RuntimeException(
-          "Unable to load GoogleCredentials from configuration" + serviceAccountPath + "\n", e);
+          "Unable to load GoogleCredentials from configuration" + serviceAccountPath, e);
     }
   }
 }

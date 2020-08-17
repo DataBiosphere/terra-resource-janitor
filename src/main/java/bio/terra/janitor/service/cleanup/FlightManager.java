@@ -96,6 +96,7 @@ class FlightManager {
     if (!resource.isPresent()) {
       return Optional.empty();
     }
+
     janitorDao.createCleanupFlight(
         resource.get().trackedResourceId(),
         CleanupFlight.create(flightId, CleanupFlightState.INITIATING));
@@ -259,6 +260,7 @@ class FlightManager {
     List<FlightState> flights;
     try {
       flights = stairway.getFlights(/* offset =*/ 0, limit, flightFilter);
+      System.out.println(flights.size());
     } catch (DatabaseOperationException | InterruptedException e) {
       logger.error("Error getting FATAL flights.", e);
       return 0;

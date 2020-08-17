@@ -3,6 +3,7 @@ package bio.terra.janitor.service.cleanup;
 import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
 import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.janitor.app.Main;
@@ -397,6 +398,39 @@ public class FlightManagerTest {
         Optional.of(CleanupFlightState.INITIATING), janitorDao.retrieveFlightState(readyFlight));
   }
 
+  @Test
+  public void updateCompleteFlight_stateModifiedDuringCleaning() throws Exception {
+    String latchKey = "foo";
+    TrackedResource duplicatedResource = newResourceForCleaning();
+    FlightMap inputMap = new FlightMap();
+    inputMap.put(CleanupParams.TRACKED_RESOURCE_ID, duplicatedResource.trackedResourceId());
+    inputMap.put(CleanupParams.CLOUD_RESOURCE_UID, duplicatedResource.cloudResourceUid());
+    LatchStep.createLatch(inputMap, latchKey);
+
+    FlightManager manager =
+        createFlightManager(
+            trackedResource ->
+                FlightSubmissionFactory.FlightSubmission.create(
+                    LatchDuringCleanupFlight.class, inputMap));
+
+    janitorDao.createResource(duplicatedResource, ImmutableMap.of());
+    String duplicatedFlight = manager.submitFlight(EXPIRATION).get();
+
+    // The resource is modified while the flight is being cleaned up.
+    janitorDao.updateResourceState(
+        duplicatedResource.trackedResourceId(), TrackedResourceState.READY);
+
+    LatchStep.releaseLatch(latchKey);
+    blockUntilFlightComplete(duplicatedFlight);
+
+    //    // The cleaning, duplicated and abandoned tracked resource states (2) are updated for
+    // complete.
+    assertEquals(1, manager.updateFatalFlights(10));
+
+    assertEquals(
+        Optional.of(CleanupFlightState.FATAL), janitorDao.retrieveFlightState(duplicatedFlight));
+  }
+
   /** A basic cleanup {@link Flight} that uses the standard cleanup steps. */
   public static class OkCleanupFlight extends Flight {
     public OkCleanupFlight(FlightMap inputParameters, Object applicationContext) {
@@ -436,6 +470,23 @@ public class FlightManagerTest {
           ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
       addStep(new LatchStep());
       addStep(new InitialCleanupStep(janitorDao));
+      addStep(new FinalCleanupStep(janitorDao));
+    }
+  }
+
+  /**
+   * A {@link Flight} for cleanup that latches after setting the cleanup flight state but after
+   * setting cleanup step.
+   */
+  public static class LatchDuringCleanupFlight extends Flight {
+    public LatchDuringCleanupFlight(FlightMap inputParameters, Object applicationContext) {
+      super(inputParameters, applicationContext);
+      JanitorDao janitorDao =
+          ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
+      addStep(new InitialCleanupStep(janitorDao));
+      addStep(new LatchStep());
+      addStep(
+          new CleanupStep(ClientConfig.Builder.newBuilder().setClient("foo").build(), janitorDao));
       addStep(new FinalCleanupStep(janitorDao));
     }
   }
