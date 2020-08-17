@@ -1,6 +1,5 @@
 package bio.terra.janitor.common;
 
-import bio.terra.janitor.common.exception.JanitorCredentialException;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 
 /** Utilities for handling credentials. */
@@ -11,7 +10,7 @@ public class CredentialUtils {
       return ServiceAccountCredentials.fromStream(
           Thread.currentThread().getContextClassLoader().getResourceAsStream(serviceAccountPath));
     } catch (Exception e) {
-      throw new JanitorCredentialException(
+      throw new RuntimeException(
           "Unable to load GoogleCredentials from configuration" + serviceAccountPath + "\n", e);
     }
   }

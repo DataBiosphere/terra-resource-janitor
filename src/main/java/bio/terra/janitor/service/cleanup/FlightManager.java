@@ -87,7 +87,6 @@ class FlightManager {
     if (!resource.isPresent()) {
       return Optional.empty();
     }
-
     janitorDao.createCleanupFlight(
         resource.get().trackedResourceId(),
         CleanupFlight.create(flightId, CleanupFlightState.INITIATING));

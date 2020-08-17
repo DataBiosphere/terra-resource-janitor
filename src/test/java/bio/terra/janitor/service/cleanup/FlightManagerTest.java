@@ -100,6 +100,59 @@ public class FlightManagerTest {
   }
 
   @Test
+  public void googleBucketCleanupFlight() throws Exception {
+    TrackedResource duplicatedResource = newResourceForCleaning();
+    janitorDao.createResource(duplicatedResource, ImmutableMap.of());
+
+    FlightMap flightMap = new FlightMap();
+    flightMap.put(CleanupParams.TRACKED_RESOURCE_ID, duplicatedResource.trackedResourceId());
+    flightMap.put(CleanupParams.CLOUD_RESOURCE_UID, duplicatedResource.cloudResourceUid());
+
+    FlightManager manager =
+        new FlightManager(
+            stairwayComponent.get(),
+            janitorDao,
+            trackedResource ->
+                FlightSubmissionFactory.FlightSubmission.create(
+                    GoogleBucketCleanupFlight.class, flightMap));
+
+    //    TrackedResource abandonedResource = newResourceForCleaning();
+    //    janitorDao.createResource(abandonedResource, ImmutableMap.of());
+    //    String abandonedFlight = manager.submitFlight(EXPIRATION).get();
+    //
+    //    TrackedResource readyResource = newResourceForCleaning();
+    //    janitorDao.createResource(readyResource, ImmutableMap.of());
+    //    String readyFlight = manager.submitFlight(EXPIRATION).get();
+
+    // The resource is modified while the flight is being cleaned up.
+    //    janitorDao.updateResourceState(
+    //            abandonedResource.trackedResourceId(), TrackedResourceState.ABANDONED);
+    //    janitorDao.updateResourceState(readyResource.trackedResourceId(),
+    // TrackedResourceState.READY);
+
+    Optional<String> flightId = manager.submitFlight(EXPIRATION);
+    assertTrue(flightId.isPresent());
+    janitorDao.updateResourceState(
+        duplicatedResource.trackedResourceId(), TrackedResourceState.DUPLICATED);
+    blockUntilFlightComplete(flightId.get());
+
+    assertEquals(
+        Optional.of(CleanupFlightState.FINISHING), janitorDao.retrieveFlightState(flightId.get()));
+    assertEquals(1, manager.updateCompletedFlights(10));
+
+    assertEquals(
+        Optional.of(
+            duplicatedResource.toBuilder().trackedResourceState(TrackedResourceState.DONE).build()),
+        janitorDao.retrieveTrackedResource(duplicatedResource.trackedResourceId()));
+    assertEquals(
+        Optional.of(CleanupFlightState.FINISHED), janitorDao.retrieveFlightState(flightId.get()));
+
+    // No more work to be done once the flight is completed.
+    assertFalse(manager.submitFlight(EXPIRATION).isPresent());
+    assertEquals(0, manager.updateCompletedFlights(10));
+  }
+
+  @Test
   public void scheduleFlight_nothingReady() {
     // No resources for cleaning inserted.
     FlightManager manager =
@@ -449,6 +502,20 @@ public class FlightManagerTest {
           ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
       addStep(new LatchStep());
       addStep(new InitialCleanupStep(janitorDao));
+      addStep(new FinalCleanupStep(janitorDao));
+    }
+  }
+
+  /** A {@link Flight} for cleanup that latches before setting the cleanup flight state. */
+  public static class LatchDuringCleanupFlight extends Flight {
+    public LatchDuringCleanupFlight(
+        FlightMap inputParameters, Step cleanUpStep, Object applicationContext) {
+      super(inputParameters, applicationContext);
+      JanitorDao janitorDao =
+          ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
+      addStep(new InitialCleanupStep(janitorDao));
+      addStep(new LatchStep());
+      addStep(cleanUpStep);
       addStep(new FinalCleanupStep(janitorDao));
     }
   }

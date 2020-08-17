@@ -1,9 +1,12 @@
 package bio.terra.janitor.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.cloudres.google.storage.BucketCow;
+import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
@@ -12,6 +15,8 @@ import bio.terra.janitor.integration.common.configuration.IntegrationTestConfigu
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.pubsub.v1.Publisher;
+import com.google.cloud.storage.BucketInfo;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
@@ -49,6 +54,8 @@ public class TrackResourceIntegrationTest {
 
   private Publisher publisher;
 
+  private StorageCow storageCow;
+
   private static final OffsetDateTime CREATION = OffsetDateTime.now(ZoneOffset.UTC);
   private static final OffsetDateTime EXPIRATION =
       OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(10);
@@ -76,6 +83,14 @@ public class TrackResourceIntegrationTest {
                 FixedCredentialsProvider.create(
                     integrationTestConfiguration.getClientGoogleCredentialsOrDie()))
             .build();
+    storageCow =
+        new StorageCow(
+            integrationTestConfiguration.createClientConfig(),
+            StorageOptions.newBuilder()
+                .setCredentials(
+                    integrationTestConfiguration.getResourceAccessGoogleCredentialsOrDie())
+                .setProjectId(integrationTestConfiguration.getResourceProjectId())
+                .build());
   }
 
   @AfterEach
@@ -84,9 +99,21 @@ public class TrackResourceIntegrationTest {
   }
 
   @Test
-  public void subscribeTrackResource() throws Exception {
+  public void subscribeAndCleanupResource_googleBucket() throws Exception {
+    // Creates bucket and verify.
+    String bucketName = UUID.randomUUID().toString();
+    assertNull(storageCow.get(bucketName));
+    BucketCow createdBucket = storageCow.create(BucketInfo.of(bucketName));
+    assertEquals(bucketName, createdBucket.getBucketInfo().getName());
+    assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
+
     ByteString data =
-        ByteString.copyFromUtf8(objectMapper.writeValueAsString(TRACK_RESOURCE_MESSAGE));
+        ByteString.copyFromUtf8(
+            objectMapper.writeValueAsString(
+                newExpiredCreateResourceMessage(
+                    new CloudResourceUid()
+                        .googleBucketUid(new GoogleBucketUid().bucketName(bucketName)))));
+
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
     Thread.sleep(5000);
@@ -111,5 +138,18 @@ public class TrackResourceIntegrationTest {
     assertEquals(EXPIRATION, trackedResourceInfo.getExpiration());
     assertEquals(TrackedResourceState.READY.name(), trackedResourceInfo.getState());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
+
+    // Resource is removed
+    assertNull(storageCow.get(bucketName));
+  }
+
+  /** Returns a new {@link CreateResourceRequestBody} that is ready for cleanup. */
+  private CreateResourceRequestBody newExpiredCreateResourceMessage(CloudResourceUid resource) {
+    OffsetDateTime now = OffsetDateTime.now();
+    return new CreateResourceRequestBody()
+        .resourceUid(resource)
+        .creation(now)
+        .expiration(now)
+        .labels(DEFAULT_LABELS);
   }
 }
