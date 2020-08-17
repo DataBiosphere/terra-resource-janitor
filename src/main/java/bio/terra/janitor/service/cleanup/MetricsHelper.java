@@ -1,10 +1,13 @@
 package bio.terra.janitor.service.cleanup;
 
 import bio.terra.janitor.db.ResourceKindCount;
+import bio.terra.janitor.db.TrackedResourceState;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.opencensus.stats.*;
 import io.opencensus.tags.*;
+import sun.jvm.hotspot.types.CIntegerField;
+
 import java.time.Duration;
 import java.util.Arrays;
 
@@ -41,7 +44,11 @@ class MetricsHelper {
           MILLISECOND);
   private static final Measure.MeasureLong TRACKED_RESOURCE_COUNT =
       Measure.MeasureLong.create(
-          PREFIX + "tracked_resource_count", "Counts of te number of tracked resources.", COUNT);
+          PREFIX + "/tracked_resource_count", "Counts of te number of tracked resources.", COUNT);
+  private static final Measure.MeasureLong RECOVERED_SUBMITTED_FLIGHTS_COUNT =
+          Measure.MeasureLong.create(PREFIX + "/recovered_submitted_flights_count.", "Count of the number of recovered flights that were already submitted successfully to Stairway.", COUNT);
+  private static final Measure.MeasureLong FATAL_FLIGHT_UNDELETED_COUNT =
+          Measure.MeasureLong.create(PREFIX + "/fatal_flight_undeleted_count", "Count of the number of fatal cleanup flights that were not deleted from Stairway when they were completed by the Janitor.", COUNT);
 
   /**
    * This bucketing is our first pass guess at what might be interesting to see for durations. It is
@@ -84,13 +91,30 @@ class MetricsHelper {
           TRACKED_RESOURCE_COUNT,
           Aggregation.LastValue.create(),
           ImmutableList.of(RESOURCE_STATE_KEY, RESOURCE_TYPE_KEY, CLIENT_KEY));
+  static final View RECOVERED_SUBMITTED_FLIGHTS_VIEW =
+          View.create(
+                  View.Name.create(PREFIX + "/recovered_submitted_flights_count"),
+                  "Count of the number of recovered flights that were already submitted successfully to Stairway.",
+                  RECOVERED_SUBMITTED_FLIGHTS_COUNT,
+                  Aggregation.Count.create(),
+                  ImmutableList.of());
+  static final View FATAL_FLIGHT_UNDELETED_VIEW =
+          View.create(
+                  View.Name.create(PREFIX + "/fatal_flight_undeleted"),
+                  "Count of the number of fatal cleanup flights that were not deleted from Stairway when they were completed by the Janitor.",
+                  FATAL_FLIGHT_UNDELETED_COUNT,
+                  Aggregation.Count.create(),
+                  ImmutableList.of());
 
   private static final ImmutableList<View> VIEWS =
       ImmutableList.of(
           SUBMISSION_DURATION_VIEW,
           COMPLETION_DURATION_VIEW,
           FATAL_UPDATE_DURATION_VIEW,
-          TRACKED_RESOURCE_COUNT_VIEW);
+          TRACKED_RESOURCE_COUNT_VIEW,
+          RECOVERED_SUBMITTED_FLIGHTS_VIEW,
+              FATAL_FLIGHT_UNDELETED_VIEW
+      );
 
   // Register all views
   static {
@@ -141,5 +165,15 @@ class MetricsHelper {
             .putLocal(CLIENT_KEY, TagValue.create(count.client()))
             .build();
     STATS_RECORDER.newMeasureMap().put(TRACKED_RESOURCE_COUNT, count.count()).record(tctx);
+  }
+
+  /** Increment the count of the cleanup flights that were already submitted to Stairway but on recovery were still in the {@link bio.terra.janitor.db.CleanupFlightState#INITIATING} state.*/
+  public static void incrementRecoveredSubmittedFlight() {
+    STATS_RECORDER.newMeasureMap().put(RECOVERED_SUBMITTED_FLIGHTS_COUNT, 1).record(TAGGER.empty());
+  }
+
+  /** Increment the count of the cleanup flights that finished as {@link bio.terra.janitor.db.CleanupFlightState#FATAL} but were not yet deleted from Stairway. */
+  public static void incrementFatalFlightUndeleted() {
+    STATS_RECORDER.newMeasureMap().put(FATAL_FLIGHT_UNDELETED_COUNT, 1).record(TAGGER.empty());
   }
 }
