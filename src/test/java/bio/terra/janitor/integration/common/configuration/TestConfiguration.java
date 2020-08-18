@@ -96,8 +96,7 @@ public class TestConfiguration {
         ClientConfig.Builder.newBuilder().setClient("terra-janitor");
 
     // Resources created during tests should be tracked by the Prod Janitor so that they are tracked
-    // permanently and
-    // deleted even if the test fails.
+    // permanently and deleted even if the test fails.
     CleanupConfig cleanupConfig =
         CleanupConfig.builder()
             .setCleanupId("janitor-test")
