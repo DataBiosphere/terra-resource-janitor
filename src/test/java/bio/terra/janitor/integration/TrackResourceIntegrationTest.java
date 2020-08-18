@@ -13,6 +13,7 @@ import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.pubsub.v1.Publisher;
+import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
@@ -86,6 +87,7 @@ public class TrackResourceIntegrationTest {
     // Creates bucket and verify.
     String bucketName = UUID.randomUUID().toString();
     assertNull(storageCow.get(bucketName));
+    storageCow.create(BucketInfo.of(bucketName));
     assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
 
     OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
