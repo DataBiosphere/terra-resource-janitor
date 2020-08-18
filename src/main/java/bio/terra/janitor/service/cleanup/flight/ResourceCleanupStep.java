@@ -47,9 +47,10 @@ public abstract class ResourceCleanupStep implements Step {
       case ERROR:
       case READY:
         // State is DONE ERROR or READY, this should not happen, fail the flight.
-        logger.warn("Unexpected trackedResource state for {}.", trackedResourceId.toString());
-        janitorDao.updateFlightState(flightContext.getFlightId(), CleanupFlightState.FINISHING);
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+        throw new IllegalStateException(
+            String.format(
+                "Illegal trackedResource state for trackedResource %s, state is %s",
+                trackedResourceId.toString(), state.toString()));
       case DUPLICATED:
       case ABANDONED:
         // State is DUPLICATED or ABANDONED, skip the cleanup.
@@ -57,23 +58,21 @@ public abstract class ResourceCleanupStep implements Step {
             "Skip resource {} cleanup because the state is {} due to a race.",
             trackedResourceId.toString(),
             state.toString());
-        janitorDao.updateFlightState(flightContext.getFlightId(), CleanupFlightState.FINISHING);
         return StepResult.getStepResultSuccess();
       case CLEANING:
         // TODO(yonghao): Update cleanup log
         return cleanUp(cloudResourceUid);
       default:
-        // State is DONE ERROR or READY, this should not happen, fail the flight.
-        logger.warn("Unknown trackedResource state for {}.", trackedResourceId.toString());
-        janitorDao.updateFlightState(flightContext.getFlightId(), CleanupFlightState.FINISHING);
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+        throw new UnsupportedOperationException(
+            String.format(
+                "Unsupported trackedResource state for trackedResource %s, state is %s",
+                trackedResourceId.toString(), state.toString()));
     }
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    // Fail the flight if undo this step.
-    return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+    return StepResult.getStepResultSuccess();
   }
 
   /** The actual resource cleanup logic. */
