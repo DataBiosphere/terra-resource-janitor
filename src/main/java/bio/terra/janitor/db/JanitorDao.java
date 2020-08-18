@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -110,26 +109,6 @@ public class JanitorDao {
             .addValue("id", trackedResourceId.uuid());
     return Optional.ofNullable(
         DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER)));
-  }
-
-  /**
-   * Returns a single resource with an expiration less than or equal to {@code expiredyBy} in the
-   * given state, if there is such a TrackedResource.
-   */
-  @Transactional(propagation = Propagation.SUPPORTS)
-  public Optional<TrackedResource> retrieveExpiredResourceWith(
-      Instant expiredBy, TrackedResourceState state) {
-    String sql =
-        "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource "
-            + "WHERE state = :state and expiration <= :expiration LIMIT 1";
-    return Optional.ofNullable(
-        DataAccessUtils.singleResult(
-            jdbcTemplate.query(
-                sql,
-                new MapSqlParameterSource()
-                    .addValue("state", state.toString())
-                    .addValue("expiration", expiredBy.atOffset(ZoneOffset.UTC)),
-                TRACKED_RESOURCE_ROW_MAPPER)));
   }
 
   /** Returns the tracked reosurces matching the {@code filter}. */

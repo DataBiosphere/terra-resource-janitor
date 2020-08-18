@@ -223,27 +223,6 @@ public class JanitorDaoTest {
   }
 
   @Test
-  public void retrieveExpiredResourceWith() {
-    TrackedResource resource =
-        newDefaultResource()
-            .trackedResourceState(TrackedResourceState.READY)
-            .expiration(EXPIRATION)
-            .build();
-    janitorDao.createResource(resource, ImmutableMap.of());
-
-    assertEquals(
-        Optional.of(resource),
-        janitorDao.retrieveExpiredResourceWith(EXPIRATION, TrackedResourceState.READY));
-    assertEquals(
-        Optional.empty(),
-        janitorDao.retrieveExpiredResourceWith(EXPIRATION, TrackedResourceState.CLEANING));
-    assertEquals(
-        Optional.empty(),
-        janitorDao.retrieveExpiredResourceWith(
-            EXPIRATION.minusSeconds(1), TrackedResourceState.READY));
-  }
-
-  @Test
   public void cleanupFlight() {
     TrackedResource resource = newDefaultResource().build();
     janitorDao.createResource(resource, ImmutableMap.of());
