@@ -15,8 +15,8 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
     ResourceType resourceType =
         new ResourceTypeVisitor().accept(trackedResource.cloudResourceUid());
     FlightMap flightMap = new FlightMap();
-    flightMap.put(CleanupParams.TRACKED_RESOURCE_ID, trackedResource.trackedResourceId());
-    flightMap.put(CleanupParams.CLOUD_RESOURCE_UID, trackedResource.cloudResourceUid());
+    flightMap.put(FlightMapKeys.TRACKED_RESOURCE_ID, trackedResource.trackedResourceId());
+    flightMap.put(FlightMapKeys.CLOUD_RESOURCE_UID, trackedResource.cloudResourceUid());
     switch (resourceType) {
       case GOOGLE_BUCKET:
         return FlightSubmission.create(GoogleBucketCleanupFlight.class, flightMap);
