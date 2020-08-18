@@ -1,12 +1,10 @@
 package bio.terra.janitor.service.cleanup;
 
-import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.common.ResourceType;
+import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.db.TrackedResource;
-import bio.terra.janitor.service.cleanup.flight.FinalCleanupStep;
-import bio.terra.janitor.service.cleanup.flight.InitialCleanupStep;
-import bio.terra.janitor.service.cleanup.flight.UnsupportedCleanupStep;
+import bio.terra.janitor.service.cleanup.flight.*;
 import bio.terra.stairway.*;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 /** The standard {@link FlightSubmissionFactory} to be used. */
@@ -14,22 +12,16 @@ import org.springframework.stereotype.Component;
 public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
   @Override
   public FlightSubmission createSubmission(TrackedResource trackedResource) {
-    // TODO(wchamber): Add different flights and cleanup steps for each cloud resource type.
-    return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
-  }
-
-  /**
-   * A Flight for cleanups of resource types that are not yet supported. Always results in failure
-   * by failing to cleanup the resource.
-   */
-  public static class UnsupportedCleanupFlight extends Flight {
-    public UnsupportedCleanupFlight(FlightMap inputParameters, Object applicationContext) {
-      super(inputParameters, applicationContext);
-      JanitorDao janitorDao =
-          ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
-      addStep(new InitialCleanupStep(janitorDao));
-      addStep(new UnsupportedCleanupStep());
-      addStep(new FinalCleanupStep(janitorDao));
+    ResourceType resourceType =
+        new ResourceTypeVisitor().accept(trackedResource.cloudResourceUid());
+    FlightMap flightMap = new FlightMap();
+    flightMap.put(FlightMapKeys.TRACKED_RESOURCE_ID, trackedResource.trackedResourceId());
+    flightMap.put(FlightMapKeys.CLOUD_RESOURCE_UID, trackedResource.cloudResourceUid());
+    switch (resourceType) {
+      case GOOGLE_BUCKET:
+        return FlightSubmission.create(GoogleBucketCleanupFlight.class, flightMap);
+      default:
+        return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
     }
   }
 }
