@@ -1,5 +1,7 @@
 package bio.terra.janitor.service.cleanup.flight;
 
+import static bio.terra.janitor.db.TrackedResourceState.CLEANING;
+
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.CloudResourceUid;
@@ -39,31 +41,13 @@ public abstract class ResourceCleanupStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
     TrackedResourceState state = trackedResource.get().trackedResourceState();
-    switch (state) {
-      case DONE:
-      case ERROR:
-      case READY:
-        // State is DONE ERROR or READY, this should not happen, fail the flight.
-        throw new IllegalStateException(
-            String.format(
-                "Illegal trackedResource state for trackedResource %s, state is %s",
-                trackedResourceId.toString(), state.toString()));
-      case DUPLICATED:
-      case ABANDONED:
-        // State is DUPLICATED or ABANDONED, skip the cleanup.
-        logger.warn(
-            "Skip resource {} cleanup because the state is {} due to a race.",
-            trackedResourceId.toString(),
-            state.toString());
-        return StepResult.getStepResultSuccess();
-      case CLEANING:
-        // TODO(yonghao): Update cleanup log
-        return cleanUp(cloudResourceUid);
-      default:
-        throw new UnsupportedOperationException(
-            String.format(
-                "Unsupported trackedResource state for trackedResource %s, state is %s",
-                trackedResourceId.toString(), state.toString()));
+    if (state.equals(CLEANING)) {
+      return cleanUp(cloudResourceUid);
+    } else {
+      throw new IllegalStateException(
+          String.format(
+              "Illegal trackedResource state for trackedResource %s, state is %s",
+              trackedResourceId.toString(), state.toString()));
     }
   }
 

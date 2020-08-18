@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 
 @Tag("unit")
 public class TrackedResourceIdTest {
+  private final ObjectMapper objectMapper = new ObjectMapper();
+
   @Test
   public void serialize() throws Exception {
     UUID id = UUID.randomUUID();
@@ -17,6 +19,15 @@ public class TrackedResourceIdTest {
         "[\"bio.terra.janitor.db.AutoValue_TrackedResourceId\",{\"uuid\":\""
             + id.toString()
             + "\"}]",
-        new ObjectMapper().writeValueAsString(trackedResourceId));
+        objectMapper.writeValueAsString(trackedResourceId));
+  }
+
+  @Test
+  public void deserialize() throws Exception {
+    UUID id = UUID.randomUUID();
+    TrackedResourceId trackedResourceId = TrackedResourceId.create(id);
+    String serialized = objectMapper.writeValueAsString(trackedResourceId);
+    TrackedResourceId deserialized = objectMapper.readValue(serialized, TrackedResourceId.class);
+    assertEquals(trackedResourceId, deserialized);
   }
 }
