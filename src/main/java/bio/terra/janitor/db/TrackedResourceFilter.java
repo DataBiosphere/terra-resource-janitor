@@ -5,6 +5,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 
 /** A value class for filtering which resources are retrieved. */
@@ -22,11 +23,14 @@ public abstract class TrackedResourceFilter {
   /** If present, only resources with an expiration date less than or equal to this are allowed. */
   public abstract Optional<Instant> expiredBy();
 
+  /** If present, only return up to {@code limit} resources. */
+  public abstract OptionalInt limit();
+
   /** Creates a new builder that allows all resources. */
   public static Builder builder() {
     return new AutoValue_TrackedResourceFilter.Builder()
-            .allowedStates(ImmutableSet.of())
-            .forbiddenStates(ImmutableSet.of());
+        .allowedStates(ImmutableSet.of())
+        .forbiddenStates(ImmutableSet.of());
   }
 
   @AutoValue.Builder
@@ -38,6 +42,8 @@ public abstract class TrackedResourceFilter {
     public abstract Builder cloudResourceUid(CloudResourceUid cloudResourceUid);
 
     public abstract Builder expiredBy(Instant expiredBy);
+
+    public abstract Builder limit(int value);
 
     public abstract TrackedResourceFilter build();
   }

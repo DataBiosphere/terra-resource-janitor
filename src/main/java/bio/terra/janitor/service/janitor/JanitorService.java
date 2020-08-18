@@ -53,8 +53,11 @@ public class JanitorService {
             .build();
     List<TrackedResource> duplicateResources =
         janitorDao.retrieveResourcesMatching(
-            resource.cloudResourceUid(),
-            ImmutableSet.of(TrackedResourceState.DONE, TrackedResourceState.DUPLICATED));
+            TrackedResourceFilter.builder()
+                .cloudResourceUid(resource.cloudResourceUid())
+                .forbiddenStates(
+                    ImmutableSet.of(TrackedResourceState.DONE, TrackedResourceState.DUPLICATED))
+                .build());
     if (!duplicateResources.isEmpty()) {
       if (duplicateResources.size() > 1) {
         // If all resources are created through this function, they should be duplicated
