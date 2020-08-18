@@ -9,6 +9,7 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
+import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -122,6 +123,7 @@ public class TrackResourceIntegrationTest {
     assertEquals(publishTime, trackedResourceInfo.getCreation());
     assertEquals(publishTime, trackedResourceInfo.getExpiration());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
+    assertEquals(trackedResourceInfo.getState(), TrackedResourceState.DONE.toString());
 
     // Resource is removed
     assertNull(storageCow.get(bucketName));

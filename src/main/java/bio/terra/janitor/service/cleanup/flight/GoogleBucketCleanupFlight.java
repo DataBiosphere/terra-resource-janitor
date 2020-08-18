@@ -15,11 +15,10 @@ public class GoogleBucketCleanupFlight extends Flight {
         ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
     ClientConfig clientConfig =
         ((ApplicationContext) applicationContext).getBean("crlClientConfig", ClientConfig.class);
-    addStep(new InitialCleanupStep(janitorDao));
-
     RetryRuleFixedInterval retryRule =
         new RetryRuleFixedInterval(/* intervalSeconds =*/ 180, /* maxCount =*/ 5);
 
+    addStep(new InitialCleanupStep(janitorDao));
     addStep(new GoogleBucketCleanupStep(clientConfig, janitorDao), retryRule);
     addStep(new FinalCleanupStep(janitorDao));
   }

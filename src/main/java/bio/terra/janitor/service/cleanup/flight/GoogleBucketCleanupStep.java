@@ -18,7 +18,10 @@ public class GoogleBucketCleanupStep extends ResourceCleanupStep {
   }
 
   @Override
-  StepResult cleanUp(CloudResourceUid resourceUid) {
+  protected StepResult cleanUp(CloudResourceUid resourceUid) {
+    // TODO(yonghao): Set bucket lifetime to 0 and wait once Stairway supports waiting. This is more
+    // robust for buckets with many or very large objects.
+    // TODO(PF-29): Iterate through and delete all objects within the bucket.
     try {
       storageCow.delete(resourceUid.getGoogleBucketUid().getBucketName());
       return StepResult.getStepResultSuccess();

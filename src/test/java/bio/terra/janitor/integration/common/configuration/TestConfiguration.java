@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "test")
 public class TestConfiguration {
   /** How long to keep the resource before the 'prod' Janitor do the cleanup. */
-  public static Duration RESOURCE_TIME_TO_LIVE = Duration.ofMinutes(30);
+  public static Duration RESOURCE_TIME_TO_LIVE_PROD = Duration.ofMinutes(30);
 
   /** pubsub project id to publish track resource to Janitor test env(toolsalpha) */
   private String resourceProjectId;
@@ -95,11 +95,14 @@ public class TestConfiguration {
     ClientConfig.Builder clientConfigBuilder =
         ClientConfig.Builder.newBuilder().setClient("terra-janitor");
 
+    // Resources created during tests should be tracked by the Prod Janitor so that they are tracked
+    // permanently and
+    // deleted even if the test fails.
     CleanupConfig cleanupConfig =
         CleanupConfig.builder()
             .setCleanupId("janitor-test")
             .setJanitorProjectId(prodTrackResourceProjectId)
-            .setTimeToLive(RESOURCE_TIME_TO_LIVE)
+            .setTimeToLive(RESOURCE_TIME_TO_LIVE_PROD)
             .setJanitorTopicName(prodTrackResourceTopicId)
             .setCredentials(getGoogleCredentialsOrDie(prodJanitorClientCredentialFilePath))
             .build();

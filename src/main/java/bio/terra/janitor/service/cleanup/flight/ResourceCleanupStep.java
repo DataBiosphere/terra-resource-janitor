@@ -28,9 +28,6 @@ public abstract class ResourceCleanupStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) {
-    // TODO(yonghao): Set bucket lifetime to 0 and wait once Stairway supports waiting. This is more
-    // robust for buckets with many or very large objects.
-    // TODO(PF-29): Iterate through and delete all objects within the bucket.
     CleanupParams cleanupParams = new CleanupParams(flightContext.getInputParameters());
     CloudResourceUid cloudResourceUid = cleanupParams.getResourceUid();
     TrackedResourceId trackedResourceId = cleanupParams.getTrackedResourceId();
@@ -76,5 +73,5 @@ public abstract class ResourceCleanupStep implements Step {
   }
 
   /** The actual resource cleanup logic. */
-  abstract StepResult cleanUp(CloudResourceUid resourceUid);
+  protected abstract StepResult cleanUp(CloudResourceUid resourceUid);
 }
