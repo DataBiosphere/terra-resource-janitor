@@ -7,10 +7,14 @@ import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.StorageException;
 import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Step to cleanup Google Bucket resource. */
 public class GoogleBucketCleanupStep extends ResourceCleanupStep {
@@ -30,12 +34,15 @@ public class GoogleBucketCleanupStep extends ResourceCleanupStep {
       // Delete all Blobs before deleting bucket.
       String bucketName = resourceUid.getGoogleBucketUid().getBucketName();
       BucketCow bucketCow = storageCow.get(bucketName);
-      bucketCow.list().iterateAll().forEach(BlobCow::delete);
+      List<BlobId> blobIds= new ArrayList<>();
+      bucketCow.list().iterateAll().forEach(blobCow -> blobIds.add(blobCow.getBlobInfo().getBlobId()));
       System.out.println("~~~~~~COMPLETE START111111");
       System.out.println(stopwatch.elapsed().abs());
-      bucketCow.delete();
+      blobIds.forEach(storageCow::delete);
       System.out.println("~~~~~~COMPLETE START22222222");
       System.out.println(stopwatch.elapsed().abs());
+      bucketCow.delete();
+
       System.out.println("~~~~~~COMPLETE CLEANUP");
       System.out.println(stopwatch.elapsed().abs());
       return StepResult.getStepResultSuccess();
