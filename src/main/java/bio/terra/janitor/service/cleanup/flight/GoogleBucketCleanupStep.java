@@ -34,6 +34,8 @@ public class GoogleBucketCleanupStep extends ResourceCleanupStep {
       // Delete all Blobs before deleting bucket.
       String bucketName = resourceUid.getGoogleBucketUid().getBucketName();
       BucketCow bucketCow = storageCow.get(bucketName);
+      System.out.println("~~~~~~COMPLETE START00000");
+      System.out.println(stopwatch.elapsed().abs());
       List<BlobId> blobIds= new ArrayList<>();
       bucketCow.list().iterateAll().forEach(blobCow -> blobIds.add(blobCow.getBlobInfo().getBlobId()));
       System.out.println("~~~~~~COMPLETE START111111");
