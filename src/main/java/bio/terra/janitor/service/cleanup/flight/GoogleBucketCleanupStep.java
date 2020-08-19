@@ -35,14 +35,17 @@ public class GoogleBucketCleanupStep extends ResourceCleanupStep {
       String bucketName = resourceUid.getGoogleBucketUid().getBucketName();
       BucketCow bucketCow = storageCow.get(bucketName);
       System.out.println("~~~~~~COMPLETE START00000");
-      System.out.println(stopwatch.elapsed().abs());
+      System.out.println(stopwatch.elapsed().abs().toMinutes());
       List<BlobId> blobIds= new ArrayList<>();
+      bucketCow.list();
+      System.out.println("~~~~~~COMPLETE START111111222222");
+      System.out.println(stopwatch.elapsed().abs().toMinutes());
       bucketCow.list().iterateAll().forEach(blobCow -> blobIds.add(blobCow.getBlobInfo().getBlobId()));
       System.out.println("~~~~~~COMPLETE START111111");
-      System.out.println(stopwatch.elapsed().abs());
+      System.out.println(stopwatch.elapsed().abs().toMinutes());
       blobIds.forEach(storageCow::delete);
       System.out.println("~~~~~~COMPLETE START22222222");
-      System.out.println(stopwatch.elapsed().abs());
+      System.out.println(stopwatch.elapsed().abs().toMinutes());
       bucketCow.delete();
 
       System.out.println("~~~~~~COMPLETE CLEANUP");
