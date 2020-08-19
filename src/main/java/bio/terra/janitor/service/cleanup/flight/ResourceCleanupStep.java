@@ -58,7 +58,9 @@ public abstract class ResourceCleanupStep implements Step {
         return StepResult.getStepResultSuccess();
       case CLEANING:
         // TODO(yonghao): Update cleanup log
-        return cleanUp(cloudResourceUid);
+        StepResult stepResult = cleanUp(cloudResourceUid);
+        System.out.println(String.format("ResourceCleanupStep %s", stepResult.toString()));
+        return stepResult;
       default:
         throw new UnsupportedOperationException(
             String.format(
