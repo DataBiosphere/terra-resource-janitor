@@ -8,6 +8,7 @@ import bio.terra.janitor.db.JanitorDao;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import com.google.cloud.storage.StorageException;
+import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,11 +25,14 @@ public class GoogleBucketCleanupStep extends ResourceCleanupStep {
     // TODO(yonghao): Set bucket lifetime to 0 and wait once Stairway supports waiting. This is more
     // robust for buckets with many or very large objects.
     try {
+      Stopwatch stopwatch = Stopwatch.createStarted();
       // Delete all Blobs before deleting bucket.
       String bucketName = resourceUid.getGoogleBucketUid().getBucketName();
       BucketCow bucketCow = storageCow.get(bucketName);
       bucketCow.list().iterateAll().forEach(BlobCow::delete);
       bucketCow.delete();
+      System.out.println("~~~~~~COMPLETE CLEANUP");
+      System.out.println(stopwatch.elapsed().abs());
       return StepResult.getStepResultSuccess();
     } catch (Exception e) {
       logger.warn("Exception occurs during Bucket Cleanup", e);
