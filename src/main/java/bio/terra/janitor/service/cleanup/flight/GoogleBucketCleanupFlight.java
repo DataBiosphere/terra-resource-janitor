@@ -19,7 +19,7 @@ public class GoogleBucketCleanupFlight extends Flight {
         new RetryRuleFixedInterval(/* intervalSeconds =*/ 180, /* maxCount =*/ 5);
 
     addStep(new InitialCleanupStep(janitorDao));
-    addStep(new GoogleBucketCleanupStep(clientConfig, janitorDao), retryRule);
+    addStep(new GoogleBucketCleanupStep(clientConfig, janitorDao));
     addStep(new FinalCleanupStep(janitorDao));
   }
 }
