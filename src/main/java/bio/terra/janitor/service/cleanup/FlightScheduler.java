@@ -8,7 +8,6 @@ import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +21,8 @@ public class FlightScheduler {
   private Logger logger = LoggerFactory.getLogger(FlightScheduler.class);
 
   /** Only need as many threads as we have scheduled tasks. */
-  private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(4, Executors.defaultThreadFactory());
+  private final ScheduledExecutorService executor =
+      new ScheduledThreadPoolExecutor(4, Executors.defaultThreadFactory());
 
   private final PrimaryConfiguration primaryConfiguration;
   private final StairwayComponent stairwayComponent;
