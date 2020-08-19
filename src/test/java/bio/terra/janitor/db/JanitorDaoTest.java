@@ -10,6 +10,7 @@ import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.ResourceType;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -155,24 +156,70 @@ public class JanitorDaoTest {
   }
 
   @Test
-  public void retrieveExpiredResourceWith() {
-    TrackedResource resource =
+  public void retrieveResourcesMatching() {
+    TrackedResource readyResource =
         newDefaultResource()
             .trackedResourceState(TrackedResourceState.READY)
             .expiration(EXPIRATION)
             .build();
-    janitorDao.createResource(resource, ImmutableMap.of());
+    TrackedResource errorResource =
+        newDefaultResource()
+            .trackedResourceState(TrackedResourceState.ERROR)
+            .expiration(EXPIRATION)
+            .build();
+    TrackedResource lateExpiredResource =
+        newDefaultResource()
+            .trackedResourceState(TrackedResourceState.ERROR)
+            .expiration(EXPIRATION.plusSeconds(10))
+            .build();
+    janitorDao.createResource(readyResource, ImmutableMap.of());
+    janitorDao.createResource(errorResource, ImmutableMap.of());
+    janitorDao.createResource(lateExpiredResource, ImmutableMap.of());
 
-    assertEquals(
-        Optional.of(resource),
-        janitorDao.retrieveExpiredResourceWith(EXPIRATION, TrackedResourceState.READY));
-    assertEquals(
-        Optional.empty(),
-        janitorDao.retrieveExpiredResourceWith(EXPIRATION, TrackedResourceState.CLEANING));
-    assertEquals(
-        Optional.empty(),
-        janitorDao.retrieveExpiredResourceWith(
-            EXPIRATION.minusSeconds(1), TrackedResourceState.READY));
+    assertThat(
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .allowedStates(
+                    ImmutableSet.of(TrackedResourceState.ABANDONED, TrackedResourceState.READY))
+                .build()),
+        Matchers.containsInAnyOrder(readyResource));
+    assertThat(
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .forbiddenStates(ImmutableSet.of(TrackedResourceState.ERROR))
+                .build()),
+        Matchers.containsInAnyOrder(readyResource));
+    assertThat(
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .cloudResourceUid(readyResource.cloudResourceUid())
+                .build()),
+        Matchers.containsInAnyOrder(readyResource));
+    assertThat(
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder().expiredBy(EXPIRATION).build()),
+        Matchers.containsInAnyOrder(readyResource, errorResource));
+    assertThat(
+        janitorDao.retrieveResourcesMatching(TrackedResourceFilter.builder().limit(1).build()),
+        Matchers.hasSize(1));
+
+    assertThat(
+        janitorDao.retrieveResourcesMatching(TrackedResourceFilter.builder().build()),
+        Matchers.containsInAnyOrder(readyResource, errorResource, lateExpiredResource));
+    assertThat(
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .allowedStates(ImmutableSet.of(TrackedResourceState.CLEANING))
+                .build()),
+        Matchers.empty());
+    assertThat(
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .allowedStates(ImmutableSet.of(TrackedResourceState.READY))
+                .expiredBy(EXPIRATION)
+                .limit(5)
+                .build()),
+        Matchers.containsInAnyOrder(readyResource));
   }
 
   @Test

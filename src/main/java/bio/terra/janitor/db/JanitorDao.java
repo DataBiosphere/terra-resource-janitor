@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -112,24 +111,47 @@ public class JanitorDao {
         DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, TRACKED_RESOURCE_ROW_MAPPER)));
   }
 
-  /**
-   * Returns a single resource with an expiration less than or equal to {@code expiredyBy} in the
-   * given state, if there is such a TrackedResource.
-   */
+  /** Returns the tracked reosurces matching the {@code filter}. */
   @Transactional(propagation = Propagation.SUPPORTS)
-  public Optional<TrackedResource> retrieveExpiredResourceWith(
-      Instant expiredBy, TrackedResourceState state) {
-    String sql =
-        "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource "
-            + "WHERE state = :state and expiration <= :expiration LIMIT 1";
-    return Optional.ofNullable(
-        DataAccessUtils.singleResult(
-            jdbcTemplate.query(
-                sql,
-                new MapSqlParameterSource()
-                    .addValue("state", state.toString())
-                    .addValue("expiration", expiredBy.atOffset(ZoneOffset.UTC)),
-                TRACKED_RESOURCE_ROW_MAPPER)));
+  public List<TrackedResource> retrieveResourcesMatching(TrackedResourceFilter filter) {
+    StringBuilder sql =
+        new StringBuilder(
+            "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource ");
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    List<String> whereClauses = new ArrayList<>();
+    if (!filter.allowedStates().isEmpty()) {
+      whereClauses.add("state IN(:filter_allowed_states)");
+      params.addValue(
+          "filter_allowed_states",
+          filter.allowedStates().stream()
+              .map(TrackedResourceState::toString)
+              .collect(Collectors.toList()));
+    }
+    if (!filter.forbiddenStates().isEmpty()) {
+      whereClauses.add("state NOT IN(:filter_forbidden_states)");
+      params.addValue(
+          "filter_forbidden_states",
+          filter.forbiddenStates().stream()
+              .map(TrackedResourceState::toString)
+              .collect(Collectors.toList()));
+    }
+    if (filter.cloudResourceUid().isPresent()) {
+      whereClauses.add("resource_uid = :filter_cloud_resource_uid::jsonb");
+      params.addValue("filter_cloud_resource_uid", serialize(filter.cloudResourceUid().get()));
+    }
+    if (filter.expiredBy().isPresent()) {
+      whereClauses.add("expiration <= :filters_expired_by");
+      params.addValue("filters_expired_by", filter.expiredBy().get().atOffset(ZoneOffset.UTC));
+    }
+    if (!whereClauses.isEmpty()) {
+      sql.append(whereClauses.stream().collect(Collectors.joining(" AND ", " WHERE ", "")));
+    }
+    if (filter.limit().isPresent()) {
+      sql = sql.append(" LIMIT :filter_limit ");
+      params.addValue("filter_limit", filter.limit().getAsInt());
+    }
+    sql.append(";");
+    return jdbcTemplate.query(sql.toString(), params, TRACKED_RESOURCE_ROW_MAPPER);
   }
 
   /** Return the resource and flight associated with the {@code flightId}, if they exist. */

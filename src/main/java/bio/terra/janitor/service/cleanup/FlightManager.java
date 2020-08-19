@@ -6,6 +6,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableSet;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -91,17 +92,27 @@ class FlightManager {
    */
   private Optional<TrackedResource> updateResourceForCleaning(
       Instant expiredBy, String flightId, TransactionStatus unused) {
-    Optional<TrackedResource> resource =
-        janitorDao.retrieveExpiredResourceWith(expiredBy, TrackedResourceState.READY);
-    if (!resource.isPresent()) {
+    List<TrackedResource> resources =
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .allowedStates(ImmutableSet.of(TrackedResourceState.READY))
+                .expiredBy(expiredBy)
+                .limit(1)
+                .build());
+    if (resources.isEmpty()) {
       return Optional.empty();
     }
+    if (resources.size() > 1) {
+      throw new IllegalStateException(
+          String.format("Retrieved more than 1 resource with limit 1, %d", resources.size()));
+    }
+    TrackedResource resource = resources.get(0);
 
     janitorDao.createCleanupFlight(
-        resource.get().trackedResourceId(),
+        resource.trackedResourceId(),
         CleanupFlight.create(flightId, CleanupFlightState.INITIATING));
     return janitorDao.updateResourceState(
-        resource.get().trackedResourceId(), TrackedResourceState.CLEANING);
+        resource.trackedResourceId(), TrackedResourceState.CLEANING);
   }
 
   /**
