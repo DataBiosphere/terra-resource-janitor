@@ -31,6 +31,7 @@ public class GoogleBucketCleanupStep extends ResourceCleanupStep {
       bucketCow.delete();
       return StepResult.getStepResultSuccess();
     } catch (StorageException e) {
+      logger.warn("Google Storage Exception happens during Bucket Cleanup", e);
       // Catch all exceptions from GOOGLE and consider this retryable error.
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }

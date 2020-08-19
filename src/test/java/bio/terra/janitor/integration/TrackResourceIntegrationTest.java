@@ -135,8 +135,6 @@ public class TrackResourceIntegrationTest {
     assertEquals(publishTime, trackedResourceInfo.getCreation());
     assertEquals(publishTime, trackedResourceInfo.getExpiration());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
-    System.out.println("~~~~~~~~~~");
-    System.out.println(trackedResourceInfo.getState());
     assertEquals(TrackedResourceState.DONE.toString(), trackedResourceInfo.getState());
 
     // Resource is removed
