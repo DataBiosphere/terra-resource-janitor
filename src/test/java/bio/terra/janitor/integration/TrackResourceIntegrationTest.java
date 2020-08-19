@@ -114,7 +114,7 @@ public class TrackResourceIntegrationTest {
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
     // Sleep for 10 seconds
-    Thread.sleep(10000);
+    Thread.sleep(15000);
 
     String getResponse =
         this.mvc
@@ -135,7 +135,7 @@ public class TrackResourceIntegrationTest {
     assertEquals(publishTime, trackedResourceInfo.getCreation());
     assertEquals(publishTime, trackedResourceInfo.getExpiration());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
-    assertEquals(trackedResourceInfo.getState(), TrackedResourceState.DONE.toString());
+    assertEquals(TrackedResourceState.DONE.toString(), trackedResourceInfo.getState());
 
     // Resource is removed
     assertNull(storageCow.get(bucketName));
