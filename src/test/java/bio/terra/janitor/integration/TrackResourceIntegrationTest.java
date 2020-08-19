@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.cloudres.google.storage.BlobCow;
+import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
@@ -13,13 +15,19 @@ import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.cloud.WriteChannel;
 import com.google.cloud.pubsub.v1.Publisher;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
@@ -86,10 +94,14 @@ public class TrackResourceIntegrationTest {
   @Test
   public void subscribeAndCleanupResource_googleBucket() throws Exception {
     // Creates bucket and verify.
-    String bucketName = UUID.randomUUID().toString();
+    String bucketName = randomName();
     assertNull(storageCow.get(bucketName));
-    storageCow.create(BucketInfo.of(bucketName));
+    BucketCow bucketCow = storageCow.create(BucketInfo.of(bucketName));
+    BlobId blobId = BlobId.of(bucketCow.getBucketInfo().getName(), randomName());
+    createBlobWithContents(storageCow, blobId, "blob-contents");
+
     assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
+    assertEquals(blobId.getName(), storageCow.get(blobId).getBlobInfo().getName());
 
     OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
     CloudResourceUid resource =
@@ -127,6 +139,7 @@ public class TrackResourceIntegrationTest {
 
     // Resource is removed
     assertNull(storageCow.get(bucketName));
+    assertNull(storageCow.get(blobId));
   }
 
   /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
@@ -137,5 +150,18 @@ public class TrackResourceIntegrationTest {
         .creation(now)
         .expiration(now)
         .labels(DEFAULT_LABELS);
+  }
+
+  /** Generates a random name to use for a cloud resource. */
+  private static String randomName() {
+    return UUID.randomUUID().toString();
+  }
+
+  private static BlobCow createBlobWithContents(
+      StorageCow storageCow, BlobId blobId, String contents) throws IOException {
+    try (WriteChannel writeChannel = storageCow.writer(BlobInfo.newBuilder(blobId).build())) {
+      writeChannel.write(ByteBuffer.wrap(contents.getBytes(StandardCharsets.UTF_8)));
+    }
+    return storageCow.get(blobId);
   }
 }

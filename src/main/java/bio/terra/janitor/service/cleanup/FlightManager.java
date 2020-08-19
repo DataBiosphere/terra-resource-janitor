@@ -121,8 +121,8 @@ class FlightManager {
         // If there is some flight state, then the flight has been submitted successfully and does
         // not need to be recovered. There's nothing to do but wait for the flight to update it's
         // state from INITIATING.
-        // TODO(wchamber): add metrics.
         stairway.getFlightState(flightId);
+        MetricsHelper.incrementRecoveredSubmittedFlight();
       } catch (FlightNotFoundException e) {
         // Stairway does not know about the flightId, so we must not have submitted successfully.
         // Try to resubmit.
@@ -314,7 +314,7 @@ class FlightManager {
     if (resourceAndFlight.get().cleanupFlight().state().equals(CleanupFlightState.FATAL)) {
       // We already marked the flight as completed, we must have previously failed to delete the
       // flight from Stairway. We should try the Stairway deletion again.
-      // TODO(wchamber): Add metric.
+      MetricsHelper.incrementFatalFlightUndeleted();
       return true;
     }
     if (resourceState.equals(TrackedResourceState.CLEANING)) {
