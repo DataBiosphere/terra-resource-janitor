@@ -114,7 +114,7 @@ public class TrackResourceIntegrationTest {
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
     // Sleep for 30 seconds
-    Thread.sleep(30000);
+    Thread.sleep(60000);
 
     String getResponse =
         this.mvc
