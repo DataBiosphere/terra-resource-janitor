@@ -25,6 +25,7 @@ public class GoogleBucketCleanupStep extends ResourceCleanupStep {
     // TODO(yonghao): Set bucket lifetime to 0 and wait once Stairway supports waiting. This is more
     // robust for buckets with many or very large objects.
     try {
+      System.out.println("~~~~~~COMPLETE START");
       Stopwatch stopwatch = Stopwatch.createStarted();
       // Delete all Blobs before deleting bucket.
       String bucketName = resourceUid.getGoogleBucketUid().getBucketName();
