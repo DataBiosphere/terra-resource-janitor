@@ -55,6 +55,8 @@ public class GoogleBucketCleanupStep extends ResourceCleanupStep {
       System.out.println(stopwatch.elapsed().abs());
       return StepResult.getStepResultSuccess();
     } catch (Exception e) {
+
+      System.out.println(String.format("Exception occurs during Bucket Cleanup: %s", e));
       logger.warn("Exception occurs during Bucket Cleanup", e);
       // Catch all exceptions from GOOGLE and consider this retryable error.
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
