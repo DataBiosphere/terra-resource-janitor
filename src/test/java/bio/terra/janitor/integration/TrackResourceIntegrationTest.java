@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.cloudres.google.storage.BlobCow;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.*;
@@ -15,7 +14,6 @@ import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.cloud.WriteChannel;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -25,9 +23,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
@@ -98,14 +93,36 @@ public class TrackResourceIntegrationTest {
     assertNull(storageCow.get(bucketName));
     BucketCow bucketCow = storageCow.create(BucketInfo.of(bucketName));
     BlobId blobId = BlobId.of(bucketCow.getBucketInfo().getName(), randomName());
-    createBlobWithContents(storageCow, blobId, "blob-contents");
+    storageCow.create(BlobInfo.newBuilder(blobId).build());
 
     assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
     assertEquals(blobId.getName(), storageCow.get(blobId).getBlobInfo().getName());
 
-    OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
     CloudResourceUid resource =
         new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
+
+    publishAndVerifyResourceTracked(resource);
+
+    // Resource is removed
+    assertNull(storageCow.get(bucketName));
+    assertNull(storageCow.get(blobId));
+  }
+
+  /** Try to let Janitor cleanup a resources that doesn't exist in cloud. */
+  @Test
+  public void subscribeAndCleanupResource_notExists() throws Exception {
+    CloudResourceUid resource =
+        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(randomName()));
+
+    publishAndVerifyResourceTracked(resource);
+  }
+
+  /**
+   * Publish message to Janitor to track resource and verify the resource by GET resource endpoint.
+   */
+  private void publishAndVerifyResourceTracked(CloudResourceUid resource) throws Exception {
+    OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
+
     ByteString data =
         ByteString.copyFromUtf8(
             objectMapper.writeValueAsString(
@@ -135,13 +152,7 @@ public class TrackResourceIntegrationTest {
     assertEquals(publishTime, trackedResourceInfo.getCreation());
     assertEquals(publishTime, trackedResourceInfo.getExpiration());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
-    System.out.println("~~~~~~~~~~");
-    System.out.println(trackedResourceInfo.getState());
     assertEquals(TrackedResourceState.DONE.toString(), trackedResourceInfo.getState());
-
-    // Resource is removed
-    assertNull(storageCow.get(bucketName));
-    assertNull(storageCow.get(blobId));
   }
 
   /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
@@ -157,13 +168,5 @@ public class TrackResourceIntegrationTest {
   /** Generates a random name to use for a cloud resource. */
   private static String randomName() {
     return UUID.randomUUID().toString();
-  }
-
-  private static BlobCow createBlobWithContents(
-      StorageCow storageCow, BlobId blobId, String contents) throws IOException {
-    try (WriteChannel writeChannel = storageCow.writer(BlobInfo.newBuilder(blobId).build())) {
-      writeChannel.write(ByteBuffer.wrap(contents.getBytes(StandardCharsets.UTF_8)));
-    }
-    return storageCow.get(blobId);
   }
 }
