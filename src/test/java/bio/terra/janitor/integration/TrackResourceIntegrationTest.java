@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
@@ -14,6 +15,8 @@ import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.pubsub.v1.Publisher;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.collect.ImmutableMap;
@@ -86,14 +89,49 @@ public class TrackResourceIntegrationTest {
   @Test
   public void subscribeAndCleanupResource_googleBucket() throws Exception {
     // Creates bucket and verify.
+    String bucketName = randomName();
+    assertNull(storageCow.get(bucketName));
+    BucketCow bucketCow = storageCow.create(BucketInfo.of(bucketName));
+    BlobId blobId = BlobId.of(bucketCow.getBucketInfo().getName(), randomName());
+    storageCow.create(BlobInfo.newBuilder(blobId).build());
+
+    assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
+    assertEquals(blobId.getName(), storageCow.get(blobId).getBlobInfo().getName());
+
+    CloudResourceUid resource =
+        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
+
+    publishAndVerifyResourceTracked(resource);
+
+    // Resource is removed
+    assertNull(storageCow.get(bucketName));
+    assertNull(storageCow.get(blobId));
+  }
+
+  /** Try to let Janitor cleanup a resources that is already deleted in cloud. */
+  @Test
+  public void subscribeAndCleanupResource_alreadyDeletedResource() throws Exception {
+    // Creates bucket and verify.
     String bucketName = UUID.randomUUID().toString();
     assertNull(storageCow.get(bucketName));
     storageCow.create(BucketInfo.of(bucketName));
     assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
+    storageCow.delete(bucketName);
+    // Delete the resource.
+    assertNull(storageCow.get(bucketName));
 
-    OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
     CloudResourceUid resource =
         new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
+
+    publishAndVerifyResourceTracked(resource);
+  }
+
+  /**
+   * Publish message to Janitor to track resource and verify the resource by GET resource endpoint.
+   */
+  private void publishAndVerifyResourceTracked(CloudResourceUid resource) throws Exception {
+    OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
+
     ByteString data =
         ByteString.copyFromUtf8(
             objectMapper.writeValueAsString(
@@ -123,10 +161,7 @@ public class TrackResourceIntegrationTest {
     assertEquals(publishTime, trackedResourceInfo.getCreation());
     assertEquals(publishTime, trackedResourceInfo.getExpiration());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
-    assertEquals(trackedResourceInfo.getState(), TrackedResourceState.DONE.toString());
-
-    // Resource is removed
-    assertNull(storageCow.get(bucketName));
+    assertEquals(TrackedResourceState.DONE.toString(), trackedResourceInfo.getState());
   }
 
   /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
@@ -137,5 +172,10 @@ public class TrackResourceIntegrationTest {
         .creation(now)
         .expiration(now)
         .labels(DEFAULT_LABELS);
+  }
+
+  /** Generates a random name to use for a cloud resource. */
+  private static String randomName() {
+    return UUID.randomUUID().toString();
   }
 }
