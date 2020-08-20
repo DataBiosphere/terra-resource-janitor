@@ -1,7 +1,6 @@
 package bio.terra.janitor.integration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -108,6 +107,24 @@ public class TrackResourceIntegrationTest {
     assertNull(storageCow.get(blobId));
   }
 
+  /** Try to let Janitor cleanup a Bucket that is already deleted in cloud. */
+  @Test
+  public void subscribeAndCleanupResource_alreadyDeletedBucket() throws Exception {
+    // Creates bucket and verify.
+    String bucketName = UUID.randomUUID().toString();
+    assertNull(storageCow.get(bucketName));
+    storageCow.create(BucketInfo.of(bucketName));
+    assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
+    storageCow.delete(bucketName);
+    // Delete the resource.
+    assertNull(storageCow.get(bucketName));
+
+    CloudResourceUid resource =
+        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
+
+    publishAndVerifyResourceTracked(resource);
+  }
+
   @Test
   public void subscribeAndCleanupResource_googleBlob() throws Exception {
     // Creates Blob and verify.
@@ -128,24 +145,32 @@ public class TrackResourceIntegrationTest {
 
     // Resource is removed
     assertNull(storageCow.get(blobId));
+    storageCow.delete(bucketName);
   }
 
-  /** Try to let Janitor cleanup a resources that is already deleted in cloud. */
+  /** Try to let Janitor cleanup a Blob that is already deleted in cloud. */
   @Test
-  public void subscribeAndCleanupResource_alreadyDeletedResource() throws Exception {
-    // Creates bucket and verify.
-    String bucketName = UUID.randomUUID().toString();
+  public void subscribeAndCleanupResource_alreadyDeletedBlob() throws Exception {
+    // Creates Blob and verify.
+    String bucketName = randomName();
     assertNull(storageCow.get(bucketName));
-    storageCow.create(BucketInfo.of(bucketName));
+    BucketCow bucketCow = storageCow.create(BucketInfo.of(bucketName));
+    BlobId blobId = BlobId.of(bucketCow.getBucketInfo().getName(), randomName());
+    storageCow.create(BlobInfo.newBuilder(blobId).build());
     assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
-    storageCow.delete(bucketName);
-    // Delete the resource.
-    assertNull(storageCow.get(bucketName));
+    assertEquals(blobId.getName(), storageCow.get(blobId).getBlobInfo().getName());
+    // Then delete this blob
+    assertTrue(storageCow.delete(blobId));
 
     CloudResourceUid resource =
-        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
+        new CloudResourceUid()
+            .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
     publishAndVerifyResourceTracked(resource);
+
+    // Resource is removed
+    assertNull(storageCow.get(blobId));
+    storageCow.delete(bucketName);
   }
 
   /**

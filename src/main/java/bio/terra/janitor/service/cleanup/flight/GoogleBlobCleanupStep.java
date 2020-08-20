@@ -22,7 +22,6 @@ public class GoogleBlobCleanupStep extends ResourceCleanupStep {
   @Override
   protected StepResult cleanUp(CloudResourceUid resourceUid) {
     try {
-      // Delete all Blobs before deleting bucket.
       BlobId blobId =
           BlobId.of(
               resourceUid.getGoogleBlobUid().getBucketName(),
