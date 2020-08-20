@@ -108,11 +108,20 @@ public class TrackResourceIntegrationTest {
     assertNull(storageCow.get(blobId));
   }
 
-  /** Try to let Janitor cleanup a resources that doesn't exist in cloud. */
+  /** Try to let Janitor cleanup a resources that is already deleted in cloud. */
   @Test
-  public void subscribeAndCleanupResource_notExists() throws Exception {
+  public void subscribeAndCleanupResource_alreadyDeletedResource() throws Exception {
+    // Creates bucket and verify.
+    String bucketName = UUID.randomUUID().toString();
+    assertNull(storageCow.get(bucketName));
+    storageCow.create(BucketInfo.of(bucketName));
+    assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
+    storageCow.create(BucketInfo.of(bucketName));
+    // Delete the resource.
+    assertNull(storageCow.get(bucketName));
+
     CloudResourceUid resource =
-        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(randomName()));
+        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
     publishAndVerifyResourceTracked(resource);
   }
