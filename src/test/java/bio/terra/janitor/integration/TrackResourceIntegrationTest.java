@@ -116,7 +116,7 @@ public class TrackResourceIntegrationTest {
     assertNull(storageCow.get(bucketName));
     storageCow.create(BucketInfo.of(bucketName));
     assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
-    storageCow.create(BucketInfo.of(bucketName));
+    storageCow.delete(bucketName);
     // Delete the resource.
     assertNull(storageCow.get(bucketName));
 
