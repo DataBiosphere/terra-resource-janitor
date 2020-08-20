@@ -108,6 +108,28 @@ public class TrackResourceIntegrationTest {
     assertNull(storageCow.get(blobId));
   }
 
+  @Test
+  public void subscribeAndCleanupResource_googleBlob() throws Exception {
+    // Creates Blob and verify.
+    String bucketName = randomName();
+    assertNull(storageCow.get(bucketName));
+    BucketCow bucketCow = storageCow.create(BucketInfo.of(bucketName));
+    BlobId blobId = BlobId.of(bucketCow.getBucketInfo().getName(), randomName());
+    storageCow.create(BlobInfo.newBuilder(blobId).build());
+
+    assertEquals(bucketName, storageCow.get(bucketName).getBucketInfo().getName());
+    assertEquals(blobId.getName(), storageCow.get(blobId).getBlobInfo().getName());
+
+    CloudResourceUid resource =
+        new CloudResourceUid()
+            .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
+
+    publishAndVerifyResourceTracked(resource);
+
+    // Resource is removed
+    assertNull(storageCow.get(blobId));
+  }
+
   /** Try to let Janitor cleanup a resources that is already deleted in cloud. */
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedResource() throws Exception {

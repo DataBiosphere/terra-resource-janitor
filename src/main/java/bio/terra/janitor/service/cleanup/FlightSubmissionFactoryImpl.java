@@ -20,6 +20,8 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
     switch (resourceType) {
       case GOOGLE_BUCKET:
         return FlightSubmission.create(GoogleBucketCleanupFlight.class, flightMap);
+      case GOOGLE_BLOB:
+        return FlightSubmission.create(GoogleBlobCleanupFlight.class, flightMap);
       default:
         return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
     }
