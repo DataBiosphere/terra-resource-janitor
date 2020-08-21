@@ -57,27 +57,27 @@ public class TrackResourceIntegrationTest {
 
   private StorageCow storageCow;
   private static final Map<String, String> DEFAULT_LABELS =
-      ImmutableMap.of("key1", "value1", "key2", "value2");
+          ImmutableMap.of("key1", "value1", "key2", "value2");
 
   @BeforeEach
   public void setUp() throws Exception {
     TopicName topicName =
-        TopicName.of(
-            trackResourcePubsubConfiguration.getProjectId(),
-            testConfiguration.getTrackResourceTopicId());
+            TopicName.of(
+                    trackResourcePubsubConfiguration.getProjectId(),
+                    testConfiguration.getTrackResourceTopicId());
     publisher =
-        Publisher.newBuilder(topicName)
-            .setCredentialsProvider(
-                FixedCredentialsProvider.create(
-                    testConfiguration.getClientGoogleCredentialsOrDie()))
-            .build();
+            Publisher.newBuilder(topicName)
+                    .setCredentialsProvider(
+                            FixedCredentialsProvider.create(
+                                    testConfiguration.getClientGoogleCredentialsOrDie()))
+                    .build();
     storageCow =
-        new StorageCow(
-            testConfiguration.createClientConfig(),
-            StorageOptions.newBuilder()
-                .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
-                .setProjectId(testConfiguration.getResourceProjectId())
-                .build());
+            new StorageCow(
+                    testConfiguration.createClientConfig(),
+                    StorageOptions.newBuilder()
+                            .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
+                            .setProjectId(testConfiguration.getResourceProjectId())
+                            .build());
   }
 
   @AfterEach
@@ -98,7 +98,7 @@ public class TrackResourceIntegrationTest {
     assertEquals(blobId.getName(), storageCow.get(blobId).getBlobInfo().getName());
 
     CloudResourceUid resource =
-        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
+            new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
     publishAndVerifyResourceTracked(resource);
 
@@ -120,7 +120,7 @@ public class TrackResourceIntegrationTest {
     assertNull(storageCow.get(bucketName));
 
     CloudResourceUid resource =
-        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
+            new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
     publishAndVerifyResourceTracked(resource);
   }
@@ -138,8 +138,8 @@ public class TrackResourceIntegrationTest {
     assertEquals(blobId.getName(), storageCow.get(blobId).getBlobInfo().getName());
 
     CloudResourceUid resource =
-        new CloudResourceUid()
-            .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
+            new CloudResourceUid()
+                    .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
     publishAndVerifyResourceTracked(resource);
 
@@ -163,8 +163,8 @@ public class TrackResourceIntegrationTest {
     assertTrue(storageCow.delete(blobId));
 
     CloudResourceUid resource =
-        new CloudResourceUid()
-            .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
+            new CloudResourceUid()
+                    .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
     publishAndVerifyResourceTracked(resource);
 
@@ -180,9 +180,9 @@ public class TrackResourceIntegrationTest {
     OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
 
     ByteString data =
-        ByteString.copyFromUtf8(
-            objectMapper.writeValueAsString(
-                newExpiredCreateResourceMessage(resource, publishTime)));
+            ByteString.copyFromUtf8(
+                    objectMapper.writeValueAsString(
+                            newExpiredCreateResourceMessage(resource, publishTime)));
 
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
@@ -190,18 +190,18 @@ public class TrackResourceIntegrationTest {
     Thread.sleep(10000);
 
     String getResponse =
-        this.mvc
-            .perform(
-                get("/api/janitor/v1/resource")
-                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource)))
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(status().isOk())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+            this.mvc
+                    .perform(
+                            get("/api/janitor/v1/resource")
+                                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource)))
+                    .andDo(MockMvcResultHandlers.print())
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
 
     TrackedResourceInfoList resourceInfoList =
-        objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+            objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
     assertEquals(resource, trackedResourceInfo.getResourceUid());
@@ -213,12 +213,12 @@ public class TrackResourceIntegrationTest {
 
   /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
   private CreateResourceRequestBody newExpiredCreateResourceMessage(
-      CloudResourceUid resource, OffsetDateTime now) {
+          CloudResourceUid resource, OffsetDateTime now) {
     return new CreateResourceRequestBody()
-        .resourceUid(resource)
-        .creation(now)
-        .expiration(now)
-        .labels(DEFAULT_LABELS);
+            .resourceUid(resource)
+            .creation(now)
+            .expiration(now)
+            .labels(DEFAULT_LABELS);
   }
 
   /** Generates a random name to use for a cloud resource. */

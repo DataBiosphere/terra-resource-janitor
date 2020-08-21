@@ -49,23 +49,34 @@ public class TrackedResourceSubscriber {
             trackResourcePubsubConfiguration.getProjectId(),
             trackResourcePubsubConfiguration.getSubscription());
 
-    // Instantiate an asynchronous message receiver.
-    MessageReceiver receiver =
-        (PubsubMessage message, AckReplyConsumer consumer) -> {
-          // Handle incoming message, then always ack the received message.
-          try {
-            CreateResourceRequestBody body =
-                objectMapper.readValue(
-                    message.getData().toStringUtf8(), CreateResourceRequestBody.class);
-            janitorService.createResource(body);
-            consumer.ack();
-          } catch (JsonProcessingException e) {
-            throw new InvalidMessageException(
-                "Invalid track resource pubsub message: " + message.toString(), e);
-          }
-        };
-
-    Subscriber subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
+    Subscriber subscriber =
+        Subscriber.newBuilder(subscriptionName, new TestReceives(objectMapper, janitorService))
+            .build();
     subscriber.startAsync().awaitRunning();
+  }
+
+  static class TestReceives implements MessageReceiver {
+
+    private final ObjectMapper objectMapper;
+    private final JanitorService janitorService;
+
+    TestReceives(ObjectMapper objectMapper, JanitorService janitorService) {
+      this.objectMapper = objectMapper;
+      this.janitorService = janitorService;
+    }
+
+    @Override
+    public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
+      try {
+        CreateResourceRequestBody body =
+            objectMapper.readValue(
+                message.getData().toStringUtf8(), CreateResourceRequestBody.class);
+        janitorService.createResource(body);
+        consumer.ack();
+      } catch (JsonProcessingException e) {
+        throw new InvalidMessageException(
+            "Invalid track resource pubsub message: " + message.toString(), e);
+      }
+    }
   }
 }
