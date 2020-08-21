@@ -4,7 +4,6 @@ import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.exception.InvalidMessageException;
 import bio.terra.janitor.service.janitor.JanitorService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
@@ -22,7 +21,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class TrackedResourceSubscriber {
-  private Logger logger = LoggerFactory.getLogger(TrackedResourceSubscriber.class);
+  private static final Logger logger = LoggerFactory.getLogger(TrackedResourceSubscriber.class);
 
   private final TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
   private final JanitorService janitorService;
@@ -51,18 +50,18 @@ public class TrackedResourceSubscriber {
             trackResourcePubsubConfiguration.getSubscription());
 
     Subscriber subscriber =
-        Subscriber.newBuilder(subscriptionName, new TestReceives(objectMapper, janitorService))
+        Subscriber.newBuilder(subscriptionName, new ResourceReceiver(objectMapper, janitorService))
             .build();
     subscriber.startAsync().awaitRunning();
   }
 
   @VisibleForTesting
-  static class TestReceives implements MessageReceiver {
+  static class ResourceReceiver implements MessageReceiver {
 
     private final ObjectMapper objectMapper;
     private final JanitorService janitorService;
 
-    TestReceives(ObjectMapper objectMapper, JanitorService janitorService) {
+    ResourceReceiver(ObjectMapper objectMapper, JanitorService janitorService) {
       this.objectMapper = objectMapper;
       this.janitorService = janitorService;
     }
@@ -75,7 +74,7 @@ public class TrackedResourceSubscriber {
                 message.getData().toStringUtf8(), CreateResourceRequestBody.class);
         janitorService.createResource(body);
         consumer.ack();
-      } catch (JsonProcessingException e) {
+      } catch (Exception e) {
         throw new InvalidMessageException(
             "Invalid track resource pubsub message: " + message.toString(), e);
       }
