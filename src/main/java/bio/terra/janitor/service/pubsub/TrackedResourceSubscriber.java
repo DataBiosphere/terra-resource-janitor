@@ -58,12 +58,10 @@ public class TrackedResourceSubscriber {
                 objectMapper.readValue(
                     message.getData().toStringUtf8(), CreateResourceRequestBody.class);
             janitorService.createResource(body);
+            consumer.ack();
           } catch (JsonProcessingException e) {
             throw new InvalidMessageException(
                 "Invalid track resource pubsub message: " + message.toString(), e);
-          } finally {
-            // TODO(yonghao): Add dead letter queue to handle failed operations.
-            consumer.ack();
           }
         };
 
