@@ -1,7 +1,6 @@
 package bio.terra.janitor.service.cleanup.flight;
 
 import bio.terra.cloudres.common.ClientConfig;
-import bio.terra.cloudres.google.storage.BlobCow;
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.stairway.StepResult;
@@ -26,12 +25,7 @@ public class GoogleBlobCleanupStep extends ResourceCleanupStep {
           BlobId.of(
               resourceUid.getGoogleBlobUid().getBucketName(),
               resourceUid.getGoogleBlobUid().getBlobName());
-      BlobCow blobCow = storageCow.get(blobId);
-      if (blobCow == null) {
-        // Blob doesn't exists.
-        return StepResult.getStepResultSuccess();
-      }
-      blobCow.delete();
+      storageCow.delete(blobId);
       return StepResult.getStepResultSuccess();
     } catch (StorageException e) {
       logger.warn("Google StorageException occurs during Blob Cleanup", e);
