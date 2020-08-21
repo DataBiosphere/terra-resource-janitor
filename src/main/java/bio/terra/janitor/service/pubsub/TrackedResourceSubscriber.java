@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.pubsub.v1.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,7 @@ public class TrackedResourceSubscriber {
     subscriber.startAsync().awaitRunning();
   }
 
+  @VisibleForTesting
   static class TestReceives implements MessageReceiver {
 
     private final ObjectMapper objectMapper;
