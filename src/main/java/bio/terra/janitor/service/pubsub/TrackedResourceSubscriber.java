@@ -75,6 +75,7 @@ public class TrackedResourceSubscriber {
         janitorService.createResource(body);
         consumer.ack();
       } catch (Exception e) {
+        logger.warn("Invalid track resource pubsub message: " + message.toString(), e);
         throw new InvalidMessageException(
             "Invalid track resource pubsub message: " + message.toString(), e);
       }

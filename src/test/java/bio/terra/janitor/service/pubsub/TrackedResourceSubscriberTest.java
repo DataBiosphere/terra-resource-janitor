@@ -1,8 +1,6 @@
 package bio.terra.janitor.service.pubsub;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
@@ -28,7 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 @Tag("unit")
 @ExtendWith(SpringExtension.class)
@@ -71,20 +68,9 @@ public class TrackedResourceSubscriberTest {
         new TrackedResourceSubscriber.ResourceReceiver(objectMapper, janitorService);
 
     resourceReceiver.receiveMessage(PubsubMessage.newBuilder().setData(data).build(), consumer);
+    janitorService.getResources(resource);
 
-    String getResponse =
-        this.mvc
-            .perform(
-                get("/api/janitor/v1/resource")
-                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource)))
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(status().isOk())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
-    TrackedResourceInfoList resourceInfoList =
-        objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+    TrackedResourceInfoList resourceInfoList = janitorService.getResources(resource);
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
     assertEquals(resource, trackedResourceInfo.getResourceUid());
