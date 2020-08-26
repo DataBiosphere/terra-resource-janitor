@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
+import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,6 +27,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class JanitorServiceTest {
   private static final OffsetDateTime DEFAULT_TIME = OffsetDateTime.now();
+  private static final AuthenticatedUserRequest ADMIN_USER =
+      new AuthenticatedUserRequest().email("test1@email.com");
   @Autowired private JanitorService janitorService;
 
   /** Returns a map of the resource ids to their TrackedResourceStates as strings. */
@@ -45,9 +48,11 @@ public class JanitorServiceTest {
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME))
+                    .expiration(DEFAULT_TIME),
+                ADMIN_USER)
             .getId();
-    Map<String, String> retrievedStates = extractStates(janitorService.getResources(resourceUid));
+    Map<String, String> retrievedStates =
+        extractStates(janitorService.getResources(resourceUid, ADMIN_USER));
     assertThat(retrievedStates, Matchers.hasEntry(firstId, "READY"));
     assertThat(retrievedStates, Matchers.aMapWithSize(1));
 
@@ -58,9 +63,10 @@ public class JanitorServiceTest {
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME.minusMinutes(10)))
+                    .expiration(DEFAULT_TIME.minusMinutes(10)),
+                ADMIN_USER)
             .getId();
-    retrievedStates = extractStates(janitorService.getResources(resourceUid));
+    retrievedStates = extractStates(janitorService.getResources(resourceUid, ADMIN_USER));
     assertThat(retrievedStates, Matchers.hasEntry(firstId, "READY"));
     assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
     assertThat(retrievedStates, Matchers.aMapWithSize(2));
@@ -72,9 +78,10 @@ public class JanitorServiceTest {
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME.plusMinutes(20)))
+                    .expiration(DEFAULT_TIME.plusMinutes(20)),
+                ADMIN_USER)
             .getId();
-    retrievedStates = extractStates(janitorService.getResources(resourceUid));
+    retrievedStates = extractStates(janitorService.getResources(resourceUid, ADMIN_USER));
     assertThat(retrievedStates, Matchers.hasEntry(firstId, "DUPLICATED"));
     assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
     assertThat(retrievedStates, Matchers.hasEntry(thirdId, "READY"));

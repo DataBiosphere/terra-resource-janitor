@@ -106,3 +106,18 @@ Stop the local postgres:
 ```
 local-dev/run_postgres.sh stop
 ```
+## Authorization
+Janitor uses a list of user email address as administrator user to access its admin endpoint.
+The value can be set in `iam.adminUserList` configuration.
+### For Broad Engineers:
+The file is stored in Vault. 
+To read user list, run:
+```
+docker run -e VAULT_TOKEN=$(cat ~/.vault-token) -it broadinstitute/dsde-toolbox:dev vault read config/terra/crl-janitor/common/iam 
+```
+To request admin access, please contact [mc-terra-janitor-admins](https://github.com/orgs/broadinstitute/teams/mc-terra-janitor-admins) members.
+
+To update user list, run:
+```
+docker run --rm --cap-add IPC_LOCK -e "VAULT_TOKEN=$(cat ~/.vault-token)" -e "VAULT_ADDR=https://clotho.broadinstitute.org:8200" -v $(pwd):/current vault:1.1.0 vault write config/terra/crl-janitor/common/iam admin-users=@/current/{USER_FILE}}
+```
