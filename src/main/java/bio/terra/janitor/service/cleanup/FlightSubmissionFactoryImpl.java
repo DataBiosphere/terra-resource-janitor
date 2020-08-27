@@ -22,6 +22,10 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
         return FlightSubmission.create(GoogleBucketCleanupFlight.class, flightMap);
       case GOOGLE_BLOB:
         return FlightSubmission.create(GoogleBlobCleanupFlight.class, flightMap);
+      case GOOGLE_BIG_QUERY_DATASET:
+        return FlightSubmission.create(GoogleDatasetCleanupFlight.class, flightMap);
+      case GOOGLE_BIG_QUERY_TABLE:
+        return FlightSubmission.create(GoogleBigQueryTableCleanupFlight.class, flightMap);
       default:
         return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
     }

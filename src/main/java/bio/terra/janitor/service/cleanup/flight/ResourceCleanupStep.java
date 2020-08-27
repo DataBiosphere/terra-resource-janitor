@@ -4,11 +4,9 @@ import static bio.terra.janitor.service.cleanup.FlightMapKeys.CLOUD_RESOURCE_UID
 import static bio.terra.janitor.service.cleanup.FlightMapKeys.TRACKED_RESOURCE_ID;
 
 import bio.terra.cloudres.common.ClientConfig;
-import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.db.*;
 import bio.terra.stairway.*;
-import com.google.cloud.storage.StorageOptions;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,11 +16,9 @@ public abstract class ResourceCleanupStep implements Step {
   private Logger logger = LoggerFactory.getLogger(ResourceCleanupStep.class);
 
   private final JanitorDao janitorDao;
-  final StorageCow storageCow;
 
   public ResourceCleanupStep(ClientConfig clientConfig, JanitorDao janitorDao) {
     this.janitorDao = janitorDao;
-    this.storageCow = new StorageCow(clientConfig, StorageOptions.getDefaultInstance());
   }
 
   @Override

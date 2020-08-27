@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.cloudres.google.bigquery.BigQueryCow;
+import bio.terra.cloudres.google.bigquery.DatasetCow;
+import bio.terra.cloudres.google.bigquery.TableCow;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.*;
@@ -13,6 +16,7 @@ import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.cloud.bigquery.*;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -56,11 +60,15 @@ public class TrackResourceIntegrationTest {
   private Publisher publisher;
 
   private StorageCow storageCow;
+  private BigQueryCow bigQueryCow;
+  private String projectId;
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
 
   @BeforeEach
   public void setUp() throws Exception {
+    projectId = testConfiguration.getResourceProjectId();
+
     TopicName topicName =
         TopicName.of(
             trackResourcePubsubConfiguration.getProjectId(),
@@ -76,7 +84,15 @@ public class TrackResourceIntegrationTest {
             testConfiguration.createClientConfig(),
             StorageOptions.newBuilder()
                 .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
-                .setProjectId(testConfiguration.getResourceProjectId())
+                .setProjectId(projectId)
+                .build());
+
+    bigQueryCow =
+        new BigQueryCow(
+            testConfiguration.createClientConfig(),
+            BigQueryOptions.newBuilder()
+                .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
+                .setProjectId(projectId)
                 .build());
   }
 
@@ -173,6 +189,35 @@ public class TrackResourceIntegrationTest {
     storageCow.delete(bucketName);
   }
 
+  @Test
+  public void subscribeAndCleanupResource_googleDataset() throws Exception {
+    // Creates dataset and table.
+    String datasetName = randomNameWithUnderscore();
+    String tableName = randomNameWithUnderscore();
+    TableId tableId = TableId.of(datasetName, tableName);
+    assertNull(bigQueryCow.getDataSet(datasetName));
+    DatasetCow datasetCow = bigQueryCow.create(DatasetInfo.newBuilder(datasetName).build());
+    TableCow tableCow =
+        bigQueryCow.create(
+            TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build()).build());
+
+    assertEquals(
+        datasetName,
+        bigQueryCow.getDataSet(datasetName).getDatasetInfo().getDatasetId().getDataset());
+    assertEquals(tableName, bigQueryCow.getTable(tableId).getTableInfo().getTableId().getTable());
+
+    CloudResourceUid datasetUid =
+        new CloudResourceUid()
+            .googleBigQueryDatasetUid(
+                new GoogleBigQueryDatasetUid().projectId(projectId).datasetId(datasetName));
+
+    publishAndVerifyResourceTracked(datasetUid);
+
+    // Resource is removed
+    assertNull(bigQueryCow.getDataSet(datasetName));
+    assertNull(bigQueryCow.getTable(tableId));
+  }
+
   /**
    * Publish message to Janitor to track resource and verify the resource by GET resource endpoint.
    */
@@ -224,5 +269,10 @@ public class TrackResourceIntegrationTest {
   /** Generates a random name to use for a cloud resource. */
   private static String randomName() {
     return UUID.randomUUID().toString();
+  }
+
+  /** Generates a random name to and replace '-' with '_'. */
+  private static String randomNameWithUnderscore() {
+    return UUID.randomUUID().toString().replace('-', '_');
   }
 }
