@@ -1,24 +1,20 @@
 package bio.terra.janitor.service.iam;
 
-import bio.terra.janitor.common.exception.ApiException;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.Optional;
 import java.util.UUID;
 
+/** Captures the inbound authentication information. */
 public class AuthenticatedUserRequest {
   private String email;
   private String subjectId;
-  private Optional<String> token;
-  private UUID reqId;
+  private UUID requestId;
 
   public AuthenticatedUserRequest() {
-    this.reqId = UUID.randomUUID();
+    this.requestId = UUID.randomUUID();
   }
 
-  public AuthenticatedUserRequest(String email, String subjectId, Optional<String> token) {
+  public AuthenticatedUserRequest(String email, String subjectId) {
     this.email = email;
     this.subjectId = subjectId;
-    this.token = token;
   }
 
   public String getSubjectId() {
@@ -39,29 +35,12 @@ public class AuthenticatedUserRequest {
     return this;
   }
 
-  public Optional<String> getToken() {
-    return token;
-  }
-
-  public AuthenticatedUserRequest token(Optional<String> token) {
-    this.token = token;
-    return this;
-  }
-
-  @JsonIgnore
-  public String getRequiredToken() {
-    if (!token.isPresent()) {
-      throw new ApiException("Token required");
-    }
-    return token.get();
-  }
-
-  public UUID getReqId() {
-    return reqId;
+  public UUID getRequestId() {
+    return requestId;
   }
 
   public AuthenticatedUserRequest reqId(UUID reqId) {
-    this.reqId = reqId;
+    this.requestId = reqId;
     return this;
   }
 }

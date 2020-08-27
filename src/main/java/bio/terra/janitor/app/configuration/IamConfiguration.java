@@ -18,13 +18,15 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class IamConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(IamConfiguration.class);
 
-  // The file path for admin user list.
+  // The Janitor admin user list.
   private String adminUserList;
+  // Extracted from the adminUserList value. Mutually exclusive with adminUserList.
   private Set<String> adminUsers;
-  private boolean configBasedAuthZEnabled;
+  // If the config based authorization are enabled. If disabled, Janitor will not perform the config
+  // authZ check.
+  private boolean configBasedAuthzEnabled;
 
   public Set<String> getAdminUsers() {
-    logger.warn("Failed to read admin user file from configuration" + adminUserList);
     return adminUsers;
   }
 
@@ -42,17 +44,16 @@ public class IamConfiguration {
                   adminUserList,
                   TypeFactory.defaultInstance().constructCollectionType(Set.class, String.class));
     } catch (IOException e) {
-      logger.warn("Failed to read admin user file from configuration", e);
-      throw new RuntimeException(
-          "Failed to read admin user file from configuration", e);
+      logger.warn("Failed to read admin user list from configuration", e);
+      throw new RuntimeException("Failed to read admin user list from configuration", e);
     }
   }
 
-  public boolean isConfigBasedAuthZEnabled() {
-    return configBasedAuthZEnabled;
+  public boolean isConfigBasedAuthzEnabled() {
+    return configBasedAuthzEnabled;
   }
 
-  public void setConfigBasedAuthZEnabled(boolean configBasedAuthZEnabled) {
-    this.configBasedAuthZEnabled = configBasedAuthZEnabled;
+  public void setConfigBasedAuthzEnabled(boolean configBasedAuthzEnabled) {
+    this.configBasedAuthzEnabled = configBasedAuthzEnabled;
   }
 }

@@ -36,7 +36,7 @@ public class JanitorService {
 
   public CreatedResource createResource(
       CreateResourceRequestBody body, AuthenticatedUserRequest userReq) {
-    iamService.isAdminUser(userReq);
+    iamService.requireAdminUser(userReq);
     return createResourceInternal(body);
   }
 
@@ -104,7 +104,7 @@ public class JanitorService {
 
   /** Retrieves the info about a tracked resource if their exists a resource for that id. */
   public Optional<TrackedResourceInfo> getResource(String id, AuthenticatedUserRequest userReq) {
-    iamService.isAdminUser(userReq);
+    iamService.requireAdminUser(userReq);
     UUID uuid;
     try {
       uuid = UUID.fromString(id);
@@ -121,7 +121,7 @@ public class JanitorService {
   /** Retrieves the resources with the {@link CloudResourceUid}. */
   public TrackedResourceInfoList getResources(
       CloudResourceUid cloudResourceUid, AuthenticatedUserRequest userReq) {
-    iamService.isAdminUser(userReq);
+    iamService.requireAdminUser(userReq);
     List<TrackedResourceAndLabels> resourcesWithLabels =
         janitorDao.retrieveResourcesWith(cloudResourceUid);
     TrackedResourceInfoList resourceList = new TrackedResourceInfoList();

@@ -21,13 +21,14 @@ public class IamService {
   }
 
   /** Check if user is an administrator. Throws {@link UnauthorizedException} if not. */
-  public void isAdminUser(AuthenticatedUserRequest userReq) {
-    if (iamConfiguration.isConfigBasedAuthZEnabled()) {
+  public void requireAdminUser(AuthenticatedUserRequest userReq) {
+    if (!iamConfiguration.isConfigBasedAuthzEnabled()) {
       return;
     }
     boolean isAdmin = iamConfiguration.getAdminUsers().contains(userReq.getEmail());
-    if (!isAdmin)
+    if (!isAdmin) {
       throw new UnauthorizedException(
           "User " + userReq.getEmail() + " is not Janitor's administrator.");
+    }
   }
 }

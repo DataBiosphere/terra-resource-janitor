@@ -32,34 +32,31 @@ public class JanitorApiController implements JanitorApi {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
   }
 
-  private AuthenticatedUserRequest getAuthenticatedInfo() {
+  private AuthenticatedUserRequest getAuthenticatedRequest() {
     return authenticatedUserRequestFactory.from(request);
   }
 
   @Override
   public ResponseEntity<TrackedResourceInfo> getResource(String id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    Optional<TrackedResourceInfo> resource = janitorService.getResource(id, userReq);
-    if (resource.isPresent()) {
-      return new ResponseEntity<>(resource.get(), HttpStatus.OK);
-    } else {
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
+    Optional<TrackedResourceInfo> resource =
+        janitorService.getResource(id, getAuthenticatedRequest());
+    return resource
+        .map(trackedResourceInfo -> new ResponseEntity<>(trackedResourceInfo, HttpStatus.OK))
+        .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
   @Override
   public ResponseEntity<TrackedResourceInfoList> getResources(
       @NotNull @Valid CloudResourceUid cloudResourceUid) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     return new ResponseEntity<>(
-        janitorService.getResources(cloudResourceUid, userReq), HttpStatus.OK);
+        janitorService.getResources(cloudResourceUid, getAuthenticatedRequest()), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<CreatedResource> createResource(
       @Valid @RequestBody CreateResourceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    return new ResponseEntity<>(janitorService.createResource(body, userReq), HttpStatus.OK);
+    return new ResponseEntity<>(
+        janitorService.createResource(body, getAuthenticatedRequest()), HttpStatus.OK);
   }
 
   /** Required if using Swagger-CodeGen, but actually we don't need this. */
