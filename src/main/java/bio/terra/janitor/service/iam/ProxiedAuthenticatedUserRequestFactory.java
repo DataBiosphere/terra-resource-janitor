@@ -1,8 +1,6 @@
 package bio.terra.janitor.service.iam;
 
-import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 /**
