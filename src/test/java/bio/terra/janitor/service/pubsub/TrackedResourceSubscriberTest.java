@@ -6,6 +6,7 @@ import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.common.exception.InvalidMessageException;
 import bio.terra.janitor.db.TrackedResourceState;
+import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.service.janitor.JanitorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
@@ -33,6 +34,9 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class TrackedResourceSubscriberTest {
+  private static final AuthenticatedUserRequest ADMIN_USER =
+      new AuthenticatedUserRequest().email("test1@email.com");
+
   @Autowired
   @Qualifier("objectMapper")
   private ObjectMapper objectMapper;
@@ -68,9 +72,9 @@ public class TrackedResourceSubscriberTest {
         new TrackedResourceSubscriber.ResourceReceiver(objectMapper, janitorService);
 
     resourceReceiver.receiveMessage(PubsubMessage.newBuilder().setData(data).build(), consumer);
-    janitorService.getResources(resource);
+    janitorService.getResources(resource, ADMIN_USER);
 
-    TrackedResourceInfoList resourceInfoList = janitorService.getResources(resource);
+    TrackedResourceInfoList resourceInfoList = janitorService.getResources(resource, ADMIN_USER);
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
     assertEquals(resource, trackedResourceInfo.getResourceUid());

@@ -72,7 +72,7 @@ public class TrackedResourceSubscriber {
         CreateResourceRequestBody body =
             objectMapper.readValue(
                 message.getData().toStringUtf8(), CreateResourceRequestBody.class);
-        janitorService.createResource(body);
+        janitorService.createResourceInternal(body);
         consumer.ack();
       } catch (Exception e) {
         logger.warn("Invalid track resource pubsub message: " + message.toString(), e);

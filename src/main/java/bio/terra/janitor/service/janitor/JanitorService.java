@@ -2,6 +2,8 @@ package bio.terra.janitor.service.janitor;
 
 import bio.terra.generated.model.*;
 import bio.terra.janitor.db.*;
+import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
+import bio.terra.janitor.service.iam.IamService;
 import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -22,14 +24,24 @@ public class JanitorService {
 
   private final JanitorDao janitorDao;
   private final TransactionTemplate transactionTemplate;
+  private final IamService iamService;
 
   @Autowired
-  public JanitorService(JanitorDao janitorDao, TransactionTemplate transactionTemplate) {
+  public JanitorService(
+      JanitorDao janitorDao, TransactionTemplate transactionTemplate, IamService iamService) {
     this.janitorDao = janitorDao;
     this.transactionTemplate = transactionTemplate;
+    this.iamService = iamService;
   }
 
-  public CreatedResource createResource(CreateResourceRequestBody body) {
+  public CreatedResource createResource(
+      CreateResourceRequestBody body, AuthenticatedUserRequest userReq) {
+    iamService.requireAdminUser(userReq);
+    return createResourceInternal(body);
+  }
+
+  /** Internal method to Create a new {@link TrackedResource} without user credentials. */
+  public CreatedResource createResourceInternal(CreateResourceRequestBody body) {
     TrackedResourceId id =
         transactionTemplate.execute(status -> createResourceAndUpdateDuplicates(body, status));
     return new CreatedResource().id(id.toString());
@@ -91,7 +103,8 @@ public class JanitorService {
   }
 
   /** Retrieves the info about a tracked resource if their exists a resource for that id. */
-  public Optional<TrackedResourceInfo> getResource(String id) {
+  public Optional<TrackedResourceInfo> getResource(String id, AuthenticatedUserRequest userReq) {
+    iamService.requireAdminUser(userReq);
     UUID uuid;
     try {
       uuid = UUID.fromString(id);
@@ -106,7 +119,9 @@ public class JanitorService {
   }
 
   /** Retrieves the resources with the {@link CloudResourceUid}. */
-  public TrackedResourceInfoList getResources(CloudResourceUid cloudResourceUid) {
+  public TrackedResourceInfoList getResources(
+      CloudResourceUid cloudResourceUid, AuthenticatedUserRequest userReq) {
+    iamService.requireAdminUser(userReq);
     List<TrackedResourceAndLabels> resourcesWithLabels =
         janitorDao.retrieveResourcesWith(cloudResourceUid);
     TrackedResourceInfoList resourceList = new TrackedResourceInfoList();
