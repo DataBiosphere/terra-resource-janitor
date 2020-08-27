@@ -11,6 +11,7 @@ import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
+import bio.terra.janitor.service.iam.AuthHeaderKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.pubsub.v1.Publisher;
@@ -193,7 +194,8 @@ public class TrackResourceIntegrationTest {
         this.mvc
             .perform(
                 get("/api/janitor/v1/resource")
-                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource)))
+                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource))
+                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), "test1@email.com"))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
             .andReturn()
