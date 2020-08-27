@@ -25,12 +25,13 @@ public class GoogleDatasetCleanupStep extends ResourceCleanupStep {
 
   @Override
   protected StepResult cleanUp(CloudResourceUid resourceUid) {
-    System.out.println("11111111111111222222222222");
+    DatasetId datasetId =
+        DatasetId.of(
+            resourceUid.getGoogleBigQueryDatasetUid().getProjectId(),
+            resourceUid.getGoogleBigQueryDatasetUid().getDatasetId());
     try {
-      DatasetId datasetId = DatasetId.of(resourceUid.getGoogleBigQueryDatasetUid().getDatasetId());
-      System.out.println(
-          bigQueryCow.delete(datasetId, BigQuery.DatasetDeleteOption.deleteContents()));
-
+      // Delete dataset with content inside.
+      bigQueryCow.delete(datasetId, BigQuery.DatasetDeleteOption.deleteContents());
       return StepResult.getStepResultSuccess();
     } catch (BigQueryException e) {
       logger.warn("Google BigQueryException occurs during Dataset Cleanup", e);

@@ -5,8 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
-import bio.terra.cloudres.google.bigquery.DatasetCow;
-import bio.terra.cloudres.google.bigquery.TableCow;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.*;
@@ -196,15 +194,15 @@ public class TrackResourceIntegrationTest {
     String datasetName = randomNameWithUnderscore();
     String tableName = randomNameWithUnderscore();
     TableId tableId = TableId.of(datasetName, tableName);
-    assertNull(bigQueryCow.getDataSet(datasetName));
-    DatasetCow datasetCow = bigQueryCow.create(DatasetInfo.newBuilder(datasetName).build());
-    TableCow tableCow =
-        bigQueryCow.create(
-            TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build()).build());
+    assertNull(bigQueryCow.getDataset(datasetName));
+    bigQueryCow.create(DatasetInfo.newBuilder(datasetName).build());
+    bigQueryCow.create(
+        TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build()).build());
 
+    // Verify resources are created in GCP
     assertEquals(
         datasetName,
-        bigQueryCow.getDataSet(datasetName).getDatasetInfo().getDatasetId().getDataset());
+        bigQueryCow.getDataset(datasetName).getDatasetInfo().getDatasetId().getDataset());
     assertEquals(tableName, bigQueryCow.getTable(tableId).getTableInfo().getTableId().getTable());
 
     CloudResourceUid datasetUid =
@@ -212,11 +210,56 @@ public class TrackResourceIntegrationTest {
             .googleBigQueryDatasetUid(
                 new GoogleBigQueryDatasetUid().projectId(projectId).datasetId(datasetName));
 
+    // Publish a message to cleanup the dataset and make sure content inside is also deleted.
     publishAndVerifyResourceTracked(datasetUid);
 
     // Resource is removed
-    assertNull(bigQueryCow.getDataSet(datasetName));
+    assertNull(bigQueryCow.getDataset(datasetName));
     assertNull(bigQueryCow.getTable(tableId));
+
+    // Try to publish another message to cleanup the same table and verify Janitor works fine for
+    // tables already deleted
+    // by other flight.
+    CloudResourceUid tableUid =
+        new CloudResourceUid()
+            .googleBigQueryTableUid(
+                new GoogleBigQueryTableUid()
+                    .projectId(projectId)
+                    .datasetId(datasetName)
+                    .tableId(tableName));
+    publishAndVerifyResourceTracked(tableUid);
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_googleBigQueryTable() throws Exception {
+    // Creates dataset and table.
+    String datasetName = randomNameWithUnderscore();
+    String tableName = randomNameWithUnderscore();
+    TableId tableId = TableId.of(datasetName, tableName);
+    assertNull(bigQueryCow.getDataset(datasetName));
+    bigQueryCow.create(DatasetInfo.newBuilder(datasetName).build());
+    bigQueryCow.create(
+        TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build()).build());
+
+    // Verify resources are created in GCP
+    assertEquals(
+        datasetName,
+        bigQueryCow.getDataset(datasetName).getDatasetInfo().getDatasetId().getDataset());
+    assertEquals(tableName, bigQueryCow.getTable(tableId).getTableInfo().getTableId().getTable());
+
+    CloudResourceUid tableUid =
+        new CloudResourceUid()
+            .googleBigQueryTableUid(
+                new GoogleBigQueryTableUid()
+                    .projectId(projectId)
+                    .datasetId(datasetName)
+                    .tableId(tableName));
+    publishAndVerifyResourceTracked(tableUid);
+
+    // Resource is removed
+    assertNull(bigQueryCow.getTable(tableId));
+    // Cleanup the dataset
+    assertTrue(bigQueryCow.delete(datasetName));
   }
 
   /**
