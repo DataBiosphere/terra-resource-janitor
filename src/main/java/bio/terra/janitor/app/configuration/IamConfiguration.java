@@ -24,6 +24,7 @@ public class IamConfiguration {
   private boolean configBasedAuthZEnabled;
 
   public Set<String> getAdminUsers() {
+    logger.warn("Failed to read admin user file from configuration" + adminUserList);
     return adminUsers;
   }
 
@@ -41,8 +42,9 @@ public class IamConfiguration {
                   adminUserList,
                   TypeFactory.defaultInstance().constructCollectionType(Set.class, String.class));
     } catch (IOException e) {
-      logger.warn("Failed to read admin user file from configuration", e);
-      throw new RuntimeException("Failed to read admin user file from configuration", e);
+      logger.warn("Failed to read admin user file from configuration" + adminUserList, e);
+      throw new RuntimeException(
+          "Failed to read admin user file from configuration" + adminUserList, e);
     }
   }
 
