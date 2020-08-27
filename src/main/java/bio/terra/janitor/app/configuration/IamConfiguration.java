@@ -42,9 +42,9 @@ public class IamConfiguration {
                   adminUserList,
                   TypeFactory.defaultInstance().constructCollectionType(Set.class, String.class));
     } catch (IOException e) {
-      logger.warn("Failed to read admin user file from configuration" + adminUserList, e);
+      logger.warn("Failed to read admin user file from configuration", e);
       throw new RuntimeException(
-          "Failed to read admin user file from configuration" + adminUserList, e);
+          "Failed to read admin user file from configuration", e);
     }
   }
 
