@@ -1,5 +1,7 @@
 package bio.terra.janitor.service.pubsub;
 
+import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
+
 import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.exception.InvalidMessageException;
@@ -31,7 +33,7 @@ public class TrackedResourceSubscriber {
   TrackedResourceSubscriber(
       TrackResourcePubsubConfiguration trackResourcePubsubConfiguration,
       JanitorService janitorService,
-      @Qualifier("objectMapper") ObjectMapper objectMapper) {
+      @Qualifier(OBJECT_MAPPER) ObjectMapper objectMapper) {
     this.trackResourcePubsubConfiguration = trackResourcePubsubConfiguration;
     this.janitorService = janitorService;
     this.objectMapper = objectMapper;

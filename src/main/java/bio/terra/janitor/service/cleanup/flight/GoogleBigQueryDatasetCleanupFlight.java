@@ -10,9 +10,9 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRuleFixedInterval;
 import org.springframework.context.ApplicationContext;
 
-/** A Flight to cleanup Blob in GCP. */
-public class GoogleBlobCleanupFlight extends Flight {
-  public GoogleBlobCleanupFlight(FlightMap inputParameters, Object applicationContext) {
+/** A Flight to cleanup BigQuery Dataset in GCP. */
+public class GoogleBigQueryDatasetCleanupFlight extends Flight {
+  public GoogleBigQueryDatasetCleanupFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     JanitorDao janitorDao =
         ((ApplicationContext) applicationContext).getBean(JANITOR_DAO, JanitorDao.class);
@@ -22,7 +22,7 @@ public class GoogleBlobCleanupFlight extends Flight {
         new RetryRuleFixedInterval(/* intervalSeconds =*/ 180, /* maxCount =*/ 5);
 
     addStep(new InitialCleanupStep(janitorDao));
-    addStep(new GoogleBlobCleanupStep(clientConfig, janitorDao), retryRule);
+    addStep(new GoogleBigQueryDatasetCleanupStep(clientConfig, janitorDao), retryRule);
     addStep(new FinalCleanupStep(janitorDao));
   }
 }

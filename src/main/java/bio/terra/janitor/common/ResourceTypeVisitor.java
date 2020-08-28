@@ -24,12 +24,12 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
 
   @Override
   public ResourceType visit(GoogleBigQueryTableUid resource) {
-    return GOOGLE_BIG_QUERY_TABLE;
+    return GOOGLE_BIGQUERY_TABLE;
   }
 
   @Override
   public ResourceType visit(GoogleBigQueryDatasetUid resource) {
-    return GOOGLE_BIG_QUERY_DATASET;
+    return GOOGLE_BIGQUERY_DATASET;
   }
 
   @Override
