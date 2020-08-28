@@ -1,5 +1,6 @@
 package bio.terra.janitor.integration;
 
+import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -53,7 +54,7 @@ public class TrackResourceIntegrationTest {
   @Autowired private MockMvc mvc;
 
   @Autowired
-  @Qualifier("objectMapper")
+  @Qualifier(OBJECT_MAPPER)
   private ObjectMapper objectMapper;
 
   private Publisher publisher;
@@ -218,8 +219,7 @@ public class TrackResourceIntegrationTest {
     assertNull(bigQueryCow.getTable(tableId));
 
     // Try to publish another message to cleanup the same table and verify Janitor works fine for
-    // tables already deleted
-    // by other flight.
+    // tables already deleted by other flight.
     CloudResourceUid tableUid =
         new CloudResourceUid()
             .googleBigQueryTableUid(

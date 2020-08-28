@@ -1,5 +1,8 @@
 package bio.terra.janitor.service.cleanup.flight;
 
+import static bio.terra.janitor.app.configuration.BeanNames.CRL_CLIENT_CONFIG;
+import static bio.terra.janitor.app.configuration.BeanNames.JANITOR_DAO;
+
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.stairway.Flight;
@@ -12,9 +15,9 @@ public class GoogleBlobCleanupFlight extends Flight {
   public GoogleBlobCleanupFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     JanitorDao janitorDao =
-        ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
+        ((ApplicationContext) applicationContext).getBean(JANITOR_DAO, JanitorDao.class);
     ClientConfig clientConfig =
-        ((ApplicationContext) applicationContext).getBean("crlClientConfig", ClientConfig.class);
+        ((ApplicationContext) applicationContext).getBean(CRL_CLIENT_CONFIG, ClientConfig.class);
     RetryRuleFixedInterval retryRule =
         new RetryRuleFixedInterval(/* intervalSeconds =*/ 180, /* maxCount =*/ 5);
 

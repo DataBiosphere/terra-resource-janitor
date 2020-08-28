@@ -1,5 +1,7 @@
 package bio.terra.janitor.service.cleanup.flight;
 
+import static bio.terra.janitor.app.configuration.BeanNames.JANITOR_DAO;
+
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
@@ -13,7 +15,7 @@ public class UnsupportedCleanupFlight extends Flight {
   public UnsupportedCleanupFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     JanitorDao janitorDao =
-        ((ApplicationContext) applicationContext).getBean("janitorDao", JanitorDao.class);
+        ((ApplicationContext) applicationContext).getBean(JANITOR_DAO, JanitorDao.class);
     addStep(new InitialCleanupStep(janitorDao));
     addStep(new UnsupportedCleanupStep());
     addStep(new FinalCleanupStep(janitorDao));

@@ -14,11 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Step to cleanup Google BigQuery Dataset resource. */
-public class GoogleDatasetCleanupStep extends ResourceCleanupStep {
-  private final Logger logger = LoggerFactory.getLogger(GoogleDatasetCleanupStep.class);
+public class GoogleBigQueryDatasetCleanupStep extends ResourceCleanupStep {
+  private final Logger logger = LoggerFactory.getLogger(GoogleBigQueryDatasetCleanupStep.class);
   private final BigQueryCow bigQueryCow;
 
-  public GoogleDatasetCleanupStep(ClientConfig clientConfig, JanitorDao janitorDao) {
+  public GoogleBigQueryDatasetCleanupStep(ClientConfig clientConfig, JanitorDao janitorDao) {
     super(clientConfig, janitorDao);
     this.bigQueryCow = new BigQueryCow(clientConfig, BigQueryOptions.getDefaultInstance());
   }
@@ -30,7 +30,6 @@ public class GoogleDatasetCleanupStep extends ResourceCleanupStep {
             resourceUid.getGoogleBigQueryDatasetUid().getProjectId(),
             resourceUid.getGoogleBigQueryDatasetUid().getDatasetId());
     try {
-      // Delete dataset with content inside.
       bigQueryCow.delete(datasetId, BigQuery.DatasetDeleteOption.deleteContents());
       return StepResult.getStepResultSuccess();
     } catch (BigQueryException e) {
