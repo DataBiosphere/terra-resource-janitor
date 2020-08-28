@@ -59,6 +59,13 @@ public class JanitorApiController implements JanitorApi {
         janitorService.createResource(body, getAuthenticatedRequest()), HttpStatus.OK);
   }
 
+  @Override
+  public ResponseEntity<Void> updateResource(
+      @NotNull @Valid CloudResourceUid cloudResourceUid, @NotNull @Valid ResourceState state) {
+    janitorService.updateResource(cloudResourceUid, state, getAuthenticatedRequest());
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
   /** Required if using Swagger-CodeGen, but actually we don't need this. */
   @Override
   public Optional<ObjectMapper> getObjectMapper() {
