@@ -1,5 +1,7 @@
 package bio.terra.janitor.app.configuration;
 
+import static bio.terra.janitor.app.configuration.BeanNames.*;
+
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.janitor.app.StartupInitializer;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -20,12 +22,12 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "janitor")
 public class ApplicationConfiguration {
-  @Bean("jdbcTemplate")
+  @Bean(JDBC_TEMPLATE)
   public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(JanitorJdbcConfiguration config) {
     return new NamedParameterJdbcTemplate(config.getDataSource());
   }
 
-  @Bean("objectMapper")
+  @Bean(OBJECT_MAPPER)
   public ObjectMapper objectMapper() {
     return new ObjectMapper()
         .registerModule(new ParameterNamesModule())
@@ -35,7 +37,7 @@ public class ApplicationConfiguration {
         .setDefaultPropertyInclusion(JsonInclude.Include.NON_ABSENT);
   }
 
-  @Bean("crlClientConfig")
+  @Bean(CRL_CLIENT_CONFIG)
   public ClientConfig clientConfig() {
     // Janitor only uses CRL Cows to delete resources. Cleanup is not needed.
     return ClientConfig.Builder.newBuilder().setClient("terra-crl-janitor").build();

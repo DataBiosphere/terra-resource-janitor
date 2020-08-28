@@ -1,5 +1,6 @@
 package bio.terra.janitor.service.pubsub;
 
+import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.generated.model.*;
@@ -38,7 +39,7 @@ public class TrackedResourceSubscriberTest {
       new AuthenticatedUserRequest().email("test1@email.com");
 
   @Autowired
-  @Qualifier("objectMapper")
+  @Qualifier(OBJECT_MAPPER)
   private ObjectMapper objectMapper;
 
   @Autowired private JanitorService janitorService;

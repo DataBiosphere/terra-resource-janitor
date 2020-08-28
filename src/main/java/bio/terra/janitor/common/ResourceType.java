@@ -6,8 +6,8 @@ package bio.terra.janitor.common;
  * <p>These enums are recorded as strings in the database and should therefore not be changed.
  */
 public enum ResourceType {
-  GOOGLE_BIG_QUERY_TABLE,
-  GOOGLE_BIG_QUERY_DATASET,
+  GOOGLE_BIGQUERY_TABLE,
+  GOOGLE_BIGQUERY_DATASET,
   GOOGLE_BLOB,
   GOOGLE_BUCKET,
   GOOGLE_PROJECT;
