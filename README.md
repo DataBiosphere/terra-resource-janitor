@@ -12,6 +12,10 @@ done by multiple instances should be confined to the primary.
 
 # Development
 
+## Prerequisites
+Follow [this instruction](https://adoptopenjdk.net/installation.html) to install AdoptOpenJDK Java 11. 
+Here's an easy way on Mac, using [jEnv](https://www.jenv.be/) to manage the active version.
+
 ## Configs Rendering
 Local Testing and Github Action tests require credentials to be able to call GCP, run
 ``` local-dev/render-config.sh``` first for local testing. It generates:
