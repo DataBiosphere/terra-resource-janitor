@@ -73,8 +73,16 @@ configurations.all {
     exclude group: "commons-logging", module: "commons-logging"
 }
 
+sourceCompatibility = JavaVersion.VERSION_11
+
 java {
     withJavadocJar()
+}
+
+jib {
+    from {
+        image = "adoptopenjdk:11-jre-hotspot"
+    }
 }
 
 // Linter
