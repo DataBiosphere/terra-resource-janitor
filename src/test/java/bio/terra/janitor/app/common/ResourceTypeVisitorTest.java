@@ -34,7 +34,7 @@ public class ResourceTypeVisitorTest {
   @Test
   public void acceptGoogleBigQueryDataset() {
     assertEquals(
-        GOOGLE_BIG_QUERY_DATASET,
+            GOOGLE_BIGQUERY_DATASET,
         visitor.accept(
             new CloudResourceUid()
                 .googleBigQueryDatasetUid(
@@ -46,7 +46,7 @@ public class ResourceTypeVisitorTest {
   @Test
   public void acceptGoogleBigQueryTable() {
     assertEquals(
-        GOOGLE_BIG_QUERY_TABLE,
+            GOOGLE_BIGQUERY_TABLE,
         visitor.accept(
             new CloudResourceUid()
                 .googleBigQueryTableUid(
