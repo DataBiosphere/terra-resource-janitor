@@ -1,16 +1,17 @@
 package bio.terra.janitor.service.janitor;
 
 import bio.terra.generated.model.*;
+import bio.terra.janitor.common.NotFoundException;
+import bio.terra.janitor.common.exception.InternalServerErrorException;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.service.iam.IamService;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -126,9 +127,70 @@ public class JanitorService {
         janitorDao.retrieveResourcesWith(cloudResourceUid);
     TrackedResourceInfoList resourceList = new TrackedResourceInfoList();
     resourcesWithLabels.stream()
-        .map(resourceWithLabels -> createInfo(resourceWithLabels))
+        .map(JanitorService::createInfo)
         .forEach(resourceList::addResourcesItem);
     return resourceList;
+  }
+
+  /**
+   * Updates the resource state.
+   *
+   * <p>Currently it supports:
+   *
+   * <ul>
+   *   <li>Abandon resource: Update resource from READY or CLEANING to ABANDONED
+   *   <li>Bump resource: Update resource from ABANDONED to READY
+   * </ul>
+   */
+  public void updateResource(
+      CloudResourceUid cloudResourceUid, ResourceState state, AuthenticatedUserRequest userReq) {
+    iamService.requireAdminUser(userReq);
+    if (state == ResourceState.ABANDONED) {
+      // Update state to ABANDONED for READY or CLEANING state resources.
+      List<TrackedResource> resources =
+          getResourceWithState(
+              cloudResourceUid, TrackedResourceState.READY, TrackedResourceState.CLEANING);
+
+      if (resources.size() > 1) {
+        throw new InternalServerErrorException(
+            "More than one READY or CLEANING state resources are found.");
+      }
+      janitorDao.updateResourceState(
+          resources.get(0).trackedResourceId(), TrackedResourceState.ABANDONED);
+    } else if (state == ResourceState.READY) {
+      // Bump ABANDONED state resources for cleaning.
+      List<TrackedResource> resources =
+          getResourceWithState(cloudResourceUid, TrackedResourceState.ABANDONED);
+
+      // It is possible that there might be multiple ABANDON resources, and we only need to update
+      // the one with last
+      // expiration time.
+      TrackedResource latestResource =
+          resources.stream().max(Comparator.comparing(TrackedResource::expiration)).get();
+      janitorDao.updateResourceState(
+          latestResource.trackedResourceId(), TrackedResourceState.READY);
+    }
+  }
+
+  /**
+   * Gets list of {@link TrackedResource} with {@link TrackedResourceState}.
+   *
+   * <p>Throws {@link NotFoundException} if no resource found.
+   */
+  private List<TrackedResource> getResourceWithState(
+      CloudResourceUid resourceUid, TrackedResourceState... states) {
+    List<TrackedResource> resources =
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .cloudResourceUid(resourceUid)
+                .allowedStates(Sets.newHashSet(states))
+                .build());
+
+    if (resources.size() == 0) {
+      throw new NotFoundException(
+          String.format("Resource: %s not found with state %s", resourceUid, states));
+    }
+    return resources;
   }
 
   private static TrackedResourceInfo createInfo(TrackedResourceAndLabels resourceAndLabels) {

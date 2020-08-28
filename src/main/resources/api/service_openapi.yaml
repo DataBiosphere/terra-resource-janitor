@@ -92,7 +92,38 @@ paths:
         403:
           description: Permission denied
           $ref: '#/components/responses/ErrorResponse'
-
+    put:
+      description: |
+        Update tracked resources, currently it supports update resource state to ABANDON or READY(Bump)
+      operationId: updateResource
+      tags:
+        - janitor
+      parameters:
+        - name: cloudResourceUid
+          in: query
+          description: The cloud resource uid of the tracked resources.
+          required: true
+          schema:
+            $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+        - name: state
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ResourceState'
+      responses:
+        204:
+          description: Resource is updated successfully
+        400:
+          description: bad cloudResourceUid or state
+          $ref: '#/components/responses/ErrorResponse'
+        403:
+          description: Permission denied
+          $ref: '#/components/responses/ErrorResponse'
+        404:
+          description: Resource not found for the id.
+        500:
+          description: Update request error
+          $ref: '#/components/responses/ErrorResponse'
 
   '/api/janitor/v1/resource/{id}':
     parameters:
@@ -225,6 +256,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TrackedResourceInfo'
+
+    ResourceState:
+      type: string
+      description: Supported state to update a resource.
+      enum:
+        - READY
+        - ABANDONED
 
   responses:
     ErrorResponse:
