@@ -77,5 +77,5 @@ jobs:
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           repository: broadinstitute/terra-helmfile
-          event-type: version-bump
+          event-type: update-service
           client-payload: '{"service": "crljanitor", "version": "${{ steps.tag.outputs.tag }}"}'
