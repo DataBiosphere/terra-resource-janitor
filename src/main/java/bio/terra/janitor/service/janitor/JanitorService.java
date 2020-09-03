@@ -169,6 +169,9 @@ public class JanitorService {
           resources.stream().max(Comparator.comparing(TrackedResource::expiration)).get();
       janitorDao.updateResourceState(
           latestResource.trackedResourceId(), TrackedResourceState.READY);
+    } else {
+      throw new InternalServerErrorException(
+          String.format("Unhandled state: %s for resource %s", state, cloudResourceUid));
     }
   }
 

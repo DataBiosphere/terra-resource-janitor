@@ -220,7 +220,7 @@ public class JanitorApiControllerTest {
   }
 
   @Test
-  public void abandonThenBumpResources() throws Exception {
+  public void abandoResources() throws Exception {
     CloudResourceUid resourceUid =
         new CloudResourceUid()
             .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
@@ -327,6 +327,121 @@ public class JanitorApiControllerTest {
 
     resourceInfoList = objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
     olderResource =
+        resourceInfoList.getResources().stream()
+            .filter(resource -> resource.getId().equals(olderId))
+            .findFirst()
+            .get();
+    newerResource =
+        resourceInfoList.getResources().stream()
+            .filter(resource -> resource.getId().equals(newerId))
+            .findFirst()
+            .get();
+    assertEquals(2, resourceInfoList.getResources().size());
+    assertEquals(TrackedResourceState.DUPLICATED.name(), olderResource.getState());
+    assertEquals(TrackedResourceState.READY.name(), newerResource.getState());
+  }
+
+  @Test
+  public void bumpResources() throws Exception {
+    CloudResourceUid resourceUid =
+        new CloudResourceUid()
+            .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
+    CreateResourceRequestBody body1 =
+        new CreateResourceRequestBody()
+            .resourceUid(resourceUid)
+            .creation(CREATION)
+            .expiration(EXPIRATION)
+            .labels(DEFAULT_LABELS);
+    CreateResourceRequestBody body2 =
+        new CreateResourceRequestBody()
+            .resourceUid(resourceUid)
+            .creation(CREATION)
+            .expiration(EXPIRATION.plusMinutes(1))
+            .labels(DEFAULT_LABELS);
+
+    String createResponse1 =
+        this.mvc
+            .perform(
+                post("/api/janitor/v1/resource")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(body1))
+                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String createResponse2 =
+        this.mvc
+            .perform(
+                post("/api/janitor/v1/resource")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(body2))
+                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    this.mvc
+        .perform(
+            put("/api/janitor/v1/resource")
+                .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resourceUid))
+                .queryParam("state", ResourceState.ABANDONED.toString())
+                .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+        .andDo(MockMvcResultHandlers.print())
+        .andExpect(status().isNoContent());
+
+    String getResponse =
+        this.mvc
+            .perform(
+                get("/api/janitor/v1/resource")
+                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resourceUid))
+                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String olderId = objectMapper.readValue(createResponse1, CreatedResource.class).getId();
+    String newerId = objectMapper.readValue(createResponse2, CreatedResource.class).getId();
+
+    TrackedResourceInfoList resourceInfoList =
+        objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+    TrackedResourceInfo newerResource =
+        resourceInfoList.getResources().stream()
+            .filter(resource -> resource.getId().equals(newerId))
+            .findFirst()
+            .get();
+    assertEquals(TrackedResourceState.ABANDONED.name(), newerResource.getState());
+
+    // Then bump the abandoned resource
+    this.mvc
+        .perform(
+            put("/api/janitor/v1/resource")
+                .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resourceUid))
+                .queryParam("state", ResourceState.READY.toString())
+                .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+        .andDo(MockMvcResultHandlers.print())
+        .andExpect(status().isNoContent());
+
+    getResponse =
+        this.mvc
+            .perform(
+                get("/api/janitor/v1/resource")
+                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resourceUid))
+                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    resourceInfoList = objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+    TrackedResourceInfo olderResource =
         resourceInfoList.getResources().stream()
             .filter(resource -> resource.getId().equals(olderId))
             .findFirst()
