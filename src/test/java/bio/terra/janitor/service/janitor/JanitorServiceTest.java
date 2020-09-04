@@ -1,12 +1,15 @@
 package bio.terra.janitor.service.janitor;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
+import bio.terra.janitor.common.NotFoundException;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Tag;
@@ -86,5 +89,68 @@ public class JanitorServiceTest {
     assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
     assertThat(retrievedStates, Matchers.hasEntry(thirdId, "READY"));
     assertThat(retrievedStates, Matchers.aMapWithSize(3));
+  }
+
+  @Test
+  public void abandonThenBumpResources() throws Exception {
+    CloudResourceUid resourceUid =
+        new CloudResourceUid()
+            .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
+    String firstId =
+        janitorService
+            .createResource(
+                new CreateResourceRequestBody()
+                    .resourceUid(resourceUid)
+                    .creation(DEFAULT_TIME)
+                    .expiration(DEFAULT_TIME),
+                ADMIN_USER)
+            .getId();
+
+    String secondId =
+        janitorService
+            .createResource(
+                new CreateResourceRequestBody()
+                    .resourceUid(resourceUid)
+                    .creation(DEFAULT_TIME)
+                    .expiration(DEFAULT_TIME),
+                ADMIN_USER)
+            .getId();
+
+    janitorService.updateResource(resourceUid, ResourceState.ABANDONED, ADMIN_USER);
+
+    Map<String, String> retrievedStates =
+        extractStates(janitorService.getResources(resourceUid, ADMIN_USER));
+    assertThat(retrievedStates, Matchers.hasEntry(firstId, "ABANDONED"));
+    assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
+    assertThat(retrievedStates, Matchers.aMapWithSize(2));
+
+    // Bump the resource
+    janitorService.updateResource(resourceUid, ResourceState.READY, ADMIN_USER);
+
+    retrievedStates = extractStates(janitorService.getResources(resourceUid, ADMIN_USER));
+    assertThat(retrievedStates, Matchers.hasEntry(firstId, "READY"));
+    assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
+    assertThat(retrievedStates, Matchers.aMapWithSize(2));
+  }
+
+  @Test
+  public void abandonResources_notFound() throws Exception {
+    CloudResourceUid resourceUid =
+        new CloudResourceUid()
+            .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
+    assertThrows(
+        NotFoundException.class,
+        () -> janitorService.updateResource(resourceUid, ResourceState.ABANDONED, ADMIN_USER));
+  }
+
+  /** Gets 404 error when resource exists but not in ABANDONED state. */
+  @Test
+  public void bumpResources_notFound() throws Exception {
+    CloudResourceUid resourceUid =
+        new CloudResourceUid()
+            .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
+    assertThrows(
+        NotFoundException.class,
+        () -> janitorService.updateResource(resourceUid, ResourceState.READY, ADMIN_USER));
   }
 }
