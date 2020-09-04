@@ -5,8 +5,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.HookAction;
 import bio.terra.stairway.StairwayHook;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -27,7 +25,7 @@ public class CleanupLoggingHook implements StairwayHook {
         "startFlight",
         context.getFlightClassName(),
         context.getFlightId(),
-        Instant.now().atZone(ZoneId.of("Z")).format(DateTimeFormatter.ISO_INSTANT));
+        Instant.now().toString());
     return HookAction.CONTINUE;
   }
 
@@ -39,7 +37,7 @@ public class CleanupLoggingHook implements StairwayHook {
         context.getFlightClassName(),
         context.getFlightId(),
         context.getStepIndex(),
-        Instant.now().atZone(ZoneId.of("Z")).format(DateTimeFormatter.ISO_INSTANT));
+        Instant.now().toString());
     TrackedResourceId trackedResourceId =
         context
             .getInputParameters()
@@ -57,7 +55,7 @@ public class CleanupLoggingHook implements StairwayHook {
         "endFlight",
         context.getFlightClassName(),
         context.getFlightId(),
-        Instant.now().atZone(ZoneId.of("Z")).format(DateTimeFormatter.ISO_INSTANT));
+        Instant.now().toString());
     return HookAction.CONTINUE;
   }
 
@@ -69,7 +67,7 @@ public class CleanupLoggingHook implements StairwayHook {
         context.getFlightClassName(),
         context.getFlightId(),
         context.getStepIndex(),
-        Instant.now().atZone(ZoneId.of("Z")).format(DateTimeFormatter.ISO_INSTANT));
+        Instant.now().toString());
     return HookAction.CONTINUE;
   }
 }
