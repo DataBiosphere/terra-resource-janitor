@@ -6,4 +6,5 @@ import bio.terra.stairway.FlightMap;
 public final class FlightMapKeys {
   public static final String TRACKED_RESOURCE_ID = "trackedResourceId";
   public static final String CLOUD_RESOURCE_UID = "cloudResourceUid";
+  public static final String MDC_KEY = "mdcKey";
 }

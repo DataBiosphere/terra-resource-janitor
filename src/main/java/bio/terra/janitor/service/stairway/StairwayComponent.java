@@ -2,6 +2,7 @@ package bio.terra.janitor.service.stairway;
 
 import bio.terra.janitor.app.configuration.StairwayConfiguration;
 import bio.terra.janitor.app.configuration.StairwayJdbcConfiguration;
+import bio.terra.janitor.service.cleanup.StairwayLoggingHooks;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
@@ -49,7 +50,8 @@ public class StairwayComponent {
             .maxParallelFlights(stairwayConfiguration.getMaxParallelFlights())
             .applicationContext(applicationContext)
             .stairwayName(stairwayConfiguration.getName())
-            .stairwayClusterName(stairwayConfiguration.getClusterName());
+            .stairwayClusterName(stairwayConfiguration.getClusterName())
+            .stairwayHook(new StairwayLoggingHooks());
     try {
       stairway = builder.build();
     } catch (StairwayExecutionException e) {
