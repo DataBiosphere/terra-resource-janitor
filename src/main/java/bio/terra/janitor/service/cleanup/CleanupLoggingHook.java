@@ -4,7 +4,6 @@ import bio.terra.janitor.db.TrackedResourceId;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.HookAction;
 import bio.terra.stairway.StairwayHook;
-import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -12,9 +11,9 @@ import org.slf4j.MDC;
 /** {@link StairwayHook} to add log info for cleanup flight. */
 public class CleanupLoggingHook implements StairwayHook {
   private static final String FLIGHT_LOG_FORMAT =
-      "Operation: {}, flightClass: {}, flightId: {}, timestamp: {}";
+      "Operation: {}, flightClass: {}, flightId: {}";
   private static final String StepLogFormat =
-      "Operation: {}, flightClass: {}, flightId: {}, stepIndex: {}," + "timestamp: {}";
+      "Operation: {}, flightClass: {}, flightId: {}, stepIndex: {}";
   private static final String TRACKED_RESOURCE_MDC_KEY = "trackedResourceId";
   private static final Logger logger = LoggerFactory.getLogger(CleanupLoggingHook.class);
 
@@ -24,8 +23,7 @@ public class CleanupLoggingHook implements StairwayHook {
         FLIGHT_LOG_FORMAT,
         "startFlight",
         context.getFlightClassName(),
-        context.getFlightId(),
-        Instant.now().toString());
+        context.getFlightId());
     return HookAction.CONTINUE;
   }
 
@@ -36,8 +34,7 @@ public class CleanupLoggingHook implements StairwayHook {
         "startStep",
         context.getFlightClassName(),
         context.getFlightId(),
-        context.getStepIndex(),
-        Instant.now().toString());
+        context.getStepIndex());
     TrackedResourceId trackedResourceId =
         context
             .getInputParameters()
@@ -54,8 +51,7 @@ public class CleanupLoggingHook implements StairwayHook {
         FLIGHT_LOG_FORMAT,
         "endFlight",
         context.getFlightClassName(),
-        context.getFlightId(),
-        Instant.now().toString());
+        context.getFlightId());
     return HookAction.CONTINUE;
   }
 
@@ -66,8 +62,8 @@ public class CleanupLoggingHook implements StairwayHook {
         "endStep",
         context.getFlightClassName(),
         context.getFlightId(),
-        context.getStepIndex(),
-        Instant.now().toString());
+        context.getStepIndex());
+    MDC.remove(TRACKED_RESOURCE_MDC_KEY);
     return HookAction.CONTINUE;
   }
 }
