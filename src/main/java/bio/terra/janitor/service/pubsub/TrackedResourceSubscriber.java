@@ -5,7 +5,7 @@ import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
 import bio.terra.generated.model.CreateResourceRequestBody;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.exception.InvalidMessageException;
-import bio.terra.janitor.service.janitor.JanitorService;
+import bio.terra.janitor.service.janitor.TrackedResourceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
@@ -26,16 +26,16 @@ public class TrackedResourceSubscriber {
   private static final Logger logger = LoggerFactory.getLogger(TrackedResourceSubscriber.class);
 
   private final TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
-  private final JanitorService janitorService;
+  private final TrackedResourceService trackedResourceService;
   private final ObjectMapper objectMapper;
 
   @Autowired
   TrackedResourceSubscriber(
       TrackResourcePubsubConfiguration trackResourcePubsubConfiguration,
-      JanitorService janitorService,
+      TrackedResourceService trackedResourceService,
       @Qualifier(OBJECT_MAPPER) ObjectMapper objectMapper) {
     this.trackResourcePubsubConfiguration = trackResourcePubsubConfiguration;
-    this.janitorService = janitorService;
+    this.trackedResourceService = trackedResourceService;
     this.objectMapper = objectMapper;
   }
 
@@ -52,7 +52,8 @@ public class TrackedResourceSubscriber {
             trackResourcePubsubConfiguration.getSubscription());
 
     Subscriber subscriber =
-        Subscriber.newBuilder(subscriptionName, new ResourceReceiver(objectMapper, janitorService))
+        Subscriber.newBuilder(
+                subscriptionName, new ResourceReceiver(objectMapper, trackedResourceService))
             .build();
     subscriber.startAsync().awaitRunning();
   }
@@ -61,11 +62,11 @@ public class TrackedResourceSubscriber {
   static class ResourceReceiver implements MessageReceiver {
 
     private final ObjectMapper objectMapper;
-    private final JanitorService janitorService;
+    private final TrackedResourceService trackedResourceService;
 
-    ResourceReceiver(ObjectMapper objectMapper, JanitorService janitorService) {
+    ResourceReceiver(ObjectMapper objectMapper, TrackedResourceService trackedResourceService) {
       this.objectMapper = objectMapper;
-      this.janitorService = janitorService;
+      this.trackedResourceService = trackedResourceService;
     }
 
     @Override
@@ -74,7 +75,7 @@ public class TrackedResourceSubscriber {
         CreateResourceRequestBody body =
             objectMapper.readValue(
                 message.getData().toStringUtf8(), CreateResourceRequestBody.class);
-        janitorService.createResourceInternal(body);
+        trackedResourceService.createResource(body);
         consumer.ack();
       } catch (Exception e) {
         logger.warn("Invalid track resource pubsub message: " + message.toString(), e);
