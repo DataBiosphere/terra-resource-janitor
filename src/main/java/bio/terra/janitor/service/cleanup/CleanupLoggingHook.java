@@ -11,18 +11,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-public class StairwayLoggingHooks implements StairwayHook {
-  private static final String FlightLogFormat =
+/** {@link StairwayHook} to add log info for cleanup flight. */
+public class CleanupLoggingHook implements StairwayHook {
+  private static final String FLIGHT_LOG_FORMAT =
       "Operation: {}, flightClass: {}, flightId: {}, timestamp: {}";
   private static final String StepLogFormat =
       "Operation: {}, flightClass: {}, flightId: {}, stepIndex: {}," + "timestamp: {}";
   private static final String TRACKED_RESOURCE_MDC_KEY = "trackedResourceId";
-  private static final Logger logger = LoggerFactory.getLogger(StairwayHook.class);
+  private static final Logger logger = LoggerFactory.getLogger(CleanupLoggingHook.class);
 
   @Override
   public HookAction startFlight(FlightContext context) {
     logger.info(
-        FlightLogFormat,
+        FLIGHT_LOG_FORMAT,
         "startFlight",
         context.getFlightClassName(),
         context.getFlightId(),
@@ -52,7 +53,7 @@ public class StairwayLoggingHooks implements StairwayHook {
   @Override
   public HookAction endFlight(FlightContext context) {
     logger.info(
-        FlightLogFormat,
+        FLIGHT_LOG_FORMAT,
         "endFlight",
         context.getFlightClassName(),
         context.getFlightId(),
