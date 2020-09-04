@@ -41,17 +41,10 @@ And then check http://127.0.0.1:8080/status for service status.
 
 Swagger in local server: http://127.0.0.1:8080/swagger-ui.html
 
-You can connect to local janitor DB by running: 
+You can connect to local postgres by running: 
 ```
-psql postgresql://127.0.0.1:5432/testdb -U dbuser
+psql postgresql://127.0.0.1:5432/testdb -U janitor-test
 ```
-enter `dbpwd` as password
-
-To connect to stairway db, run: 
-```
-psql postgresql://127.0.0.1:5432/testdb_stairway -U dbuser_stairway
-```
-enter `dbpwd_stairway` as password
 
 ## Deploy to GKE cluster:
 The provided setup script clones the terra-helm and terra-helmfile git repos,

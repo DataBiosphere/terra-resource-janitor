@@ -1,8 +1,0 @@
-databaseChangeLog:
-  - changeSet:
-      id: dropTable-cleanup-log
-      author: yonghao
-      changes:
-        - dropTable:
-            cascadeConstraints:  true
-            tableName:  cleanup_log
