@@ -10,21 +10,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
+/** Service handles incoming HTTP requests. */
 @Component
 public class JanitorApiService {
-  private final JanitorDao janitorDao;
-  private final TransactionTemplate transactionTemplate;
   private final IamService iamService;
   private final TrackedResourceService trackedResourceService;
 
   @Autowired
   public JanitorApiService(
-      JanitorDao janitorDao,
-      TransactionTemplate transactionTemplate,
       IamService iamService,
       TrackedResourceService trackedResourceService) {
-    this.janitorDao = janitorDao;
-    this.transactionTemplate = transactionTemplate;
     this.iamService = iamService;
     this.trackedResourceService = trackedResourceService;
   }
@@ -35,7 +30,7 @@ public class JanitorApiService {
     return trackedResourceService.createResource(body);
   }
 
-  /** Retrieves the info about a tracked resource if their exists a resource for that id. */
+  /** Retrieves the info about a tracked resource if there exists a resource for that id. */
   public Optional<TrackedResourceInfo> getResource(String id, AuthenticatedUserRequest userReq) {
     iamService.requireAdminUser(userReq);
     return trackedResourceService.getResource(id);

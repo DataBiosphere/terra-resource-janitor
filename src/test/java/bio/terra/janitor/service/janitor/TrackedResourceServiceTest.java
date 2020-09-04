@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.common.NotFoundException;
-import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -28,11 +27,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class JanitorApiServiceTest {
+public class TrackedResourceServiceTest {
   private static final OffsetDateTime DEFAULT_TIME = OffsetDateTime.now();
-  private static final AuthenticatedUserRequest ADMIN_USER =
-      new AuthenticatedUserRequest().email("test1@email.com");
-  @Autowired private JanitorApiService janitorApiService;
+  @Autowired private TrackedResourceService trackedResourceService;
 
   /** Returns a map of the resource ids to their TrackedResourceStates as strings. */
   private static Map<String, String> extractStates(TrackedResourceInfoList resourceList) {
@@ -46,45 +43,44 @@ public class JanitorApiServiceTest {
         new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName("foo"));
 
     String firstId =
-        janitorApiService
+        trackedResourceService
             .createResource(
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME),
-                ADMIN_USER)
+                    .expiration(DEFAULT_TIME))
             .getId();
     Map<String, String> retrievedStates =
-        extractStates(janitorApiService.getResources(resourceUid, ADMIN_USER));
+        extractStates(trackedResourceService.getResources(resourceUid));
     assertThat(retrievedStates, Matchers.hasEntry(firstId, "READY"));
     assertThat(retrievedStates, Matchers.aMapWithSize(1));
 
     // Add a resource with the same CloudResourceUid that expired before the first resource.
     String secondId =
-        janitorApiService
+        trackedResourceService
             .createResource(
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME.minusMinutes(10)),
-                ADMIN_USER)
+                    .expiration(DEFAULT_TIME.minusMinutes(10))
+                )
             .getId();
-    retrievedStates = extractStates(janitorApiService.getResources(resourceUid, ADMIN_USER));
+    retrievedStates = extractStates(trackedResourceService.getResources(resourceUid));
     assertThat(retrievedStates, Matchers.hasEntry(firstId, "READY"));
     assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
     assertThat(retrievedStates, Matchers.aMapWithSize(2));
 
     // Add a resource with the same CloudResourceUid that expired after the first resource.
     String thirdId =
-        janitorApiService
+        trackedResourceService
             .createResource(
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME.plusMinutes(20)),
-                ADMIN_USER)
+                    .expiration(DEFAULT_TIME.plusMinutes(20))
+                )
             .getId();
-    retrievedStates = extractStates(janitorApiService.getResources(resourceUid, ADMIN_USER));
+    retrievedStates = extractStates(trackedResourceService.getResources(resourceUid));
     assertThat(retrievedStates, Matchers.hasEntry(firstId, "DUPLICATED"));
     assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
     assertThat(retrievedStates, Matchers.hasEntry(thirdId, "READY"));
@@ -97,39 +93,38 @@ public class JanitorApiServiceTest {
         new CloudResourceUid()
             .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
     String firstId =
-        janitorApiService
+        trackedResourceService
             .createResource(
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME),
-                ADMIN_USER)
+                    .expiration(DEFAULT_TIME)
+                )
             .getId();
 
     // Add another resource with the same CloudResourceUid to verify a DUPLICATED resource not get
     // ABANDONED or BUMP
     String secondId =
-        janitorApiService
+        trackedResourceService
             .createResource(
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME),
-                ADMIN_USER)
+                    .expiration(DEFAULT_TIME))
             .getId();
 
-    janitorApiService.updateResource(resourceUid, ResourceState.ABANDONED, ADMIN_USER);
+    trackedResourceService.abandonResource(resourceUid);
 
     Map<String, String> retrievedStates =
-        extractStates(janitorApiService.getResources(resourceUid, ADMIN_USER));
+        extractStates(trackedResourceService.getResources(resourceUid));
     assertThat(retrievedStates, Matchers.hasEntry(firstId, "ABANDONED"));
     assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
     assertThat(retrievedStates, Matchers.aMapWithSize(2));
 
     // Bump the resource
-    janitorApiService.updateResource(resourceUid, ResourceState.READY, ADMIN_USER);
+    trackedResourceService.bumpResource(resourceUid);
 
-    retrievedStates = extractStates(janitorApiService.getResources(resourceUid, ADMIN_USER));
+    retrievedStates = extractStates(trackedResourceService.getResources(resourceUid));
     assertThat(retrievedStates, Matchers.hasEntry(firstId, "READY"));
     assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
     assertThat(retrievedStates, Matchers.aMapWithSize(2));
@@ -142,7 +137,7 @@ public class JanitorApiServiceTest {
             .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
     assertThrows(
         NotFoundException.class,
-        () -> janitorApiService.updateResource(resourceUid, ResourceState.ABANDONED, ADMIN_USER));
+        () -> trackedResourceService.abandonResource(resourceUid);
   }
 
   /** Gets NotFoundException exception when resource exists but not in ABANDONED state. */
@@ -153,6 +148,6 @@ public class JanitorApiServiceTest {
             .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
     assertThrows(
         NotFoundException.class,
-        () -> janitorApiService.updateResource(resourceUid, ResourceState.READY, ADMIN_USER));
+        () -> trackedResourceService.bumpResource(resourceUid));
   }
 }

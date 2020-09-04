@@ -35,16 +35,11 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class TrackedResourceSubscriberTest {
-  private static final AuthenticatedUserRequest ADMIN_USER =
-      new AuthenticatedUserRequest().email("test1@email.com");
-
   @Autowired
   @Qualifier(OBJECT_MAPPER)
   private ObjectMapper objectMapper;
 
   @Autowired private TrackedResourceService trackedResourceService;
-
-  @Autowired private MockMvc mvc;
 
   @Test
   public void receiveMessage() throws Exception {
