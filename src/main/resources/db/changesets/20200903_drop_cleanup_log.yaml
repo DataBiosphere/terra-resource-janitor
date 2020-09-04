@@ -4,5 +4,5 @@ databaseChangeLog:
       author: yonghao
       changes:
         - dropTable:
-            cascadeConstraints:  true
-            tableName:  cleanup_log
+            cascadeConstraints: true
+            tableName: cleanup_log
