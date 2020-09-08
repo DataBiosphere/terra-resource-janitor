@@ -62,8 +62,7 @@ public class TrackedResourceServiceTest {
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME.minusMinutes(10))
-                )
+                    .expiration(DEFAULT_TIME.minusMinutes(10)))
             .getId();
     retrievedStates = extractStates(trackedResourceService.getResources(resourceUid));
     assertThat(retrievedStates, Matchers.hasEntry(firstId, "READY"));
@@ -77,8 +76,7 @@ public class TrackedResourceServiceTest {
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME.plusMinutes(20))
-                )
+                    .expiration(DEFAULT_TIME.plusMinutes(20)))
             .getId();
     retrievedStates = extractStates(trackedResourceService.getResources(resourceUid));
     assertThat(retrievedStates, Matchers.hasEntry(firstId, "DUPLICATED"));
@@ -98,8 +96,7 @@ public class TrackedResourceServiceTest {
                 new CreateResourceRequestBody()
                     .resourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME)
-                )
+                    .expiration(DEFAULT_TIME))
             .getId();
 
     // Add another resource with the same CloudResourceUid to verify a DUPLICATED resource not get
@@ -136,8 +133,7 @@ public class TrackedResourceServiceTest {
         new CloudResourceUid()
             .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
     assertThrows(
-        NotFoundException.class,
-        () -> trackedResourceService.abandonResource(resourceUid);
+        NotFoundException.class, () -> trackedResourceService.abandonResource(resourceUid));
   }
 
   /** Gets NotFoundException exception when resource exists but not in ABANDONED state. */
@@ -146,8 +142,6 @@ public class TrackedResourceServiceTest {
     CloudResourceUid resourceUid =
         new CloudResourceUid()
             .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
-    assertThrows(
-        NotFoundException.class,
-        () -> trackedResourceService.bumpResource(resourceUid));
+    assertThrows(NotFoundException.class, () -> trackedResourceService.bumpResource(resourceUid));
   }
 }

@@ -7,7 +7,6 @@ import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.common.exception.InvalidMessageException;
 import bio.terra.janitor.db.TrackedResourceState;
-import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.service.janitor.TrackedResourceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
@@ -27,7 +26,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
 
 @Tag("unit")
 @ExtendWith(SpringExtension.class)

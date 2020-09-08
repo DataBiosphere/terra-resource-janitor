@@ -2,7 +2,6 @@ package bio.terra.janitor.service.janitor;
 
 import bio.terra.generated.model.*;
 import bio.terra.janitor.common.NotFoundException;
-import bio.terra.janitor.common.exception.InternalServerErrorException;
 import bio.terra.janitor.db.*;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -129,22 +128,26 @@ public class TrackedResourceService {
             cloudResourceUid, TrackedResourceState.READY, TrackedResourceState.CLEANING);
 
     if (resources.size() > 1) {
-      throw new InternalServerErrorException(
-          "More than one READY or CLEANING state resources are found.");
+      logger.error(
+          "More than one READY or CLEANING state resources are found for resource {}.",
+          cloudResourceUid);
     }
-    janitorDao.updateResourceState(
-        resources.get(0).trackedResourceId(), TrackedResourceState.ABANDONED);
+    resources.forEach(
+        resource ->
+            janitorDao.updateResourceState(
+                resource.trackedResourceId(), TrackedResourceState.ABANDONED));
   }
 
   /**
-   * Updates the ABANDONED resource state to READY.
+   * Updates the ABANDONED/ERROR resource state to READY.
    *
-   * <p>It is possible that there might be multiple ABANDON resources, and we only need to update
+   * <p>It is possible that there might be multiple ABANDONED resources, and we only need to update
    * the one with last expiration time.
    */
   public void bumpResource(CloudResourceUid cloudResourceUid) {
     List<TrackedResource> resources =
-        getResourceWithState(cloudResourceUid, TrackedResourceState.ABANDONED);
+        getResourceWithState(
+            cloudResourceUid, TrackedResourceState.ABANDONED, TrackedResourceState.ERROR);
 
     TrackedResource latestResource =
         resources.stream().max(Comparator.comparing(TrackedResource::expiration)).get();
