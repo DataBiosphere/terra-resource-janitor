@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
  * yaml. The global exception handler auto-magically converts exceptions of this base class into the
  * appropriate ErrorReport REST response.
  */
-public abstract class BadRequestException extends ErrorReportException {
+public class BadRequestException extends ErrorReportException {
   private static final HttpStatus thisStatus = HttpStatus.BAD_REQUEST;
 
   public BadRequestException(String message) {

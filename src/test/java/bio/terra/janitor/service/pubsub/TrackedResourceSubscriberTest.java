@@ -7,8 +7,7 @@ import bio.terra.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.common.exception.InvalidMessageException;
 import bio.terra.janitor.db.TrackedResourceState;
-import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
-import bio.terra.janitor.service.janitor.JanitorService;
+import bio.terra.janitor.service.janitor.TrackedResourceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.common.collect.ImmutableMap;
@@ -27,7 +26,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
 
 @Tag("unit")
 @ExtendWith(SpringExtension.class)
@@ -35,16 +33,11 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class TrackedResourceSubscriberTest {
-  private static final AuthenticatedUserRequest ADMIN_USER =
-      new AuthenticatedUserRequest().email("test1@email.com");
-
   @Autowired
   @Qualifier(OBJECT_MAPPER)
   private ObjectMapper objectMapper;
 
-  @Autowired private JanitorService janitorService;
-
-  @Autowired private MockMvc mvc;
+  @Autowired private TrackedResourceService trackedResourceService;
 
   @Test
   public void receiveMessage() throws Exception {
@@ -70,12 +63,12 @@ public class TrackedResourceSubscriberTest {
         };
 
     TrackedResourceSubscriber.ResourceReceiver resourceReceiver =
-        new TrackedResourceSubscriber.ResourceReceiver(objectMapper, janitorService);
+        new TrackedResourceSubscriber.ResourceReceiver(objectMapper, trackedResourceService);
 
     resourceReceiver.receiveMessage(PubsubMessage.newBuilder().setData(data).build(), consumer);
-    janitorService.getResources(resource, ADMIN_USER);
+    trackedResourceService.getResources(resource);
 
-    TrackedResourceInfoList resourceInfoList = janitorService.getResources(resource, ADMIN_USER);
+    TrackedResourceInfoList resourceInfoList = trackedResourceService.getResources(resource);
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
     assertEquals(resource, trackedResourceInfo.getResourceUid());
