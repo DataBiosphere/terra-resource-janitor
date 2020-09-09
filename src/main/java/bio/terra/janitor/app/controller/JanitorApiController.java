@@ -4,7 +4,7 @@ import bio.terra.generated.controller.JanitorApi;
 import bio.terra.generated.model.*;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.janitor.service.janitor.JanitorService;
+import bio.terra.janitor.service.janitor.JanitorApiService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
@@ -18,16 +18,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Controller
 public class JanitorApiController implements JanitorApi {
-  private final JanitorService janitorService;
+  private final JanitorApiService janitorApiService;
   private final HttpServletRequest request;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
 
   @Autowired
   public JanitorApiController(
-      JanitorService janitorService,
+      JanitorApiService janitorApiService,
       HttpServletRequest request,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory) {
-    this.janitorService = janitorService;
+    this.janitorApiService = janitorApiService;
     this.request = request;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
   }
@@ -39,7 +39,7 @@ public class JanitorApiController implements JanitorApi {
   @Override
   public ResponseEntity<TrackedResourceInfo> getResource(String id) {
     Optional<TrackedResourceInfo> resource =
-        janitorService.getResource(id, getAuthenticatedRequest());
+        janitorApiService.getResource(id, getAuthenticatedRequest());
     return resource
         .map(trackedResourceInfo -> new ResponseEntity<>(trackedResourceInfo, HttpStatus.OK))
         .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -49,20 +49,20 @@ public class JanitorApiController implements JanitorApi {
   public ResponseEntity<TrackedResourceInfoList> getResources(
       @NotNull @Valid CloudResourceUid cloudResourceUid) {
     return new ResponseEntity<>(
-        janitorService.getResources(cloudResourceUid, getAuthenticatedRequest()), HttpStatus.OK);
+        janitorApiService.getResources(cloudResourceUid, getAuthenticatedRequest()), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<CreatedResource> createResource(
       @Valid @RequestBody CreateResourceRequestBody body) {
     return new ResponseEntity<>(
-        janitorService.createResource(body, getAuthenticatedRequest()), HttpStatus.OK);
+        janitorApiService.createResource(body, getAuthenticatedRequest()), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<Void> updateResource(
       @NotNull @Valid CloudResourceUid cloudResourceUid, @NotNull @Valid ResourceState state) {
-    janitorService.updateResource(cloudResourceUid, state, getAuthenticatedRequest());
+    janitorApiService.updateResource(cloudResourceUid, state, getAuthenticatedRequest());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

@@ -2,16 +2,16 @@ package bio.terra.janitor.service.janitor;
 
 import bio.terra.generated.model.*;
 import bio.terra.janitor.common.NotFoundException;
-import bio.terra.janitor.common.exception.InternalServerErrorException;
 import bio.terra.janitor.db.*;
-import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
-import bio.terra.janitor.service.iam.IamService;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,30 +19,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 
+/** Services handles Janitor's tracked resource operations. */
 @Component
-public class JanitorService {
-  private final Logger logger = LoggerFactory.getLogger(JanitorService.class);
+public class TrackedResourceService {
+  private final Logger logger = LoggerFactory.getLogger(TrackedResourceService.class);
 
   private final JanitorDao janitorDao;
   private final TransactionTemplate transactionTemplate;
-  private final IamService iamService;
 
   @Autowired
-  public JanitorService(
-      JanitorDao janitorDao, TransactionTemplate transactionTemplate, IamService iamService) {
+  public TrackedResourceService(JanitorDao janitorDao, TransactionTemplate transactionTemplate) {
     this.janitorDao = janitorDao;
     this.transactionTemplate = transactionTemplate;
-    this.iamService = iamService;
-  }
-
-  public CreatedResource createResource(
-      CreateResourceRequestBody body, AuthenticatedUserRequest userReq) {
-    iamService.requireAdminUser(userReq);
-    return createResourceInternal(body);
   }
 
   /** Internal method to Create a new {@link TrackedResource} without user credentials. */
-  public CreatedResource createResourceInternal(CreateResourceRequestBody body) {
+  public CreatedResource createResource(CreateResourceRequestBody body) {
     TrackedResourceId id =
         transactionTemplate.execute(status -> createResourceAndUpdateDuplicates(body, status));
     return new CreatedResource().id(id.toString());
@@ -104,8 +96,7 @@ public class JanitorService {
   }
 
   /** Retrieves the info about a tracked resource if their exists a resource for that id. */
-  public Optional<TrackedResourceInfo> getResource(String id, AuthenticatedUserRequest userReq) {
-    iamService.requireAdminUser(userReq);
+  public Optional<TrackedResourceInfo> getResource(String id) {
     UUID uuid;
     try {
       uuid = UUID.fromString(id);
@@ -116,60 +107,51 @@ public class JanitorService {
     TrackedResourceId trackedResourceId = TrackedResourceId.create(uuid);
     Optional<TrackedResourceAndLabels> resourceAndLabels =
         janitorDao.retrieveResourceAndLabels(trackedResourceId);
-    return resourceAndLabels.map(JanitorService::createInfo);
+    return resourceAndLabels.map(TrackedResourceService::createInfo);
   }
 
   /** Retrieves the resources with the {@link CloudResourceUid}. */
-  public TrackedResourceInfoList getResources(
-      CloudResourceUid cloudResourceUid, AuthenticatedUserRequest userReq) {
-    iamService.requireAdminUser(userReq);
+  public TrackedResourceInfoList getResources(CloudResourceUid cloudResourceUid) {
     List<TrackedResourceAndLabels> resourcesWithLabels =
         janitorDao.retrieveResourcesWith(cloudResourceUid);
     TrackedResourceInfoList resourceList = new TrackedResourceInfoList();
     resourcesWithLabels.stream()
-        .map(JanitorService::createInfo)
+        .map(TrackedResourceService::createInfo)
         .forEach(resourceList::addResourcesItem);
     return resourceList;
   }
 
-  /**
-   * Updates the resource state.
-   *
-   * <p>Currently it supports:
-   *
-   * <ul>
-   *   <li>Abandon resource: Update resource from READY or CLEANING to ABANDONED
-   *   <li>Bump resource: Update resource from ABANDONED to READY
-   * </ul>
-   */
-  public void updateResource(
-      CloudResourceUid cloudResourceUid, ResourceState state, AuthenticatedUserRequest userReq) {
-    iamService.requireAdminUser(userReq);
-    if (state == ResourceState.ABANDONED) {
-      // Update state to ABANDONED for READY or CLEANING state resources.
-      List<TrackedResource> resources =
-          getResourceWithState(
-              cloudResourceUid, TrackedResourceState.READY, TrackedResourceState.CLEANING);
+  /** Updates the READY resource state to ABANDONED. */
+  public void abandonResource(CloudResourceUid cloudResourceUid) {
+    List<TrackedResource> resources =
+        getResourceWithState(
+            cloudResourceUid, TrackedResourceState.READY, TrackedResourceState.CLEANING);
 
-      if (resources.size() > 1) {
-        throw new InternalServerErrorException(
-            "More than one READY or CLEANING state resources are found.");
-      }
-      janitorDao.updateResourceState(
-          resources.get(0).trackedResourceId(), TrackedResourceState.ABANDONED);
-    } else if (state == ResourceState.READY) {
-      // Bump ABANDONED state resources for cleaning.
-      List<TrackedResource> resources =
-          getResourceWithState(cloudResourceUid, TrackedResourceState.ABANDONED);
-
-      // It is possible that there might be multiple ABANDON resources, and we only need to update
-      // the one with last
-      // expiration time.
-      TrackedResource latestResource =
-          resources.stream().max(Comparator.comparing(TrackedResource::expiration)).get();
-      janitorDao.updateResourceState(
-          latestResource.trackedResourceId(), TrackedResourceState.READY);
+    if (resources.size() > 1) {
+      logger.error(
+          "More than one READY or CLEANING state resources are found for resource {}.",
+          cloudResourceUid);
     }
+    resources.forEach(
+        resource ->
+            janitorDao.updateResourceState(
+                resource.trackedResourceId(), TrackedResourceState.ABANDONED));
+  }
+
+  /**
+   * Updates the ABANDONED/ERROR resource state to READY.
+   *
+   * <p>It is possible that there might be multiple ABANDONED resources, and we only need to update
+   * the one with last expiration time.
+   */
+  public void bumpResource(CloudResourceUid cloudResourceUid) {
+    List<TrackedResource> resources =
+        getResourceWithState(
+            cloudResourceUid, TrackedResourceState.ABANDONED, TrackedResourceState.ERROR);
+
+    TrackedResource latestResource =
+        resources.stream().max(Comparator.comparing(TrackedResource::expiration)).get();
+    janitorDao.updateResourceState(latestResource.trackedResourceId(), TrackedResourceState.READY);
   }
 
   /**
