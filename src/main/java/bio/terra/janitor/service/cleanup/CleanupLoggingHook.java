@@ -10,8 +10,7 @@ import org.slf4j.MDC;
 
 /** {@link StairwayHook} to add log info for cleanup flight. */
 public class CleanupLoggingHook implements StairwayHook {
-  private static final String FLIGHT_LOG_FORMAT =
-      "Operation: {}, flightClass: {}, flightId: {}";
+  private static final String FLIGHT_LOG_FORMAT = "Operation: {}, flightClass: {}, flightId: {}";
   private static final String StepLogFormat =
       "Operation: {}, flightClass: {}, flightId: {}, stepIndex: {}";
   private static final String TRACKED_RESOURCE_MDC_KEY = "trackedResourceId";
@@ -20,10 +19,7 @@ public class CleanupLoggingHook implements StairwayHook {
   @Override
   public HookAction startFlight(FlightContext context) {
     logger.info(
-        FLIGHT_LOG_FORMAT,
-        "startFlight",
-        context.getFlightClassName(),
-        context.getFlightId());
+        FLIGHT_LOG_FORMAT, "startFlight", context.getFlightClassName(), context.getFlightId());
     return HookAction.CONTINUE;
   }
 
@@ -48,10 +44,7 @@ public class CleanupLoggingHook implements StairwayHook {
   @Override
   public HookAction endFlight(FlightContext context) {
     logger.info(
-        FLIGHT_LOG_FORMAT,
-        "endFlight",
-        context.getFlightClassName(),
-        context.getFlightId());
+        FLIGHT_LOG_FORMAT, "endFlight", context.getFlightClassName(), context.getFlightId());
     return HookAction.CONTINUE;
   }
 
