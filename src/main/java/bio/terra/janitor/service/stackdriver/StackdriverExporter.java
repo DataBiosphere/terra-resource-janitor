@@ -15,13 +15,13 @@ import org.springframework.stereotype.Component;
 
 /** A component for setting up Stackdriver stats & tracing exporting. */
 @Component
-public class StatsExporter {
-  private final Logger logger = LoggerFactory.getLogger(StatsExporter.class);
+public class StackdriverExporter {
+  private final Logger logger = LoggerFactory.getLogger(StackdriverExporter.class);
 
   private final StackdriverConfiguration stackdriverConfiguration;
 
   @Autowired
-  public StatsExporter(StackdriverConfiguration stackdriverConfiguration) {
+  public StackdriverExporter(StackdriverConfiguration stackdriverConfiguration) {
     this.stackdriverConfiguration = stackdriverConfiguration;
   }
 
