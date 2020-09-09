@@ -132,8 +132,7 @@ public class TrackedResourceService {
           "More than one READY or CLEANING state resources are found for resource {}.",
           cloudResourceUid);
     }
-    resources.forEach(
-            this::abandonResourcesAndLog);
+    resources.forEach(this::abandonResourcesAndLog);
   }
 
   /**
@@ -188,6 +187,6 @@ public class TrackedResourceService {
   private void abandonResourcesAndLog(TrackedResource trackedResource) {
     logger.info("Abandoned resource, trackedResourceId: {}", trackedResource.trackedResourceId());
     janitorDao.updateResourceState(
-            trackedResource.trackedResourceId(), TrackedResourceState.ABANDONED);
+        trackedResource.trackedResourceId(), TrackedResourceState.ABANDONED);
   }
 }
