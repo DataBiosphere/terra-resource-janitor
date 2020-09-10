@@ -132,10 +132,7 @@ public class TrackedResourceService {
           "More than one READY or CLEANING state resources are found for resource {}.",
           cloudResourceUid);
     }
-    resources.forEach(
-        resource ->
-            janitorDao.updateResourceState(
-                resource.trackedResourceId(), TrackedResourceState.ABANDONED));
+    resources.forEach(this::abandonResources);
   }
 
   /**
@@ -152,6 +149,7 @@ public class TrackedResourceService {
     TrackedResource latestResource =
         resources.stream().max(Comparator.comparing(TrackedResource::expiration)).get();
     janitorDao.updateResourceState(latestResource.trackedResourceId(), TrackedResourceState.READY);
+    logger.info("Bump resource, trackedResourceId: {} ", latestResource.trackedResourceId());
   }
 
   /**
@@ -184,5 +182,11 @@ public class TrackedResourceService {
         .creation(OffsetDateTime.ofInstant(resource.creation(), ZoneOffset.UTC))
         .expiration(OffsetDateTime.ofInstant(resource.expiration(), ZoneOffset.UTC))
         .labels(resourceAndLabels.labels());
+  }
+
+  private void abandonResources(TrackedResource trackedResource) {
+    janitorDao.updateResourceState(
+        trackedResource.trackedResourceId(), TrackedResourceState.ABANDONED);
+    logger.info("Abandoned resource, trackedResourceId: {}", trackedResource.trackedResourceId());
   }
 }
