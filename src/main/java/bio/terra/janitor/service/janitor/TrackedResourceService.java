@@ -185,8 +185,8 @@ public class TrackedResourceService {
   }
 
   private void abandonResources(TrackedResource trackedResource) {
-    logger.info("Abandoned resource, trackedResourceId: {}", trackedResource.trackedResourceId());
     janitorDao.updateResourceState(
         trackedResource.trackedResourceId(), TrackedResourceState.ABANDONED);
+    logger.info("Abandoned resource, trackedResourceId: {}", trackedResource.trackedResourceId());
   }
 }
