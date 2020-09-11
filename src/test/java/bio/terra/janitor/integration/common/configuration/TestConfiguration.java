@@ -36,7 +36,10 @@ public class TestConfiguration {
   /** Credential file path to be able to pubish message to Janitor prod env(tools). */
   private String prodJanitorClientCredentialFilePath;
 
+  /** What parent resource (organizatino or folder) to create projects within. */
   private String resourceCredentialFilePath;
+
+  private String parentResourceId;
 
   public String getTrackResourceTopicId() {
     return trackResourceTopicId;
@@ -82,6 +85,14 @@ public class TestConfiguration {
     this.resourceCredentialFilePath = resourceCredentialFilePath;
   }
 
+  public String getParentResourceId() {
+    return parentResourceId;
+  }
+
+  public void setParentResourceId(String parentResourceId) {
+    this.parentResourceId = parentResourceId;
+  }
+
   /**
    * Janitor Client {@link ServiceAccountCredentials} which has permission to publish message to
    * Janitor.
@@ -93,18 +104,18 @@ public class TestConfiguration {
   /** Creates {@link ClientConfig} for using CRL in test. */
   public ClientConfig createClientConfig() {
     ClientConfig.Builder clientConfigBuilder =
-        ClientConfig.Builder.newBuilder().setClient("terra-janitor");
+            ClientConfig.Builder.newBuilder().setClient("terra-janitor");
 
     // Resources created during tests should be tracked by the Prod Janitor so that they are tracked
     // permanently and deleted even if the test fails.
     CleanupConfig cleanupConfig =
-        CleanupConfig.builder()
-            .setCleanupId("janitor-test")
-            .setJanitorProjectId(prodTrackResourceProjectId)
-            .setTimeToLive(RESOURCE_TIME_TO_LIVE_PROD)
-            .setJanitorTopicName(prodTrackResourceTopicId)
-            .setCredentials(getGoogleCredentialsOrDie(prodJanitorClientCredentialFilePath))
-            .build();
+            CleanupConfig.builder()
+                    .setCleanupId("janitor-test")
+                    .setJanitorProjectId(prodTrackResourceProjectId)
+                    .setTimeToLive(RESOURCE_TIME_TO_LIVE_PROD)
+                    .setJanitorTopicName(prodTrackResourceTopicId)
+                    .setCredentials(getGoogleCredentialsOrDie(prodJanitorClientCredentialFilePath))
+                    .build();
     clientConfigBuilder.setCleanupConfig(cleanupConfig);
     return clientConfigBuilder.build();
   }
