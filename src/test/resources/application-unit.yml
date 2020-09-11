@@ -1,0 +1,22 @@
+db:
+  janitor:
+    password: dbpwd
+    recreate-db-on-start: true
+    update-db-on-start: true
+    uri: jdbc:postgresql://127.0.0.1:5432/testdb
+    username: dbuser
+  stairway:
+    password: dbpwd_stairway
+    uri: jdbc:postgresql://127.0.0.1:5432/testdb_stairway
+    username: dbuser_stairway
+
+janitor:
+  primary:
+    scheduler-enabled: false
+
+pubsub:
+  track-resource:
+    enabled: false
+
+stackdriver:
+  enabled: false

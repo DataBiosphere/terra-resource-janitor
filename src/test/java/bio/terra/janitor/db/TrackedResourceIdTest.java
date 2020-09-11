@@ -6,8 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 
 @Tag("unit")
+@ActiveProfiles("unit")
 public class TrackedResourceIdTest {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
