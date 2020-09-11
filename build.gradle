@@ -16,7 +16,7 @@ plugins {
 }
 
 group = 'bio.terra'
-version = System.getenv('SERVICE_TAG') != null ? System.getenv('SERVICE_TAG') : '0.0.1-SNAPSHOT'
+version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.0.1-SNAPSHOT'
 sourceCompatibility = '1.8'
 
 repositories {

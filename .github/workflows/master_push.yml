@@ -73,7 +73,7 @@ jobs:
       - name: Build and push GCR image using Jib
         run: "./gradlew jib --image=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"
         env:
-          SERVICE_TAG: ${{ steps.tag.outputs.tag }}
+          SERVICE_VERSION: ${{ steps.tag.outputs.tag }}
       - name: Update Version Mapping
         uses: broadinstitute/repository-dispatch@master
         with:
