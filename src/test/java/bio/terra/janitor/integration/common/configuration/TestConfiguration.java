@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 /** Configs in integration test. */
 @Component
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "test")
+@ConfigurationProperties(prefix = "janitor.test")
 public class TestConfiguration {
   /** How long to keep the resource before the 'prod' Janitor do the cleanup. */
   public static Duration RESOURCE_TIME_TO_LIVE_PROD = Duration.ofMinutes(30);

@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "stairway")
+@ConfigurationProperties(prefix = "janitor.stairway")
 public class StairwayConfiguration {
   private String name;
   private String clusterName;

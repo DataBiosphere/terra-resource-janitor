@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "pubsub.track-resource")
+@ConfigurationProperties(prefix = "janitor.pubsub.track-resource")
 public class TrackResourcePubsubConfiguration {
   private boolean enabled;
 
