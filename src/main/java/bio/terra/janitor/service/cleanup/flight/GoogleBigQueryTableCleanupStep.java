@@ -25,12 +25,6 @@ public class GoogleBigQueryTableCleanupStep extends ResourceCleanupStep {
 
   @Override
   protected StepResult cleanUp(CloudResourceUid resourceUid) {
-    try {
-      System.out.println("!!!!!!!!!!!!");
-      System.out.println(BigQueryOptions.getDefaultInstance().getCredentials().getRequestMetadata());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
     GoogleBigQueryTableUid bigQueryTableUid = resourceUid.getGoogleBigQueryTableUid();
     TableId tableId =
         TableId.of(
