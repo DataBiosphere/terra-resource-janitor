@@ -135,7 +135,7 @@ public class TrackResourceIntegrationTest {
     CloudResourceUid resource =
         new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
-    publishAndVerifyResourceTracked(resource);
+    publishAndVerifyCleanupDone(resource);
 
     // Resource is removed
     assertNull(storageCow.get(bucketName));
@@ -157,7 +157,7 @@ public class TrackResourceIntegrationTest {
     CloudResourceUid resource =
         new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
-    publishAndVerifyResourceTracked(resource);
+    publishAndVerifyCleanupDone(resource);
   }
 
   @Test
@@ -176,7 +176,7 @@ public class TrackResourceIntegrationTest {
         new CloudResourceUid()
             .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
-    publishAndVerifyResourceTracked(resource);
+    publishAndVerifyCleanupDone(resource);
 
     // Resource is removed
     assertNull(storageCow.get(blobId));
@@ -201,7 +201,7 @@ public class TrackResourceIntegrationTest {
         new CloudResourceUid()
             .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
-    publishAndVerifyResourceTracked(resource);
+    publishAndVerifyCleanupDone(resource);
 
     // Resource is removed
     assertNull(storageCow.get(blobId));
@@ -231,7 +231,7 @@ public class TrackResourceIntegrationTest {
                 new GoogleBigQueryDatasetUid().projectId(projectId).datasetId(datasetName));
 
     // Publish a message to cleanup the dataset and make sure content inside is also deleted.
-    publishAndVerifyResourceTracked(datasetUid);
+    publishAndVerifyCleanupDone(datasetUid);
 
     // Resource is removed
     assertNull(bigQueryCow.getDataset(datasetName));
@@ -246,7 +246,7 @@ public class TrackResourceIntegrationTest {
                     .projectId(projectId)
                     .datasetId(datasetName)
                     .tableId(tableName));
-    publishAndVerifyResourceTracked(tableUid);
+    publishAndVerifyCleanupDone(tableUid);
   }
 
   @Test
@@ -273,7 +273,7 @@ public class TrackResourceIntegrationTest {
                     .projectId(projectId)
                     .datasetId(datasetName)
                     .tableId(tableName));
-    publishAndVerifyResourceTracked(tableUid);
+    publishAndVerifyCleanupDone(tableUid);
 
     // Resource is removed
     assertNull(bigQueryCow.getTable(tableId));
@@ -285,70 +285,37 @@ public class TrackResourceIntegrationTest {
   public void subscribeAndCleanupResource_googleProject() throws Exception {
     String projectId = randomProjectId();
 
-    Operation operation =
-        resourceManagerCow
-            .projects()
-            .create(new Project().setProjectId(projectId).setParent(parentResourceId))
-            .execute();
-    OperationCow<Operation> operationCow = resourceManagerCow.operations().operationCow(operation);
-    operationCow =
-        OperationUtils.pollUntilComplete(
-            operationCow, Duration.ofSeconds(5), Duration.ofSeconds(30));
-    assertTrue(operationCow.getOperation().getDone());
-    assertNull(operationCow.getOperation().getError());
-
-    Project project = resourceManagerCow.projects().get(projectId).execute();
-    assertEquals(projectId, project.getProjectId());
-    assertEquals("ACTIVE", project.getLifecycleState());
+    createProject(projectId);
 
     CloudResourceUid resource =
         new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
 
-    publishAndVerifyResourceTracked(resource);
+    publishAndVerifyCleanupDone(resource);
 
-    // Resource is removed
-    project = resourceManagerCow.projects().get(projectId).execute();
+    // Project is ready for deletion
+    Project project = resourceManagerCow.projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
 
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedGoogleProject() throws Exception {
     String projectId = randomProjectId();
-
-    Operation operation =
-        resourceManagerCow
-            .projects()
-            .create(new Project().setProjectId(projectId).setParent(parentResourceId))
-            .execute();
-    OperationCow<Operation> operationCow = resourceManagerCow.operations().operationCow(operation);
-    operationCow =
-        OperationUtils.pollUntilComplete(
-            operationCow, Duration.ofSeconds(5), Duration.ofSeconds(30));
-    assertTrue(operationCow.getOperation().getDone());
-    assertNull(operationCow.getOperation().getError());
-
-    Project project = resourceManagerCow.projects().get(projectId).execute();
-    assertEquals(projectId, project.getProjectId());
-    assertEquals("ACTIVE", project.getLifecycleState());
-
-    resourceManagerCow.projects().delete(projectId).execute();
-    project = resourceManagerCow.projects().get(projectId).execute();
-    assertEquals("DELETE_REQUESTED", project.getLifecycleState());
+    createProject(projectId);
 
     CloudResourceUid resource =
         new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
 
-    publishAndVerifyResourceTracked(resource);
+    publishAndVerifyCleanupDone(resource);
 
-    // Resource is removed
-    project = resourceManagerCow.projects().get(projectId).execute();
+    // Project is ready for deletion
+    Project project = resourceManagerCow.projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
 
   /**
    * Publish message to Janitor to track resource and verify the resource by GET resource endpoint.
    */
-  private void publishAndVerifyResourceTracked(CloudResourceUid resource) throws Exception {
+  private void publishAndVerifyCleanupDone(CloudResourceUid resource) throws Exception {
     OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
 
     ByteString data =
@@ -392,6 +359,20 @@ public class TrackResourceIntegrationTest {
         .creation(now)
         .expiration(now)
         .labels(DEFAULT_LABELS);
+  }
+
+  private void createProject(String projectId) throws Exception {
+    Operation operation =
+        resourceManagerCow
+            .projects()
+            .create(new Project().setProjectId(projectId).setParent(parentResourceId))
+            .execute();
+    OperationCow<Operation> operationCow = resourceManagerCow.operations().operationCow(operation);
+    operationCow =
+        OperationUtils.pollUntilComplete(
+            operationCow, Duration.ofSeconds(5), Duration.ofSeconds(30));
+    assertTrue(operationCow.getOperation().getDone());
+    assertNull(operationCow.getOperation().getError());
   }
 
   /** Generates a random name to use for a cloud resource. */

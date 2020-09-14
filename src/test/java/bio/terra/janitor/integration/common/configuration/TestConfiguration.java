@@ -36,7 +36,7 @@ public class TestConfiguration {
   /** Credential file path to be able to pubish message to Janitor prod env(tools). */
   private String prodJanitorClientCredentialFilePath;
 
-  /** What parent resource (organizatino or folder) to create projects within. */
+  /** What parent folder to create projects within. */
   private String resourceCredentialFilePath;
 
   private String parentResourceId;

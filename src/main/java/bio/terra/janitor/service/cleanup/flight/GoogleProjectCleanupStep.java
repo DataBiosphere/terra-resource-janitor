@@ -40,7 +40,7 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
           || project.getLifecycleState().equals("DELETE_REQUESTED")
           || project.getLifecycleState().equals("DELETE_IN_PROGRESS")) {
         // Skip is project is deleted or being deleted.
-        logger.info("Project id: {} is being deleted", projectId);
+        logger.info("Project id: {} is deleted or being deleted", projectId);
         return StepResult.getStepResultSuccess();
       }
 
