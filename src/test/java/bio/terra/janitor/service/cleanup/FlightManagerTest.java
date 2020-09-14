@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleBucketUid;
-import bio.terra.janitor.app.Main;
+import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.service.cleanup.flight.*;
 import bio.terra.janitor.service.stairway.StairwayComponent;
@@ -17,27 +17,16 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.support.TransactionTemplate;
 
-@Tag("unit")
-@ActiveProfiles({"test", "unit"})
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = Main.class)
-@SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class FlightManagerTest {
+public class FlightManagerTest extends BaseUnitTest {
   private static final Instant CREATION = Instant.EPOCH;
   private static final Instant EXPIRATION = CREATION.plusSeconds(60);
 

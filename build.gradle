@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+
 buildscript {
     repositories {
         mavenCentral()
@@ -187,34 +189,40 @@ ideaModule.dependsOn swaggerSources.server.code
 // This is the path to the default Google service account for the janitor service to run as.
 def googleCredentialsFile = "${projectDir}/src/test/resources/rendered/sa-account.json"
 
-test {
-    //  Sets the application Google Credentials.
+tasks.withType(Test) {
     environment = [
             'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
     ]
-    useJUnitPlatform()
+    testLogging {
+        events = ["passed", "failed", "skipped"]
+        // Causes the correct line to be reported on an exception.
+        exceptionFormat = TestExceptionFormat.FULL
+        reports {
+            // Write XML file (used by CircleCI, Jenkins, etc) to api/build/test-results/test
+            junitXml.enabled = true
+            // Write human-readable test report to api/build/reports/
+            html.enabled = true
+        }
+    }
+}
+
+test {
+    useJUnitPlatform {
+        includeTags 'unit', 'integration'
+    }
 }
 
 task unitTest(type: Test) {
     useJUnitPlatform {
         includeTags 'unit'
     }
-    testLogging {
-        events = ["passed", "failed", "skipped", "started"]
-    }
-    outputs.upToDateWhen { false }
 }
 
 task integrationTest(type: Test) {
-    // Sets the application Google Credentials.
-    environment = [
-            'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
-    ]
     useJUnitPlatform {
         includeTags "integration"
     }
-    testLogging {
-        events = ["passed", "failed", "skipped", "started"]
-    }
+    // Force tests to always be re-run, since integration tests involve communicating with external
+    // resources.
     outputs.upToDateWhen { false }
 }

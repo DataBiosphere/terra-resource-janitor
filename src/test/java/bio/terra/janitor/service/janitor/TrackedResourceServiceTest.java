@@ -4,32 +4,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.generated.model.*;
-import bio.terra.janitor.app.Main;
+import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.NotFoundException;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@Tag("unit")
-@ActiveProfiles({"test", "unit"})
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = Main.class)
-@SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class TrackedResourceServiceTest {
+public class TrackedResourceServiceTest extends BaseUnitTest {
   private static final OffsetDateTime DEFAULT_TIME = OffsetDateTime.now();
   @Autowired private TrackedResourceService trackedResourceService;
 
