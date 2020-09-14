@@ -1,14 +1,14 @@
 package bio.terra.janitor.service.cleanup.flight;
 
+import static bio.terra.janitor.app.configuration.BeanNames.CRL_CLIENT_CONFIG;
+import static bio.terra.janitor.app.configuration.BeanNames.JANITOR_DAO;
+
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRuleFixedInterval;
 import org.springframework.context.ApplicationContext;
-
-import static bio.terra.janitor.app.configuration.BeanNames.CRL_CLIENT_CONFIG;
-import static bio.terra.janitor.app.configuration.BeanNames.JANITOR_DAO;
 
 /** A Flight to cleanup GCP project. */
 public class GoogleProjectCleanupFlight extends Flight {

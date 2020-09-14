@@ -104,18 +104,18 @@ public class TestConfiguration {
   /** Creates {@link ClientConfig} for using CRL in test. */
   public ClientConfig createClientConfig() {
     ClientConfig.Builder clientConfigBuilder =
-            ClientConfig.Builder.newBuilder().setClient("terra-janitor");
+        ClientConfig.Builder.newBuilder().setClient("terra-janitor");
 
     // Resources created during tests should be tracked by the Prod Janitor so that they are tracked
     // permanently and deleted even if the test fails.
     CleanupConfig cleanupConfig =
-            CleanupConfig.builder()
-                    .setCleanupId("janitor-test")
-                    .setJanitorProjectId(prodTrackResourceProjectId)
-                    .setTimeToLive(RESOURCE_TIME_TO_LIVE_PROD)
-                    .setJanitorTopicName(prodTrackResourceTopicId)
-                    .setCredentials(getGoogleCredentialsOrDie(prodJanitorClientCredentialFilePath))
-                    .build();
+        CleanupConfig.builder()
+            .setCleanupId("janitor-test")
+            .setJanitorProjectId(prodTrackResourceProjectId)
+            .setTimeToLive(RESOURCE_TIME_TO_LIVE_PROD)
+            .setJanitorTopicName(prodTrackResourceTopicId)
+            .setCredentials(getGoogleCredentialsOrDie(prodJanitorClientCredentialFilePath))
+            .build();
     clientConfigBuilder.setCleanupConfig(cleanupConfig);
     return clientConfigBuilder.build();
   }

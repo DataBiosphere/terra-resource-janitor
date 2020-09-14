@@ -11,6 +11,8 @@ import com.google.cloud.bigquery.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+
 /** Step to cleanup Google BigQuery Table resource. */
 public class GoogleBigQueryTableCleanupStep extends ResourceCleanupStep {
   private final Logger logger = LoggerFactory.getLogger(GoogleBigQueryTableCleanupStep.class);
@@ -23,6 +25,12 @@ public class GoogleBigQueryTableCleanupStep extends ResourceCleanupStep {
 
   @Override
   protected StepResult cleanUp(CloudResourceUid resourceUid) {
+    try {
+      System.out.println("!!!!!!!!!!!!");
+      System.out.println(BigQueryOptions.getDefaultInstance().getCredentials().getRequestMetadata());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
     GoogleBigQueryTableUid bigQueryTableUid = resourceUid.getGoogleBigQueryTableUid();
     TableId tableId =
         TableId.of(

@@ -73,45 +73,46 @@ public class TrackResourceIntegrationTest {
   private ResourceId parentResourceId;
 
   private static final Map<String, String> DEFAULT_LABELS =
-          ImmutableMap.of("key1", "value1", "key2", "value2");
+      ImmutableMap.of("key1", "value1", "key2", "value2");
 
   @BeforeEach
   public void setUp() throws Exception {
     projectId = testConfiguration.getResourceProjectId();
 
     TopicName topicName =
-            TopicName.of(
-                    trackResourcePubsubConfiguration.getProjectId(),
-                    testConfiguration.getTrackResourceTopicId());
+        TopicName.of(
+            trackResourcePubsubConfiguration.getProjectId(),
+            testConfiguration.getTrackResourceTopicId());
     publisher =
-            Publisher.newBuilder(topicName)
-                    .setCredentialsProvider(
-                            FixedCredentialsProvider.create(
-                                    testConfiguration.getClientGoogleCredentialsOrDie()))
-                    .build();
+        Publisher.newBuilder(topicName)
+            .setCredentialsProvider(
+                FixedCredentialsProvider.create(
+                    testConfiguration.getClientGoogleCredentialsOrDie()))
+            .build();
+
     storageCow =
-            new StorageCow(
-                    testConfiguration.createClientConfig(),
-                    StorageOptions.newBuilder()
-                            .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
-                            .setProjectId(projectId)
-                            .build());
+        new StorageCow(
+            testConfiguration.createClientConfig(),
+            StorageOptions.newBuilder()
+                .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
+                .setProjectId(projectId)
+                .build());
 
     bigQueryCow =
-            new BigQueryCow(
-                    testConfiguration.createClientConfig(),
-                    BigQueryOptions.newBuilder()
-                            .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
-                            .setProjectId(projectId)
-                            .build());
+        new BigQueryCow(
+            testConfiguration.createClientConfig(),
+            BigQueryOptions.newBuilder()
+                .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
+                .setProjectId(projectId)
+                .build());
 
     resourceManagerCow =
-            CloudResourceManagerCow.create(
-                    testConfiguration.createClientConfig(),
-                    testConfiguration.getResourceAccessGoogleCredentialsOrDie());
+        CloudResourceManagerCow.create(
+            testConfiguration.createClientConfig(),
+            testConfiguration.getResourceAccessGoogleCredentialsOrDie());
 
     parentResourceId =
-            new ResourceId().setType("folder").setId(testConfiguration.getParentResourceId());
+        new ResourceId().setType("folder").setId(testConfiguration.getParentResourceId());
   }
 
   @AfterEach
@@ -132,7 +133,7 @@ public class TrackResourceIntegrationTest {
     assertEquals(blobId.getName(), storageCow.get(blobId).getBlobInfo().getName());
 
     CloudResourceUid resource =
-            new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
+        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
     publishAndVerifyResourceTracked(resource);
 
@@ -154,7 +155,7 @@ public class TrackResourceIntegrationTest {
     assertNull(storageCow.get(bucketName));
 
     CloudResourceUid resource =
-            new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
+        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
     publishAndVerifyResourceTracked(resource);
   }
@@ -172,8 +173,8 @@ public class TrackResourceIntegrationTest {
     assertEquals(blobId.getName(), storageCow.get(blobId).getBlobInfo().getName());
 
     CloudResourceUid resource =
-            new CloudResourceUid()
-                    .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
+        new CloudResourceUid()
+            .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
     publishAndVerifyResourceTracked(resource);
 
@@ -197,8 +198,8 @@ public class TrackResourceIntegrationTest {
     assertTrue(storageCow.delete(blobId));
 
     CloudResourceUid resource =
-            new CloudResourceUid()
-                    .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
+        new CloudResourceUid()
+            .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
     publishAndVerifyResourceTracked(resource);
 
@@ -216,18 +217,18 @@ public class TrackResourceIntegrationTest {
     assertNull(bigQueryCow.getDataset(datasetName));
     bigQueryCow.create(DatasetInfo.newBuilder(datasetName).build());
     bigQueryCow.create(
-            TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build()).build());
+        TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build()).build());
 
     // Verify resources are created in GCP
     assertEquals(
-            datasetName,
-            bigQueryCow.getDataset(datasetName).getDatasetInfo().getDatasetId().getDataset());
+        datasetName,
+        bigQueryCow.getDataset(datasetName).getDatasetInfo().getDatasetId().getDataset());
     assertEquals(tableName, bigQueryCow.getTable(tableId).getTableInfo().getTableId().getTable());
 
     CloudResourceUid datasetUid =
-            new CloudResourceUid()
-                    .googleBigQueryDatasetUid(
-                            new GoogleBigQueryDatasetUid().projectId(projectId).datasetId(datasetName));
+        new CloudResourceUid()
+            .googleBigQueryDatasetUid(
+                new GoogleBigQueryDatasetUid().projectId(projectId).datasetId(datasetName));
 
     // Publish a message to cleanup the dataset and make sure content inside is also deleted.
     publishAndVerifyResourceTracked(datasetUid);
@@ -239,12 +240,12 @@ public class TrackResourceIntegrationTest {
     // Try to publish another message to cleanup the same table and verify Janitor works fine for
     // tables already deleted by other flight.
     CloudResourceUid tableUid =
-            new CloudResourceUid()
-                    .googleBigQueryTableUid(
-                            new GoogleBigQueryTableUid()
-                                    .projectId(projectId)
-                                    .datasetId(datasetName)
-                                    .tableId(tableName));
+        new CloudResourceUid()
+            .googleBigQueryTableUid(
+                new GoogleBigQueryTableUid()
+                    .projectId(projectId)
+                    .datasetId(datasetName)
+                    .tableId(tableName));
     publishAndVerifyResourceTracked(tableUid);
   }
 
@@ -257,21 +258,21 @@ public class TrackResourceIntegrationTest {
     assertNull(bigQueryCow.getDataset(datasetName));
     bigQueryCow.create(DatasetInfo.newBuilder(datasetName).build());
     bigQueryCow.create(
-            TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build()).build());
+        TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build()).build());
 
     // Verify resources are created in GCP
     assertEquals(
-            datasetName,
-            bigQueryCow.getDataset(datasetName).getDatasetInfo().getDatasetId().getDataset());
+        datasetName,
+        bigQueryCow.getDataset(datasetName).getDatasetInfo().getDatasetId().getDataset());
     assertEquals(tableName, bigQueryCow.getTable(tableId).getTableInfo().getTableId().getTable());
 
     CloudResourceUid tableUid =
-            new CloudResourceUid()
-                    .googleBigQueryTableUid(
-                            new GoogleBigQueryTableUid()
-                                    .projectId(projectId)
-                                    .datasetId(datasetName)
-                                    .tableId(tableName));
+        new CloudResourceUid()
+            .googleBigQueryTableUid(
+                new GoogleBigQueryTableUid()
+                    .projectId(projectId)
+                    .datasetId(datasetName)
+                    .tableId(tableName));
     publishAndVerifyResourceTracked(tableUid);
 
     // Resource is removed
@@ -282,18 +283,17 @@ public class TrackResourceIntegrationTest {
 
   @Test
   public void subscribeAndCleanupResource_googleProject() throws Exception {
-    // Creates Blob and verify.
     String projectId = randomProjectId();
 
     Operation operation =
-            resourceManagerCow
-                    .projects()
-                    .create(new Project().setProjectId(projectId).setParent(parentResourceId))
-                    .execute();
+        resourceManagerCow
+            .projects()
+            .create(new Project().setProjectId(projectId).setParent(parentResourceId))
+            .execute();
     OperationCow<Operation> operationCow = resourceManagerCow.operations().operationCow(operation);
     operationCow =
-            OperationUtils.pollUntilComplete(
-                    operationCow, Duration.ofSeconds(5), Duration.ofSeconds(30));
+        OperationUtils.pollUntilComplete(
+            operationCow, Duration.ofSeconds(5), Duration.ofSeconds(30));
     assertTrue(operationCow.getOperation().getDone());
     assertNull(operationCow.getOperation().getError());
 
@@ -302,15 +302,47 @@ public class TrackResourceIntegrationTest {
     assertEquals("ACTIVE", project.getLifecycleState());
 
     CloudResourceUid resource =
-            new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
+        new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
 
     publishAndVerifyResourceTracked(resource);
 
     // Resource is removed
     project = resourceManagerCow.projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_alreadyDeletedGoogleProject() throws Exception {
+    String projectId = randomProjectId();
+
+    Operation operation =
+        resourceManagerCow
+            .projects()
+            .create(new Project().setProjectId(projectId).setParent(parentResourceId))
+            .execute();
+    OperationCow<Operation> operationCow = resourceManagerCow.operations().operationCow(operation);
+    operationCow =
+        OperationUtils.pollUntilComplete(
+            operationCow, Duration.ofSeconds(5), Duration.ofSeconds(30));
+    assertTrue(operationCow.getOperation().getDone());
+    assertNull(operationCow.getOperation().getError());
+
+    Project project = resourceManagerCow.projects().get(projectId).execute();
+    assertEquals(projectId, project.getProjectId());
+    assertEquals("ACTIVE", project.getLifecycleState());
+
+    resourceManagerCow.projects().delete(projectId).execute();
+    project = resourceManagerCow.projects().get(projectId).execute();
+    assertEquals("DELETE_REQUESTED", project.getLifecycleState());
+
+    CloudResourceUid resource =
+        new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
 
     publishAndVerifyResourceTracked(resource);
+
+    // Resource is removed
+    project = resourceManagerCow.projects().get(projectId).execute();
+    assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
 
   /**
@@ -320,9 +352,9 @@ public class TrackResourceIntegrationTest {
     OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
 
     ByteString data =
-            ByteString.copyFromUtf8(
-                    objectMapper.writeValueAsString(
-                            newExpiredCreateResourceMessage(resource, publishTime)));
+        ByteString.copyFromUtf8(
+            objectMapper.writeValueAsString(
+                newExpiredCreateResourceMessage(resource, publishTime)));
 
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
@@ -330,19 +362,19 @@ public class TrackResourceIntegrationTest {
     Thread.sleep(10000);
 
     String getResponse =
-            this.mvc
-                    .perform(
-                            get("/api/janitor/v1/resource")
-                                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource))
-                                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), "test1@email.com"))
-                    .andDo(MockMvcResultHandlers.print())
-                    .andExpect(status().isOk())
-                    .andReturn()
-                    .getResponse()
-                    .getContentAsString();
+        this.mvc
+            .perform(
+                get("/api/janitor/v1/resource")
+                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource))
+                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), "test1@email.com"))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
     TrackedResourceInfoList resourceInfoList =
-            objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+        objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
     assertEquals(resource, trackedResourceInfo.getResourceUid());
@@ -354,12 +386,12 @@ public class TrackResourceIntegrationTest {
 
   /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
   private CreateResourceRequestBody newExpiredCreateResourceMessage(
-          CloudResourceUid resource, OffsetDateTime now) {
+      CloudResourceUid resource, OffsetDateTime now) {
     return new CreateResourceRequestBody()
-            .resourceUid(resource)
-            .creation(now)
-            .expiration(now)
-            .labels(DEFAULT_LABELS);
+        .resourceUid(resource)
+        .creation(now)
+        .expiration(now)
+        .labels(DEFAULT_LABELS);
   }
 
   /** Generates a random name to use for a cloud resource. */
