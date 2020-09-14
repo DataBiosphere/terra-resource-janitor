@@ -74,6 +74,7 @@ You may need to use gcloud to provide GCR
 local-dev/setup_gke_deploy.sh <environment>
 ```
 
+where `environment` is your personal environment (e.g. `gjordan`) or an existing Terra env (e.g. `toolsalpha`).
 You can now push to the specified environment by running
 
 ```
