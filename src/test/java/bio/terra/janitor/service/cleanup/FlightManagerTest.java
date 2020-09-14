@@ -31,7 +31,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Tag("unit")
-@ActiveProfiles("unit")
+@ActiveProfiles({"test", "unit"})
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest

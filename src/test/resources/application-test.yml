@@ -1,0 +1,17 @@
+# Config overrides common to all tests should go here.
+# All tests should enable the "test" profile in order to load these property overrides.
+janitor:
+  db:
+    password: dbpwd
+    recreate-db-on-start: true
+    update-db-on-start: true
+    uri: jdbc:postgresql://127.0.0.1:5432/testdb
+    username: dbuser
+  iam:
+    config-based-authz-enabled: true
+    admin-user-list: ["test1@email.com"]
+  stairway:
+    db:
+      password: dbpwd_stairway
+      uri: jdbc:postgresql://127.0.0.1:5432/testdb_stairway
+      username: dbuser_stairway

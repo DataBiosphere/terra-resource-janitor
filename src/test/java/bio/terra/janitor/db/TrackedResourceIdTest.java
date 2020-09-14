@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ActiveProfiles;
 
 @Tag("unit")
-@ActiveProfiles("unit")
+@ActiveProfiles({"test", "unit"})
 public class TrackedResourceIdTest {
   private final ObjectMapper objectMapper = new ObjectMapper();
 

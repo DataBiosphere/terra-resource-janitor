@@ -23,7 +23,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 @Tag("unit")
-@ActiveProfiles("unit")
+@ActiveProfiles({"test", "unit"})
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest

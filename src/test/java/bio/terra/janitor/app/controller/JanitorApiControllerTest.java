@@ -34,7 +34,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 @Tag("unit")
-@ActiveProfiles("unit")
+@ActiveProfiles({"test", "unit"})
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest

@@ -50,7 +50,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 @Tag("integration")
-@ActiveProfiles("integration")
+@ActiveProfiles({"test", "integration"})
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest

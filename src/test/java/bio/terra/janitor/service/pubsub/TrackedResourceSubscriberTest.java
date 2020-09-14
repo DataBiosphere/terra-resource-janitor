@@ -29,7 +29,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @Tag("unit")
-@ActiveProfiles("unit")
+@ActiveProfiles({"test", "unit"})
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
