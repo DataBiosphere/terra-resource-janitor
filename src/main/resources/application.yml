@@ -5,6 +5,10 @@ janitor:
     update-db-on-start: true
     uri: jdbc:postgresql://127.0.0.1:5432/${DATABASE_NAME}
     username: ${DATABASE_USER}
+  iam:
+    # TODO(PF-81): Switch to use SAM instead of config file for user authZ.
+    config-based-authz-enabled: ${CONFIG_BASED_AUTHZ_ENABLED}
+    admin-user-list: ${ADMIN_USER_LIST:[]}
   primary:
     scheduler-enabled: true
   pubsub:

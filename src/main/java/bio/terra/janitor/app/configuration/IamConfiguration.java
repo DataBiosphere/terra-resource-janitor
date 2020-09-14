@@ -18,7 +18,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class IamConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(IamConfiguration.class);
 
-  // The Janitor admin user list.
+  // The Janitor admin user list. This should be a formatted JSON list of strings, e.g.
+  // '["testuser1@gmail.com"]'
   private String adminUserList;
   // Extracted from the adminUserList value. Mutually exclusive with adminUserList.
   private Set<String> adminUsers;
