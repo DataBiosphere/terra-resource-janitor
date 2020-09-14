@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Component
 @EnableConfigurationProperties
 @EnableTransactionManagement
-@ConfigurationProperties(prefix = "iam")
+@ConfigurationProperties(prefix = "janitor.iam")
 public class IamConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(IamConfiguration.class);
 

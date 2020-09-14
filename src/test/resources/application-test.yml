@@ -9,7 +9,10 @@ janitor:
     username: dbuser
   iam:
     config-based-authz-enabled: true
-    admin-user-list: ["test1@email.com"]
+    # n.b. this list is stored as a JSON string and parsed by the application. The surrounding
+    # single-quotes are needed to prevent the YAML interpreter from treating the value as a
+    # native list.
+    admin-user-list: '["test1@email.com"]'
   stairway:
     db:
       password: dbpwd_stairway

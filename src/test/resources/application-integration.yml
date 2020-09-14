@@ -3,7 +3,6 @@ janitor:
   primary:
     flight-completion-period: 2s
     flight-submission-period: 2s
-    scheduler-enabled: true
   pubsub:
     track-resource:
       enabled: true
