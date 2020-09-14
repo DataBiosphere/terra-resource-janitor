@@ -1,0 +1,22 @@
+# Config overrides common to all tests should go here.
+# All tests should enable the "test" profile in order to load these property overrides.
+janitor:
+  db:
+    password: dbpwd
+    recreate-db-on-start: true
+    update-db-on-start: true
+    uri: jdbc:postgresql://127.0.0.1:5432/testdb
+    username: dbuser
+  iam:
+    config-based-authz-enabled: true
+    # n.b. this list is stored as a JSON string and parsed by the application. The surrounding
+    # single-quotes are needed to prevent the YAML interpreter from treating the value as a
+    # native list.
+    admin-user-list: '["test1@email.com"]'
+  stackdriver:
+    enabled: false
+  stairway:
+    db:
+      password: dbpwd_stairway
+      uri: jdbc:postgresql://127.0.0.1:5432/testdb_stairway
+      username: dbuser_stairway

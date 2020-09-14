@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 /** Configs in integration test. */
 @Component
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "test")
+@ConfigurationProperties(prefix = "janitor.test")
 public class TestConfiguration {
   /** How long to keep the resource before the 'prod' Janitor do the cleanup. */
   public static Duration RESOURCE_TIME_TO_LIVE_PROD = Duration.ofMinutes(30);
@@ -30,15 +30,16 @@ public class TestConfiguration {
   /** pubsub topic id to publish track resource to Janitor prod env(tools) */
   private String prodTrackResourceTopicId;
 
-  /** Credential file path to be able to pubish message to Janitor test env(toolsalpha). */
+  /** Credential file path to be able to publish message to Janitor test env (toolsalpha). */
   private String janitorClientServiceAccountPath;
 
-  /** Credential file path to be able to pubish message to Janitor prod env(tools). */
+  /** Credential file path to be able to publish message to Janitor prod env (tools). */
   private String prodJanitorClientCredentialFilePath;
 
-  /** What parent folder to create projects within. */
+  /** Credential file path for accessing cloud resources. */
   private String resourceCredentialFilePath;
 
+  /** ID of the parent folder to create projects within. */
   private String parentResourceId;
 
   public String getTrackResourceTopicId() {

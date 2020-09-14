@@ -1,0 +1,19 @@
+# Config overrides specific to integration tests.
+janitor:
+  primary:
+    flight-completion-period: 2s
+    flight-submission-period: 2s
+  pubsub:
+    track-resource:
+      enabled: true
+      project-id: terra-kernel-k8s
+      subscription: crljanitor-toolsalpha-pubsub-sub
+  test:
+    janitor-client-service-account-path: rendered/client-sa-account.json
+    parent-resource-id: 1074206284898
+    prod-janitor-client-credential-file-path: rendered/tools-client-sa-account.json
+    prod-track-resource-project-id: terra-kernel-k8s
+    prod-track-resource-topic-id: crljanitor-tools-pubsub-topic
+    resource-credential-file-path: rendered/cloud-access-sa-account.json
+    resource-project-id: terra-janitor-test
+    track-resource-topic-id: crljanitor-toolsalpha-pubsub-topic

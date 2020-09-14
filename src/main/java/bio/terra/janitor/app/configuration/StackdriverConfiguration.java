@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "stackdriver")
+@ConfigurationProperties(prefix = "janitor.stackdriver")
 public class StackdriverConfiguration {
   /** Whether to enable stackdriver metrics & tracing collection. */
   private boolean enabled = true;

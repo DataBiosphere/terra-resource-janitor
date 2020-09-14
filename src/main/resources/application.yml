@@ -1,0 +1,36 @@
+janitor:
+  db:
+    password: ${DATABASE_USER_PASSWORD}
+    recreate-db-on-start: false
+    update-db-on-start: true
+    uri: jdbc:postgresql://127.0.0.1:5432/${DATABASE_NAME}
+    username: ${DATABASE_USER}
+  iam:
+    # TODO(PF-81): Switch to use SAM instead of config file for user authZ.
+    config-based-authz-enabled: ${CONFIG_BASED_AUTHZ_ENABLED}
+    admin-user-list: ${ADMIN_USER_LIST:[]}
+  primary:
+    scheduler-enabled: true
+  pubsub:
+    track-resource:
+      enabled: ${TRACK_RESOURCE_PUBSUB_ENABLED}
+      project-id: ${TRACK_RESOURCE_PUBSUB_PROJECT_ID}
+      subscription: ${TRACK_RESOURCE_PUBSUB_SUBSCRIPTION}
+  server:
+    port: 8080
+  stackdriver:
+    enabled: true
+  stairway:
+    db:
+      password: ${STAIRWAY_DATABASE_USER_PASSWORD}
+      uri: jdbc:postgresql://127.0.0.1:5432/${STAIRWAY_DATABASE_NAME}
+      username: ${STAIRWAY_DATABASE_USER}
+    force-clean-start: true
+    max-parallel-flights: 40
+    migrate-upgrade: true
+    quiet-down-timeout: 20s
+    terminate-timeout: 5s
+
+spring:
+  application:
+    name: janitor

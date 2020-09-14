@@ -1,0 +1,8 @@
+# Config overrides specific to unit tests.
+janitor:
+  primary:
+    # Testing is easier if we are not scheduling changes to the database by default.
+    scheduler-enabled: false
+  pubsub:
+    track-resource:
+      enabled: false

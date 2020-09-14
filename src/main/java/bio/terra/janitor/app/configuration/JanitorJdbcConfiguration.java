@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Component
 @EnableConfigurationProperties
 @EnableTransactionManagement
-@ConfigurationProperties(prefix = "db.janitor")
+@ConfigurationProperties(prefix = "janitor.db")
 public class JanitorJdbcConfiguration extends JdbcConfiguration {
   // These properties control code in the StartupInitializer. We would not use these in production,
   // but they are handy to set for development and testing. There are only three interesting states:
