@@ -12,9 +12,11 @@ env:
   VAULT_ADDR: https://clotho.broadinstitute.org:8200
   VAULT_SERVICE_ACCOUNT_PATH: secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/app-sa
   VAULT_CLIENT_SERVICE_ACCOUNT_PATH: secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/client-sa
+  VAULT_CLOUD_ACCESS_ACCOUNT_PATH: secret/dsde/terra/janitor-test/default/cloud-access-sa
   # Where to store the retrieved service accounts credentials for Google integration tests.
   SERVICE_ACCOUNT_FILE: src/test/resources/rendered/sa-account.json
   SERVICE_ACCOUNT_CLIENT_FILE: src/test/resources/rendered/client-sa-account.json
+  SERVICE_ACCOUNT_CLOUD_ACCESS_FILE: src/test/resources/rendered/cloud-access-sa-account.json
 jobs:
   unit-test:
     runs-on: ubuntu-latest

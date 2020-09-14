@@ -36,7 +36,10 @@ public class TestConfiguration {
   /** Credential file path to be able to pubish message to Janitor prod env(tools). */
   private String prodJanitorClientCredentialFilePath;
 
+  /** What parent folder to create projects within. */
   private String resourceCredentialFilePath;
+
+  private String parentResourceId;
 
   public String getTrackResourceTopicId() {
     return trackResourceTopicId;
@@ -80,6 +83,14 @@ public class TestConfiguration {
 
   public void setResourceCredentialFilePath(String resourceCredentialFilePath) {
     this.resourceCredentialFilePath = resourceCredentialFilePath;
+  }
+
+  public String getParentResourceId() {
+    return parentResourceId;
+  }
+
+  public void setParentResourceId(String parentResourceId) {
+    this.parentResourceId = parentResourceId;
   }
 
   /**

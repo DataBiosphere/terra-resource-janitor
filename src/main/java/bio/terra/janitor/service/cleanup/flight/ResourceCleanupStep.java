@@ -16,9 +16,11 @@ public abstract class ResourceCleanupStep implements Step {
   private Logger logger = LoggerFactory.getLogger(ResourceCleanupStep.class);
 
   private final JanitorDao janitorDao;
+  final ClientConfig clientConfig;
 
   public ResourceCleanupStep(ClientConfig clientConfig, JanitorDao janitorDao) {
     this.janitorDao = janitorDao;
+    this.clientConfig = clientConfig;
   }
 
   @Override

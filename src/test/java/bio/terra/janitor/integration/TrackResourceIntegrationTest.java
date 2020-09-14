@@ -5,7 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.cloudres.google.api.services.common.OperationCow;
+import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
+import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.generated.model.*;
@@ -16,6 +19,9 @@ import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import bio.terra.janitor.service.iam.AuthHeaderKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.services.cloudresourcemanager.model.Operation;
+import com.google.api.services.cloudresourcemanager.model.Project;
+import com.google.api.services.cloudresourcemanager.model.ResourceId;
 import com.google.cloud.bigquery.*;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.storage.BlobId;
@@ -26,6 +32,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
@@ -61,7 +68,10 @@ public class TrackResourceIntegrationTest {
 
   private StorageCow storageCow;
   private BigQueryCow bigQueryCow;
+  private CloudResourceManagerCow resourceManagerCow;
   private String projectId;
+  private ResourceId parentResourceId;
+
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
 
@@ -79,6 +89,7 @@ public class TrackResourceIntegrationTest {
                 FixedCredentialsProvider.create(
                     testConfiguration.getClientGoogleCredentialsOrDie()))
             .build();
+
     storageCow =
         new StorageCow(
             testConfiguration.createClientConfig(),
@@ -94,6 +105,14 @@ public class TrackResourceIntegrationTest {
                 .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
                 .setProjectId(projectId)
                 .build());
+
+    resourceManagerCow =
+        CloudResourceManagerCow.create(
+            testConfiguration.createClientConfig(),
+            testConfiguration.getResourceAccessGoogleCredentialsOrDie());
+
+    parentResourceId =
+        new ResourceId().setType("folder").setId(testConfiguration.getParentResourceId());
   }
 
   @AfterEach
@@ -116,7 +135,7 @@ public class TrackResourceIntegrationTest {
     CloudResourceUid resource =
         new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
-    publishAndVerifyResourceTracked(resource);
+    publishAndVerifyCleanupDone(resource);
 
     // Resource is removed
     assertNull(storageCow.get(bucketName));
@@ -138,7 +157,7 @@ public class TrackResourceIntegrationTest {
     CloudResourceUid resource =
         new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
-    publishAndVerifyResourceTracked(resource);
+    publishAndVerifyCleanupDone(resource);
   }
 
   @Test
@@ -157,7 +176,7 @@ public class TrackResourceIntegrationTest {
         new CloudResourceUid()
             .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
-    publishAndVerifyResourceTracked(resource);
+    publishAndVerifyCleanupDone(resource);
 
     // Resource is removed
     assertNull(storageCow.get(blobId));
@@ -182,7 +201,7 @@ public class TrackResourceIntegrationTest {
         new CloudResourceUid()
             .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
-    publishAndVerifyResourceTracked(resource);
+    publishAndVerifyCleanupDone(resource);
 
     // Resource is removed
     assertNull(storageCow.get(blobId));
@@ -212,7 +231,7 @@ public class TrackResourceIntegrationTest {
                 new GoogleBigQueryDatasetUid().projectId(projectId).datasetId(datasetName));
 
     // Publish a message to cleanup the dataset and make sure content inside is also deleted.
-    publishAndVerifyResourceTracked(datasetUid);
+    publishAndVerifyCleanupDone(datasetUid);
 
     // Resource is removed
     assertNull(bigQueryCow.getDataset(datasetName));
@@ -227,7 +246,7 @@ public class TrackResourceIntegrationTest {
                     .projectId(projectId)
                     .datasetId(datasetName)
                     .tableId(tableName));
-    publishAndVerifyResourceTracked(tableUid);
+    publishAndVerifyCleanupDone(tableUid);
   }
 
   @Test
@@ -254,7 +273,7 @@ public class TrackResourceIntegrationTest {
                     .projectId(projectId)
                     .datasetId(datasetName)
                     .tableId(tableName));
-    publishAndVerifyResourceTracked(tableUid);
+    publishAndVerifyCleanupDone(tableUid);
 
     // Resource is removed
     assertNull(bigQueryCow.getTable(tableId));
@@ -262,10 +281,41 @@ public class TrackResourceIntegrationTest {
     assertTrue(bigQueryCow.delete(datasetName));
   }
 
+  @Test
+  public void subscribeAndCleanupResource_googleProject() throws Exception {
+    String projectId = randomProjectId();
+
+    createProject(projectId);
+
+    CloudResourceUid resource =
+        new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
+
+    publishAndVerifyCleanupDone(resource);
+
+    // Project is ready for deletion
+    Project project = resourceManagerCow.projects().get(projectId).execute();
+    assertEquals("DELETE_REQUESTED", project.getLifecycleState());
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_alreadyDeletedGoogleProject() throws Exception {
+    String projectId = randomProjectId();
+    createProject(projectId);
+
+    CloudResourceUid resource =
+        new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
+
+    publishAndVerifyCleanupDone(resource);
+
+    // Project is ready for deletion
+    Project project = resourceManagerCow.projects().get(projectId).execute();
+    assertEquals("DELETE_REQUESTED", project.getLifecycleState());
+  }
+
   /**
    * Publish message to Janitor to track resource and verify the resource by GET resource endpoint.
    */
-  private void publishAndVerifyResourceTracked(CloudResourceUid resource) throws Exception {
+  private void publishAndVerifyCleanupDone(CloudResourceUid resource) throws Exception {
     OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
 
     ByteString data =
@@ -311,6 +361,20 @@ public class TrackResourceIntegrationTest {
         .labels(DEFAULT_LABELS);
   }
 
+  private void createProject(String projectId) throws Exception {
+    Operation operation =
+        resourceManagerCow
+            .projects()
+            .create(new Project().setProjectId(projectId).setParent(parentResourceId))
+            .execute();
+    OperationCow<Operation> operationCow = resourceManagerCow.operations().operationCow(operation);
+    operationCow =
+        OperationUtils.pollUntilComplete(
+            operationCow, Duration.ofSeconds(5), Duration.ofSeconds(30));
+    assertTrue(operationCow.getOperation().getDone());
+    assertNull(operationCow.getOperation().getError());
+  }
+
   /** Generates a random name to use for a cloud resource. */
   private static String randomName() {
     return UUID.randomUUID().toString();
@@ -319,5 +383,11 @@ public class TrackResourceIntegrationTest {
   /** Generates a random name to and replace '-' with '_'. */
   private static String randomNameWithUnderscore() {
     return UUID.randomUUID().toString().replace('-', '_');
+  }
+
+  /** Generates a random project id start with a letter and 30 characters long. */
+  public static String randomProjectId() {
+    // Project ids must starting with a letter and be no more than 30 characters long.
+    return "p" + randomName().substring(0, 29);
   }
 }
