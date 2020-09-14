@@ -36,7 +36,8 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
     try {
       Project project = resourceManagerCow.projects().get(projectId).execute();
 
-      if (project == null || project.getLifecycleState().equals("DELETE_REQUESTED")
+      if (project == null
+          || project.getLifecycleState().equals("DELETE_REQUESTED")
           || project.getLifecycleState().equals("DELETE_IN_PROGRESS")) {
         // Skip is project is deleted or being deleted.
         logger.info("Project id: {} is being deleted", projectId);
