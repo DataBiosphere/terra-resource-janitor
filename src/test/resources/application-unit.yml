@@ -6,5 +6,3 @@ janitor:
   pubsub:
     track-resource:
       enabled: false
-  stackdriver:
-    enabled: false

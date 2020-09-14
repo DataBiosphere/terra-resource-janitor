@@ -13,6 +13,8 @@ janitor:
     # single-quotes are needed to prevent the YAML interpreter from treating the value as a
     # native list.
     admin-user-list: '["test1@email.com"]'
+  stackdriver:
+    enabled: false
   stairway:
     db:
       password: dbpwd_stairway
