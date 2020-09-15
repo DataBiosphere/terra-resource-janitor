@@ -8,6 +8,7 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ '**' ]
+  workflow_dispatch:
 env:
   VAULT_ADDR: https://clotho.broadinstitute.org:8200
   VAULT_SERVICE_ACCOUNT_PATH: secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/app-sa
@@ -18,7 +19,7 @@ env:
   SERVICE_ACCOUNT_CLIENT_FILE: src/test/resources/rendered/client-sa-account.json
   SERVICE_ACCOUNT_CLOUD_ACCESS_FILE: src/test/resources/rendered/cloud-access-sa-account.json
 jobs:
-  unit-test:
+  all-tests:
     runs-on: ubuntu-latest
     services:
       postgres:
