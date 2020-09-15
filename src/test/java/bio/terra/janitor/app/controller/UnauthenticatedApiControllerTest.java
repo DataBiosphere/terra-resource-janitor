@@ -41,11 +41,4 @@ public class UnauthenticatedApiControllerTest {
     assertThat(status.getSystems(), Matchers.hasKey("postgres"));
     assertThat(status.getSystems(), Matchers.hasKey("stairway"));
   }
-
-  @Test
-  public void shutdownMakesStatusNotOk() throws Exception {
-    this.mvc.perform(get("/status")).andExpect(status().isOk());
-    this.mvc.perform(get("/shutdown")).andExpect(status().isNoContent());
-    this.mvc.perform(get("/status")).andExpect(status().is5xxServerError());
-  }
 }
