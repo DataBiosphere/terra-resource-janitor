@@ -58,8 +58,9 @@ The provided setup script clones the terra-helm and terra-helmfile git repos,
 and templates in the desired Terra environment/k8s namespace to target.
 If you need to pull changes to either terra-helm or terra-helmfile, rerun this script.
 
-To use this, first ensure Skaffold is installed on your local machine 
-(available at https://skaffold.dev/). 
+To use this, first ensure the following tools are installed on your local machine:
+ * Skaffold (https://skaffold.dev/)
+ * Helm (https://helm.sh/docs/intro/install/)
 
 > Older versions of Skaffold (v1.4.0 and earlier) do not have support for Helm 3 and will fail to deploy your 
 changes. If you're seeing errors like `UPGRADE FAILED: "(Release name)" has no 
@@ -73,6 +74,7 @@ You may need to use gcloud to provide GCR
 local-dev/setup_gke_deploy.sh <environment>
 ```
 
+where `environment` is your personal environment (e.g. `gjordan`) or an existing Terra env (e.g. `toolsalpha`).
 You can now push to the specified environment by running
 
 ```
