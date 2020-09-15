@@ -198,9 +198,9 @@ tasks.withType(Test) {
         // Causes the correct line to be reported on an exception.
         exceptionFormat = TestExceptionFormat.FULL
         reports {
-            // Write XML file (used by CircleCI, Jenkins, etc) to api/build/test-results/test
+            // Write XML file (used by CircleCI, Jenkins, etc) to build/test-results/*
             junitXml.enabled = true
-            // Write human-readable test report to api/build/reports/
+            // Write human-readable test report to build/reports/tests/*
             html.enabled = true
         }
     }
