@@ -2,15 +2,12 @@ package bio.terra.janitor.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import bio.terra.janitor.common.BaseUnitTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.ActiveProfiles;
 
-@Tag("unit")
-@ActiveProfiles({"test", "unit"})
-public class TrackedResourceIdTest {
+public class TrackedResourceIdTest extends BaseUnitTest {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Test

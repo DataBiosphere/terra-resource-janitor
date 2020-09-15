@@ -3,28 +3,17 @@ package bio.terra.janitor.service.cleanup.flight;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.janitor.app.Main;
+import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@Tag("unit")
-@ActiveProfiles({"test", "unit"})
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = Main.class)
-@SpringBootTest
 @AutoConfigureMockMvc
-public class LatchStepTest {
+public class LatchStepTest extends BaseUnitTest {
   @Autowired StairwayComponent stairwayComponent;
 
   @Test

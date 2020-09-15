@@ -5,23 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.generated.model.*;
-import bio.terra.janitor.app.Main;
+import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@Tag("unit")
-@ActiveProfiles({"test", "unit"})
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = Main.class)
-@SpringBootTest
-public class ResourceTypeVisitorTest {
+public class ResourceTypeVisitorTest extends BaseUnitTest {
   private ResourceTypeVisitor visitor = new ResourceTypeVisitor();
 
   @Test

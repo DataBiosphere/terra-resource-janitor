@@ -4,7 +4,7 @@ import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.generated.model.*;
-import bio.terra.janitor.app.Main;
+import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.exception.InvalidMessageException;
 import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.service.janitor.TrackedResourceService;
@@ -17,24 +17,13 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@Tag("unit")
-@ActiveProfiles({"test", "unit"})
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = Main.class)
-@SpringBootTest
 @AutoConfigureMockMvc
-public class TrackedResourceSubscriberTest {
+public class TrackedResourceSubscriberTest extends BaseUnitTest {
   @Autowired
   @Qualifier(OBJECT_MAPPER)
   private ObjectMapper objectMapper;

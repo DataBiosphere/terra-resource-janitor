@@ -6,8 +6,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.generated.model.GoogleBucketUid;
-import bio.terra.janitor.app.Main;
 import bio.terra.janitor.app.configuration.PrimaryConfiguration;
+import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.service.cleanup.flight.FatalStep;
 import bio.terra.janitor.service.stairway.StairwayComponent;
@@ -19,24 +19,14 @@ import java.time.Instant;
 import java.util.UUID;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.support.TransactionTemplate;
 
-@Tag("unit")
-@ActiveProfiles({"test", "unit"})
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = Main.class)
-@SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-public class FlightSchedulerTest {
+public class FlightSchedulerTest extends BaseUnitTest {
 
   // Construct a FlightScheduler manually instead of Autowired for ease of testing.
   private FlightScheduler flightScheduler;
