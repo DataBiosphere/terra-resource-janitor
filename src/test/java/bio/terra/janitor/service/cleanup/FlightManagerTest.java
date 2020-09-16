@@ -1,6 +1,6 @@
 package bio.terra.janitor.service.cleanup;
 
-import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
+import static bio.terra.janitor.common.TestUtils.pollUntil;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.generated.model.CloudResourceUid;

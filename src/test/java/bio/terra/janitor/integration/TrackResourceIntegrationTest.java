@@ -1,6 +1,7 @@
 package bio.terra.janitor.integration;
 
 import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
+import static bio.terra.janitor.common.TestUtils.pollUntil;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -315,9 +316,17 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
-    // Sleep for 10 seconds
-    Thread.sleep(10000);
-
+    TrackedResourceInfoList trackedResourceInfoList = null;
+    pollUntil(
+        () -> {
+          try {
+            return hasResource(resource, trackedResourceInfoList);
+          } catch (Exception e) {
+            throw new RuntimeException("Failed to get resource: " + resource);
+          }
+        },
+        Duration.ofSeconds(5),
+        10);
     String getResponse =
         this.mvc
             .perform(
@@ -363,6 +372,24 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
             operationCow, Duration.ofSeconds(5), Duration.ofSeconds(30));
     assertTrue(operationCow.getOperation().getDone());
     assertNull(operationCow.getOperation().getError());
+  }
+
+  private boolean hasResource(
+      CloudResourceUid resource, TrackedResourceInfoList trackedResourceInfoList) throws Exception {
+    String getResponse =
+        this.mvc
+            .perform(
+                get("/api/janitor/v1/resource")
+                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource))
+                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), "test1@email.com"))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    trackedResourceInfoList = objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+    return trackedResourceInfoList != null && trackedResourceInfoList.getResources().size() > 0;
   }
 
   /** Generates a random name to use for a cloud resource. */
