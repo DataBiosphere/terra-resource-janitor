@@ -1,7 +1,6 @@
 package bio.terra.janitor.integration;
 
 import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
-import static bio.terra.janitor.common.TestUtils.pollUntil;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -38,6 +37,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -316,31 +316,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
-    TrackedResourceInfoList trackedResourceInfoList = null;
-    pollUntil(
-        () -> {
-          try {
-            return hasResource(resource, trackedResourceInfoList);
-          } catch (Exception e) {
-            throw new RuntimeException("Failed to get resource: " + resource);
-          }
-        },
-        Duration.ofSeconds(5),
-        10);
-    String getResponse =
-        this.mvc
-            .perform(
-                get("/api/janitor/v1/resource")
-                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource))
-                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), "test1@email.com"))
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(status().isOk())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
     TrackedResourceInfoList resourceInfoList =
-        objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+        pollUntilResourceCleanFinished(resource, Duration.ofSeconds(5), 10);
+
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
     assertEquals(resource, trackedResourceInfo.getResourceUid());
@@ -374,24 +352,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertNull(operationCow.getOperation().getError());
   }
 
-  private boolean hasResource(
-      CloudResourceUid resource, TrackedResourceInfoList trackedResourceInfoList) throws Exception {
-    String getResponse =
-        this.mvc
-            .perform(
-                get("/api/janitor/v1/resource")
-                    .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource))
-                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), "test1@email.com"))
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(status().isOk())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
-    trackedResourceInfoList = objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
-    return trackedResourceInfoList != null && trackedResourceInfoList.getResources().size() > 0;
-  }
-
   /** Generates a random name to use for a cloud resource. */
   private static String randomName() {
     return UUID.randomUUID().toString();
@@ -406,5 +366,39 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   public static String randomProjectId() {
     // Project ids must starting with a letter and be no more than 30 characters long.
     return "p" + randomName().substring(0, 29);
+  }
+
+  /** Poll from get resource endpoint until it get resources from Janitor. */
+  public TrackedResourceInfoList pollUntilResourceCleanFinished(
+      CloudResourceUid resource, Duration period, int maxNumPolls) throws Exception {
+    TrackedResourceInfoList trackedResourceInfoList = null;
+    int numPolls = 0;
+    while (numPolls < maxNumPolls) {
+      TimeUnit.MILLISECONDS.sleep(period.toMillis());
+      String getResponse =
+          this.mvc
+              .perform(
+                  get("/api/janitor/v1/resource")
+                      .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource))
+                      .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), "test1@email.com"))
+              .andDo(MockMvcResultHandlers.print())
+              .andExpect(status().isOk())
+              .andReturn()
+              .getResponse()
+              .getContentAsString();
+
+      trackedResourceInfoList = objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+      if (trackedResourceInfoList != null
+          && trackedResourceInfoList.getResources().size() > 0
+          && trackedResourceInfoList
+              .getResources()
+              .get(0)
+              .getState()
+              .equals(TrackedResourceState.DONE.toString())) {
+        return trackedResourceInfoList;
+      }
+      ++numPolls;
+    }
+    throw new InterruptedException("Polling exceeded maxNumPolls");
   }
 }

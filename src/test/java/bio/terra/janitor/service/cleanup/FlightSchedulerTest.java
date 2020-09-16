@@ -1,6 +1,6 @@
 package bio.terra.janitor.service.cleanup;
 
-import static bio.terra.janitor.common.TestUtils.pollUntil;
+import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
 import static bio.terra.janitor.service.cleanup.CleanupTestUtils.sleepForMetricsExport;
 import static org.hamcrest.MatcherAssert.assertThat;
 
