@@ -277,8 +277,7 @@ class FlightManager {
           break;
         case LOST:
           // We lost the flight in some unexpected way. We pessimistically assume that the resource
-          // was
-          // not cleaned up.
+          // was not cleaned up.
           finalState = TrackedResourceState.ERROR;
           break;
         default:
