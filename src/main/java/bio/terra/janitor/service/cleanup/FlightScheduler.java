@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /** The FlightScheduler runs the {@link FlightManager} periodically to clean resources. */
-// TODO add metrics.
 @Component
 public class FlightScheduler {
   private Logger logger = LoggerFactory.getLogger(FlightScheduler.class);
@@ -65,17 +64,17 @@ public class FlightScheduler {
     // The scheduled task will not execute concurrently with itself even if it takes a long time.
     // See javadoc on ScheduledExecutorService#scheduleAtFixedRate.
     executor.scheduleAtFixedRate(
-        this::completeFlights,
+        new LogThrowables(this::completeFlights),
         /* initialDelay= */ 0,
         /* period= */ primaryConfiguration.getFlightCompletionPeriod().toMillis(),
         TimeUnit.MILLISECONDS);
     executor.scheduleAtFixedRate(
-        this::completeFatalFlights,
+        new LogThrowables(this::completeFatalFlights),
         /* initialDelay= */ 0,
         /* period= */ primaryConfiguration.getFatalFlightCompletionPeriod().toMillis(),
         TimeUnit.MILLISECONDS);
     executor.scheduleAtFixedRate(
-        this::recordResourceCount,
+        new LogThrowables(this::recordResourceCount),
         /* initialDelay= */ 0,
         /* period= */ primaryConfiguration.getRecordResourceCountPeriod().toMillis(),
         TimeUnit.MILLISECONDS);
@@ -93,7 +92,7 @@ public class FlightScheduler {
     }
     logger.info("Recovered {} unsubmitted flights.", numRecoveredFlights);
     executor.scheduleAtFixedRate(
-        this::scheduleFlights,
+        new LogThrowables(this::scheduleFlights),
         /* initialDelay= */ 0,
         /* period= */ primaryConfiguration.getFlightSubmissionPeriod().toMillis(),
         TimeUnit.MILLISECONDS);
@@ -136,5 +135,31 @@ public class FlightScheduler {
   public void shutdown() {
     // Don't schedule  anything new during shutdown.
     executor.shutdown();
+  }
+
+  /**
+   * Wraps a runnable to log any thrown errors to allow the runnable to still be run with a {@link
+   * ScheduledExecutorService}.
+   *
+   * <p>ScheduledExecutorService scheduled tasks that throw errors stop executing.
+   */
+  private class LogThrowables implements Runnable {
+    private final Runnable task;
+
+    private LogThrowables(Runnable task) {
+      this.task = task;
+    }
+
+    @Override
+    public void run() {
+      try {
+        task.run();
+      } catch (Throwable t) {
+        logger.error(
+            "Caught exception in FlightScheduler ScheduledExecutorService. StackTrace:\n"
+                + t.getStackTrace(),
+            t);
+      }
+    }
   }
 }
