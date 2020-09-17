@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.generated.model.*;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
-import bio.terra.janitor.db.ResourceTypeVisitor;
 import org.junit.jupiter.api.Test;
 
 public class ResourceTypeVisitorTest extends BaseUnitTest {
