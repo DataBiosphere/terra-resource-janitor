@@ -1,6 +1,5 @@
 package bio.terra.janitor.db;
 
-import bio.terra.janitor.common.ResourceType;
 import com.google.auto.value.AutoValue;
 
 /**

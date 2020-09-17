@@ -8,7 +8,6 @@ import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.generated.model.GoogleProjectUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.BaseUnitTest;
-import bio.terra.janitor.common.ResourceType;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.Instant;

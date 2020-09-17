@@ -1,7 +1,7 @@
 package bio.terra.janitor.service.cleanup;
 
-import bio.terra.janitor.common.ResourceType;
-import bio.terra.janitor.common.ResourceTypeVisitor;
+import bio.terra.janitor.db.ResourceType;
+import bio.terra.janitor.db.ResourceTypeVisitor;
 import bio.terra.janitor.db.TrackedResource;
 import bio.terra.janitor.service.cleanup.flight.*;
 import bio.terra.stairway.*;
