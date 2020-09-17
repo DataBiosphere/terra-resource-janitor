@@ -41,4 +41,18 @@ public class BackwardsCompatibilityTest extends BaseUnitTest {
     assertEquals(TrackedResourceState.ABANDONED, TrackedResourceState.valueOf("ABANDONED"));
     assertEquals(TrackedResourceState.DUPLICATED, TrackedResourceState.valueOf("DUPLICATED"));
   }
+
+  /**
+   * Change detection test for existing {@link CleanupFlightState }enum values. More values should
+   * be added as the enum expands.
+   */
+  @Test
+  public void cleanupFlightState() {
+    assertEquals(CleanupFlightState.INITIATING, CleanupFlightState.valueOf("INITIATING"));
+    assertEquals(CleanupFlightState.IN_FLIGHT, CleanupFlightState.valueOf("IN_FLIGHT"));
+    assertEquals(CleanupFlightState.FINISHING, CleanupFlightState.valueOf("FINISHING"));
+    assertEquals(CleanupFlightState.FINISHED, CleanupFlightState.valueOf("FINISHED"));
+    assertEquals(CleanupFlightState.FATAL, CleanupFlightState.valueOf("FATAL"));
+    assertEquals(CleanupFlightState.LOST, CleanupFlightState.valueOf("LOST"));
+  }
 }

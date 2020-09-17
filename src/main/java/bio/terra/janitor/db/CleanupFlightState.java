@@ -19,4 +19,6 @@ public enum CleanupFlightState {
   // The flight ended in the fatal, non-recoverable state in Stairway. It did not terminate
   // normally.
   FATAL,
+  // We lost the cleanup flight in Stairway. This should not happen.
+  LOST,
 }

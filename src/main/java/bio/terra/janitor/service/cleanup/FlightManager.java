@@ -197,15 +197,15 @@ class FlightManager {
    */
   private boolean completeFlight(TrackedResourceAndFlight resourceAndFlight) {
     String flightId = resourceAndFlight.cleanupFlight().flightId();
-    Optional<FlightState> flightState;
+    Optional<FlightStatus> flightStatus;
     try {
-      flightState = Optional.of(stairway.getFlightState(flightId));
+      flightStatus = Optional.of(stairway.getFlightState(flightId).getFlightStatus());
     } catch (FlightNotFoundException e) {
       logger.error(
           "Completed tracked resource flight not found. Tracked resource id [{}]. Flight id [{}].",
           resourceAndFlight.trackedResource().trackedResourceId(),
           flightId);
-      flightState = Optional.empty();
+      flightStatus = Optional.empty();
     } catch (DatabaseOperationException | InterruptedException e) {
       logger.error(
           String.format(
@@ -215,28 +215,32 @@ class FlightManager {
       return false;
     }
 
-    TrackedResourceState endCleaningState;
-    if (flightState.isEmpty()) {
-      // We lost the flight in some unexpected way. We pessimistically assume that the resource was
-      // not cleaned up.
-      endCleaningState = TrackedResourceState.ERROR;
-    } else if (flightState.get().getFlightStatus().equals(FlightStatus.SUCCESS)) {
-      endCleaningState = TrackedResourceState.DONE;
-    } else if (flightState.get().getFlightStatus().equals(FlightStatus.ERROR)) {
-      endCleaningState = TrackedResourceState.ERROR;
+    CompletedFlightState completedFlightState;
+    if (flightStatus.isEmpty()) {
+      completedFlightState = CompletedFlightState.LOST;
+    } else if (flightStatus.get().equals(FlightStatus.SUCCESS)) {
+      completedFlightState = CompletedFlightState.SUCCESS;
+    } else if (flightStatus.get().equals(FlightStatus.ERROR)) {
+      completedFlightState = CompletedFlightState.ERROR;
     } else {
       // The flight hasn't finished or has finished fatally. Let Stairway keep working or the
       // fatal monitor handle this respectively.
       return false;
     }
-    TrackedResourceState finalEndCleaningState = endCleaningState;
     return transactionTemplate.execute(
         status ->
             updateFinishedCleanupState(
                 resourceAndFlight.trackedResource().trackedResourceId(),
                 flightId,
-                finalEndCleaningState,
+                completedFlightState,
                 status));
+  }
+
+  /* An enum for the possible states of a completed flight. */
+  private enum CompletedFlightState {
+    SUCCESS, // The flight completed successfully.
+    ERROR, // The flight failed.
+    LOST; // We somehow lost the flight entirely.
   }
 
   /**
@@ -248,7 +252,7 @@ class FlightManager {
   private boolean updateFinishedCleanupState(
       TrackedResourceId trackedResourceId,
       String flightId,
-      TrackedResourceState endCleaningState,
+      CompletedFlightState completedFlightState,
       TransactionStatus transactionStatus) {
     // Retrieve the TrackedResource within this transaction to ensure no one else is abandoning or
     // duplicating it while we finish it.
@@ -263,7 +267,25 @@ class FlightManager {
     }
     TrackedResourceState resourceState = resource.get().trackedResourceState();
     if (resourceState.equals(TrackedResourceState.CLEANING)) {
-      janitorDao.updateResourceState(trackedResourceId, endCleaningState);
+      TrackedResourceState finalState;
+      switch (completedFlightState) {
+        case SUCCESS:
+          finalState = TrackedResourceState.DONE;
+          break;
+        case ERROR:
+          finalState = TrackedResourceState.ERROR;
+          break;
+        case LOST:
+          // We lost the flight in some unexpected way. We pessimistically assume that the resource
+          // was
+          // not cleaned up.
+          finalState = TrackedResourceState.ERROR;
+          break;
+        default:
+          throw new AssertionError("Unknown CompletedFlightState.");
+      }
+      janitorDao.updateResourceState(trackedResourceId, finalState);
+
     } else if (!resourceState.equals(TrackedResourceState.ABANDONED)
         && !resourceState.equals(TrackedResourceState.DUPLICATED)) {
       // The resource should not have moved from CLEANING to any other state while there was a
@@ -277,7 +299,11 @@ class FlightManager {
       return false;
     }
     // We assume no one else is modifying the CleanupFlightState while we do this.
-    janitorDao.updateFlightState(flightId, CleanupFlightState.FINISHED);
+    CleanupFlightState cleanupFlightState =
+        completedFlightState.equals(CompletedFlightState.LOST)
+            ? CleanupFlightState.LOST
+            : CleanupFlightState.FINISHED;
+    janitorDao.updateFlightState(flightId, cleanupFlightState);
     return true;
   }
 

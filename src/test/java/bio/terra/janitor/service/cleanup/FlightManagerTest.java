@@ -197,6 +197,40 @@ public class FlightManagerTest extends BaseUnitTest {
   }
 
   @Test
+  public void updateCompletedFlights_lostFlight() throws Exception {
+    String latchKey = "foo";
+    FlightMap inputMap = new FlightMap();
+    LatchStep.createLatch(inputMap, latchKey);
+
+    FlightManager manager =
+        createFlightManager(
+            trackedResource ->
+                FlightSubmissionFactory.FlightSubmission.create(
+                    LatchAfterCleanupFlight.class, inputMap));
+    TrackedResource resource = newResourceForCleaning();
+    janitorDao.createResource(resource, ImmutableMap.of());
+
+    String flightId = manager.submitFlight(EXPIRATION).get();
+    // Wait until the flight is in the finishing state so that the manager will try to pick it up.
+    pollUntil(
+        () ->
+            janitorDao
+                .retrieveFlightState(flightId)
+                .equals(Optional.of(CleanupFlightState.FINISHING)),
+        Duration.ofMillis(100),
+        10);
+    // Force the deletion of the not finished flight to simulate losing a flight.
+    stairwayComponent.get().deleteFlight(flightId, /* forceDelete= */ true);
+
+    assertEquals(1, manager.updateCompletedFlights(10));
+
+    assertEquals(
+        Optional.of(resource.toBuilder().trackedResourceState(TrackedResourceState.ERROR).build()),
+        janitorDao.retrieveTrackedResource(resource.trackedResourceId()));
+    assertEquals(Optional.of(CleanupFlightState.LOST), janitorDao.retrieveFlightState(flightId));
+  }
+
+  @Test
   public void updateCompletedFlights_waitsUntilFlightFinished() throws Exception {
     String latchKey = "foo";
     FlightMap inputMap = new FlightMap();
