@@ -197,21 +197,34 @@ class FlightManager {
    */
   private boolean completeFlight(TrackedResourceAndFlight resourceAndFlight) {
     String flightId = resourceAndFlight.cleanupFlight().flightId();
-    FlightState flightState;
+    Optional<FlightStatus> flightStatus;
     try {
-      flightState = stairway.getFlightState(flightId);
+      flightStatus = Optional.of(stairway.getFlightState(flightId).getFlightStatus());
+    } catch (FlightNotFoundException e) {
+      logger.error(
+          "Completed tracked resource flight not found. Tracked resource id [{}]. Flight id [{}].",
+          resourceAndFlight.trackedResource().trackedResourceId(),
+          flightId);
+      flightStatus = Optional.empty();
     } catch (DatabaseOperationException | InterruptedException e) {
-      logger.error(String.format("Error getting state of finishing flight [%s]", flightId), e);
+      logger.error(
+          String.format(
+              "Error getting state of finishing flight. Tracked resource id [%s]. Flight id [%s].",
+              resourceAndFlight.trackedResource().trackedResourceId(), flightId),
+          e);
       return false;
     }
-    TrackedResourceState endCleaningState;
-    if (flightState.getFlightStatus().equals(FlightStatus.SUCCESS)) {
-      endCleaningState = TrackedResourceState.DONE;
-    } else if (flightState.getFlightStatus().equals(FlightStatus.ERROR)) {
-      endCleaningState = TrackedResourceState.ERROR;
+
+    CompletedFlightState completedFlightState;
+    if (flightStatus.isEmpty()) {
+      completedFlightState = CompletedFlightState.LOST;
+    } else if (flightStatus.get().equals(FlightStatus.SUCCESS)) {
+      completedFlightState = CompletedFlightState.SUCCESS;
+    } else if (flightStatus.get().equals(FlightStatus.ERROR)) {
+      completedFlightState = CompletedFlightState.ERROR;
     } else {
-      // The flight hasn't finished or has finished fatally. Let Stairway keep working or the fatal
-      // monitor handle this respectively.
+      // The flight hasn't finished or has finished fatally. Let Stairway keep working or the
+      // fatal monitor handle this respectively.
       return false;
     }
     return transactionTemplate.execute(
@@ -219,8 +232,15 @@ class FlightManager {
             updateFinishedCleanupState(
                 resourceAndFlight.trackedResource().trackedResourceId(),
                 flightId,
-                endCleaningState,
+                completedFlightState,
                 status));
+  }
+
+  /* An enum for the possible states of a completed flight. */
+  private enum CompletedFlightState {
+    SUCCESS, // The flight completed successfully.
+    ERROR, // The flight failed.
+    LOST; // We somehow lost the flight entirely.
   }
 
   /**
@@ -232,30 +252,57 @@ class FlightManager {
   private boolean updateFinishedCleanupState(
       TrackedResourceId trackedResourceId,
       String flightId,
-      TrackedResourceState endCleaningState,
+      CompletedFlightState completedFlightState,
       TransactionStatus transactionStatus) {
     // Retrieve the TrackedResource within this transaction to ensure no one else is abandoning or
     // duplicating it while we finish it.
     Optional<TrackedResource> resource = janitorDao.retrieveTrackedResource(trackedResourceId);
     if (!resource.isPresent()) {
       logger.error(
-          "Unable to find tracked_resource with id {} while finishing flight.", trackedResourceId);
+          "Unable to find tracked_resource while finishing flight. Tracked resource id [{}]. Flight id [{}].",
+          trackedResourceId,
+          flightId);
       transactionStatus.setRollbackOnly();
       return false;
     }
     TrackedResourceState resourceState = resource.get().trackedResourceState();
     if (resourceState.equals(TrackedResourceState.CLEANING)) {
-      janitorDao.updateResourceState(trackedResourceId, endCleaningState);
+      TrackedResourceState finalState;
+      switch (completedFlightState) {
+        case SUCCESS:
+          finalState = TrackedResourceState.DONE;
+          break;
+        case ERROR:
+          finalState = TrackedResourceState.ERROR;
+          break;
+        case LOST:
+          // We lost the flight in some unexpected way. We pessimistically assume that the resource
+          // was not cleaned up.
+          finalState = TrackedResourceState.ERROR;
+          break;
+        default:
+          throw new AssertionError("Unknown CompletedFlightState.");
+      }
+      janitorDao.updateResourceState(trackedResourceId, finalState);
+
     } else if (!resourceState.equals(TrackedResourceState.ABANDONED)
         && !resourceState.equals(TrackedResourceState.DUPLICATED)) {
       // The resource should not have moved from CLEANING to any other state while there was a
       // flight working on it.
-      logger.error("Unexpected TrackedResourceState {} while finishing flight.", resourceState);
+      logger.error(
+          "Unexpected TrackedResourceState {} while finishing flight. Tracked resource id [{}]. Flight id [{}].",
+          resourceState,
+          trackedResourceId,
+          flightId);
       transactionStatus.setRollbackOnly();
       return false;
     }
     // We assume no one else is modifying the CleanupFlightState while we do this.
-    janitorDao.updateFlightState(flightId, CleanupFlightState.FINISHED);
+    CleanupFlightState cleanupFlightState =
+        completedFlightState.equals(CompletedFlightState.LOST)
+            ? CleanupFlightState.LOST
+            : CleanupFlightState.FINISHED;
+    janitorDao.updateFlightState(flightId, cleanupFlightState);
     return true;
   }
 
@@ -320,8 +367,8 @@ class FlightManager {
       transactionStatus.setRollbackOnly();
       return false;
     }
-    TrackedResourceState resourceState =
-        resourceAndFlight.get().trackedResource().trackedResourceState();
+    TrackedResource trackedResource = resourceAndFlight.get().trackedResource();
+    TrackedResourceState resourceState = trackedResource.trackedResourceState();
     if (resourceAndFlight.get().cleanupFlight().state().equals(CleanupFlightState.FATAL)) {
       // We already marked the flight as completed, we must have previously failed to delete the
       // flight from Stairway. We should try the Stairway deletion again.
@@ -330,12 +377,14 @@ class FlightManager {
     }
     if (resourceState.equals(TrackedResourceState.CLEANING)) {
       janitorDao.updateResourceState(
-          resourceAndFlight.get().trackedResource().trackedResourceId(),
-          TrackedResourceState.ERROR);
+          trackedResource.trackedResourceId(), TrackedResourceState.ERROR);
     } else if (!resourceState.equals(TrackedResourceState.ABANDONED)
         && !resourceState.equals(TrackedResourceState.DUPLICATED)) {
       logger.error(
-          "Unexpected TrackedResourceState {} while finishing fatal flight.", resourceState);
+          "Unexpected TrackedResourceState {} while finishing fatal flight. Tracked resource id [{}]. Flight id [{}].",
+          resourceState,
+          trackedResource.trackedResourceId(),
+          resourceAndFlight.get().cleanupFlight().flightId());
       transactionStatus.setRollbackOnly();
       return false;
     }
