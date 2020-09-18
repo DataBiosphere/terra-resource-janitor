@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
@@ -293,9 +295,10 @@ public class JanitorDao {
   }
 
   /**
-   * Retrieve {@link ResourceKindCount}s for all of the states of tracked resources in the database.
+   * Retrieve a table for the counts of all of the kind/state combinations of tracked resources in
+   * the database.
    */
-  public List<ResourceKindCount> retrieveResourceCounts() {
+  public Table<ResourceKind, TrackedResourceState, Integer> retrieveResourceCounts() {
     String sql =
         "SELECT count(*) as count, tr.state, tr.resource_type, "
             + "(SELECT value FROM label WHERE tracked_resource_id =  tr.id and key = :client_key) as client "
@@ -303,13 +306,19 @@ public class JanitorDao {
     return jdbcTemplate.query(
         sql,
         new MapSqlParameterSource().addValue("client_key", CLIENT_LABEL_KEY),
-        (rs, rowNum) ->
-            ResourceKindCount.builder()
-                .count(rs.getInt("count"))
-                .trackedResourceState(TrackedResourceState.valueOf(rs.getString("state")))
-                .resourceType(ResourceType.valueOf(rs.getString("resource_type")))
-                .client(rs.getString("client") == null ? "" : rs.getString("client"))
-                .build());
+        rs -> {
+          Table<ResourceKind, TrackedResourceState, Integer> counts = HashBasedTable.create();
+          while (rs.next()) {
+            ResourceKind kind =
+                ResourceKind.create(
+                    rs.getString("client") == null ? "" : rs.getString("client"),
+                    ResourceType.valueOf(rs.getString("resource_type")));
+            TrackedResourceState state = TrackedResourceState.valueOf(rs.getString("state"));
+            int count = rs.getInt("count");
+            counts.put(kind, state, count);
+          }
+          return counts;
+        });
   }
 
   private static final RowMapper<TrackedResource> TRACKED_RESOURCE_ROW_MAPPER =

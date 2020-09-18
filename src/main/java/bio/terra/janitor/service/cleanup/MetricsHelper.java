@@ -1,6 +1,7 @@
 package bio.terra.janitor.service.cleanup;
 
-import bio.terra.janitor.db.ResourceKindCount;
+import bio.terra.janitor.db.ResourceKind;
+import bio.terra.janitor.db.TrackedResourceState;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.opencensus.stats.*;
@@ -158,16 +159,17 @@ class MetricsHelper {
     STATS_RECORDER.newMeasureMap().put(FATAL_UPDATE_DURATION, duration.toMillis()).record(tctx);
   }
 
-  /** Records the latest count of {@link ResourceKindCount}. */
-  public static void recordResourceKindCount(ResourceKindCount count) {
+  /** Records the latest count of {@link ResourceKind}. */
+  public static void recordResourceKindCount(
+      ResourceKind kind, TrackedResourceState state, int count) {
     TagContext tctx =
         TAGGER
             .emptyBuilder()
-            .putLocal(RESOURCE_STATE_KEY, TagValue.create(count.trackedResourceState().toString()))
-            .putLocal(RESOURCE_TYPE_KEY, TagValue.create(count.resourceType().toString()))
-            .putLocal(CLIENT_KEY, TagValue.create(count.client()))
+            .putLocal(RESOURCE_STATE_KEY, TagValue.create(state.toString()))
+            .putLocal(RESOURCE_TYPE_KEY, TagValue.create(kind.resourceType().toString()))
+            .putLocal(CLIENT_KEY, TagValue.create(kind.client()))
             .build();
-    STATS_RECORDER.newMeasureMap().put(TRACKED_RESOURCE_COUNT, count.count()).record(tctx);
+    STATS_RECORDER.newMeasureMap().put(TRACKED_RESOURCE_COUNT, count).record(tctx);
   }
 
   /**

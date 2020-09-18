@@ -10,6 +10,7 @@ import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.BaseUnitTest;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableTable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -330,38 +331,29 @@ public class JanitorDaoTest extends BaseUnitTest {
         newDefaultResource().trackedResourceState(TrackedResourceState.CLEANING).build(),
         ImmutableMap.of());
 
-    assertThat(
-        janitorDao.retrieveResourceCounts(),
-        Matchers.containsInAnyOrder(
-            ResourceKindCount.builder()
-                .count(2)
-                .trackedResourceState(TrackedResourceState.READY)
-                .resourceType(ResourceType.GOOGLE_PROJECT)
-                .client("c1")
-                .build(),
-            ResourceKindCount.builder()
-                .count(1)
-                .trackedResourceState(TrackedResourceState.READY)
-                .resourceType(ResourceType.GOOGLE_PROJECT)
-                .client("c2")
-                .build(),
-            ResourceKindCount.builder()
-                .count(1)
-                .trackedResourceState(TrackedResourceState.READY)
-                .resourceType(ResourceType.GOOGLE_BUCKET)
-                .client("c1")
-                .build(),
-            ResourceKindCount.builder()
-                .count(1)
-                .trackedResourceState(TrackedResourceState.CLEANING)
-                .resourceType(ResourceType.GOOGLE_PROJECT)
-                .client("c1")
-                .build(),
-            ResourceKindCount.builder()
-                .count(2)
-                .trackedResourceState(TrackedResourceState.CLEANING)
-                .resourceType(ResourceType.GOOGLE_PROJECT)
-                .client("")
-                .build()));
+    assertEquals(
+        ImmutableTable.builder()
+            .put(
+                ResourceKind.create("c1", ResourceType.GOOGLE_PROJECT),
+                TrackedResourceState.READY,
+                2)
+            .put(
+                ResourceKind.create("c2", ResourceType.GOOGLE_PROJECT),
+                TrackedResourceState.READY,
+                1)
+            .put(
+                ResourceKind.create("c1", ResourceType.GOOGLE_BUCKET),
+                TrackedResourceState.READY,
+                1)
+            .put(
+                ResourceKind.create("c1", ResourceType.GOOGLE_PROJECT),
+                TrackedResourceState.CLEANING,
+                1)
+            .put(
+                ResourceKind.create("", ResourceType.GOOGLE_PROJECT),
+                TrackedResourceState.CLEANING,
+                2)
+            .build(),
+        janitorDao.retrieveResourceCounts());
   }
 }
