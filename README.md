@@ -2,7 +2,13 @@
 Janitor service to cleanup resources created by [Cloud Resource Library (CRL)](https://github.com/DataBiosphere/terra-cloud-resource-lib) 
 
 ## Overview
-TODO
+![](https://app.lucidchart.com/publicSegments/view/057ef338-e869-4fb3-acd9-6ad2d7d560ba/image.jpeg)
+
+1. When a CRL client configures it in cleanup mode, when a cloud resource is about to be created,
+CRL will publish a message to the Janitor's pubsub with the cloud resource's unique id.
+2. The Janitor Service subscribes to pub/sub, persisting tracking received resources for eventual
+cleanup.
+3. Once the resource has expired, the Janitor Service uses Stairway to delete the cloud resource. 
 
 ## Primay & Secondary Instances
 The Janitor is expected to be deployed with one primary instance and 0-many secondary instances.
