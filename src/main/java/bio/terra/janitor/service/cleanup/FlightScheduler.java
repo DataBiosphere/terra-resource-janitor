@@ -2,11 +2,13 @@ package bio.terra.janitor.service.cleanup;
 
 import bio.terra.janitor.app.configuration.PrimaryConfiguration;
 import bio.terra.janitor.db.JanitorDao;
-import bio.terra.janitor.db.ResourceKindCount;
+import bio.terra.janitor.db.ResourceKind;
+import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Table;
 import java.time.Instant;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -127,8 +129,18 @@ public class FlightScheduler {
 
   private void recordResourceCount() {
     logger.info("Beginning recording resource counts.");
-    List<ResourceKindCount> counts = janitorDao.retrieveResourceCounts();
-    counts.forEach(MetricsHelper::recordResourceKindCount);
+    Table<ResourceKind, TrackedResourceState, Integer> counts = janitorDao.retrieveResourceCounts();
+    for (var rowMapEntry : counts.rowMap().entrySet()) {
+      ResourceKind kind = rowMapEntry.getKey();
+      Map<TrackedResourceState, Integer> stateCounts = rowMapEntry.getValue();
+      for (TrackedResourceState state : TrackedResourceState.values()) {
+        // Set values for all states for each found resource kind. As the janitorDao does not return
+        // 0 counts, we need to make sure to update metrics measurements that may have changed to 0.
+        // If we don't, the last non-zero value will continue to be exported.
+        int count = stateCounts.getOrDefault(state, 0);
+        MetricsHelper.recordResourceKindCount(kind, state, count);
+      }
+    }
     logger.info("Done recording resource counts.");
   }
 
