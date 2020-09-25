@@ -3,11 +3,11 @@ package bio.terra.janitor.db;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
+import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.GoogleBucketUid;
 import bio.terra.janitor.generated.model.GoogleProjectUid;
-import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
-import bio.terra.janitor.common.BaseUnitTest;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableTable;

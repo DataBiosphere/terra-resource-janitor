@@ -1,8 +1,8 @@
 package bio.terra.janitor.db;
 
-import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
+import bio.terra.janitor.generated.model.CloudResourceUid;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
