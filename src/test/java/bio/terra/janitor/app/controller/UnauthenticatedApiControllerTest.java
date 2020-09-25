@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.generated.model.SystemStatus;
+import bio.terra.janitor.generated.model.SystemStatus;
 import bio.terra.janitor.app.Main;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;

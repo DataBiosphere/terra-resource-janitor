@@ -1,6 +1,6 @@
 package bio.terra.janitor.app.controller;
 
-import bio.terra.generated.model.CloudResourceUid;
+import bio.terra.janitor.generated.model.CloudResourceUid;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;

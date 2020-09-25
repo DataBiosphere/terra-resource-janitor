@@ -2,7 +2,7 @@ package bio.terra.janitor.db;
 
 import static bio.terra.janitor.db.ResourceType.*;
 
-import bio.terra.generated.model.*;
+import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.common.CloudResourceUidVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
 

@@ -3,8 +3,8 @@ package bio.terra.janitor.service.cleanup;
 import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
 import static org.junit.jupiter.api.Assertions.*;
 
-import bio.terra.generated.model.CloudResourceUid;
-import bio.terra.generated.model.GoogleBucketUid;
+import bio.terra.janitor.generated.model.CloudResourceUid;
+import bio.terra.janitor.generated.model.GoogleBucketUid;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.service.cleanup.flight.*;

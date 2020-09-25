@@ -1,8 +1,8 @@
 package bio.terra.janitor.app.controller;
 
-import bio.terra.generated.controller.UnauthenticatedApi;
-import bio.terra.generated.model.SystemStatus;
-import bio.terra.generated.model.SystemStatusSystems;
+import bio.terra.janitor.generated.controller.UnauthenticatedApi;
+import bio.terra.janitor.generated.model.SystemStatus;
+import bio.terra.janitor.generated.model.SystemStatusSystems;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.service.cleanup.FlightScheduler;
 import bio.terra.janitor.service.stairway.StairwayComponent;
