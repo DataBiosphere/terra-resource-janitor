@@ -4,13 +4,13 @@ import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
 import static bio.terra.janitor.service.cleanup.CleanupTestUtils.sleepForMetricsExport;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import bio.terra.generated.model.CloudResourceUid;
-import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.janitor.app.configuration.PrimaryConfiguration;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.service.cleanup.flight.FatalStep;
 import bio.terra.janitor.service.stairway.StairwayComponent;
+import bio.terra.rbs.generated.model.CloudResourceUid;
+import bio.terra.rbs.generated.model.GoogleBucketUid;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import com.google.common.collect.ImmutableMap;

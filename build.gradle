@@ -167,8 +167,8 @@ swaggerSources {
             components = ['models', 'apis']
             configFile = file("${projectDir}/src/main/resources/api/swagger-config.json")
             rawOptions = [
-                    "--api-package", "${this.group}.generated.controller".toString(),
-                    "--model-package", "${this.group}.generated.model".toString(),
+                    "--api-package", "${this.group}.rbs.generated.controller".toString(),
+                    "--model-package", "${this.group}.rbs.generated.model".toString(),
                     "--library", "spring-boot"
             ]
         }

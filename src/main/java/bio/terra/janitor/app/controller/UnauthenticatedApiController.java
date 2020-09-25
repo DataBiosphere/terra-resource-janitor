@@ -1,11 +1,11 @@
 package bio.terra.janitor.app.controller;
 
-import bio.terra.generated.controller.UnauthenticatedApi;
-import bio.terra.generated.model.SystemStatus;
-import bio.terra.generated.model.SystemStatusSystems;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.service.cleanup.FlightScheduler;
 import bio.terra.janitor.service.stairway.StairwayComponent;
+import bio.terra.rbs.generated.controller.UnauthenticatedApi;
+import bio.terra.rbs.generated.model.SystemStatus;
+import bio.terra.rbs.generated.model.SystemStatusSystems;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Connection;
 import java.util.Optional;

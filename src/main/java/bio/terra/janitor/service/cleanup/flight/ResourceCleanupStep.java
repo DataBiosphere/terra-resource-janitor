@@ -4,8 +4,8 @@ import static bio.terra.janitor.service.cleanup.FlightMapKeys.CLOUD_RESOURCE_UID
 import static bio.terra.janitor.service.cleanup.FlightMapKeys.TRACKED_RESOURCE_ID;
 
 import bio.terra.cloudres.common.ClientConfig;
-import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.db.*;
+import bio.terra.rbs.generated.model.CloudResourceUid;
 import bio.terra.stairway.*;
 import java.util.Optional;
 import org.slf4j.Logger;

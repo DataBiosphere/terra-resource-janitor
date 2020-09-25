@@ -3,12 +3,12 @@ package bio.terra.janitor.service.cleanup;
 import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
 import static org.junit.jupiter.api.Assertions.*;
 
-import bio.terra.generated.model.CloudResourceUid;
-import bio.terra.generated.model.GoogleBucketUid;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.service.cleanup.flight.*;
 import bio.terra.janitor.service.stairway.StairwayComponent;
+import bio.terra.rbs.generated.model.CloudResourceUid;
+import bio.terra.rbs.generated.model.GoogleBucketUid;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import com.google.common.collect.ImmutableMap;

@@ -1,10 +1,10 @@
 package bio.terra.janitor.service.janitor;
 
-import bio.terra.generated.model.*;
 import bio.terra.janitor.common.exception.BadRequestException;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.service.iam.IamService;
+import bio.terra.rbs.generated.model.*;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

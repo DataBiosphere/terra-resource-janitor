@@ -2,8 +2,8 @@ package bio.terra.janitor.service.cleanup.flight;
 
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.google.storage.StorageCow;
-import bio.terra.generated.model.CloudResourceUid;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.rbs.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import com.google.cloud.storage.BlobId;

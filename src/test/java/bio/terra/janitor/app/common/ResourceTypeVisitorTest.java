@@ -4,10 +4,10 @@ import static bio.terra.janitor.common.ResourceType.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import bio.terra.generated.model.*;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.ResourceTypeVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
+import bio.terra.rbs.generated.model.*;
 import org.junit.jupiter.api.Test;
 
 public class ResourceTypeVisitorTest extends BaseUnitTest {

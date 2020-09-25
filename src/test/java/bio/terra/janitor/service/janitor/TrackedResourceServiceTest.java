@@ -3,9 +3,9 @@ package bio.terra.janitor.service.janitor;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import bio.terra.generated.model.*;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.NotFoundException;
+import bio.terra.rbs.generated.model.*;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;

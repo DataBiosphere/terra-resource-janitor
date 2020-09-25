@@ -1,10 +1,10 @@
 package bio.terra.janitor.app.controller;
 
-import bio.terra.generated.controller.JanitorApi;
-import bio.terra.generated.model.*;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.janitor.service.janitor.JanitorApiService;
+import bio.terra.rbs.generated.controller.JanitorApi;
+import bio.terra.rbs.generated.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;

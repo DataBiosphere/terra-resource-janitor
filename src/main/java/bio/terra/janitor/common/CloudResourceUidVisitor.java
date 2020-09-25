@@ -1,6 +1,6 @@
 package bio.terra.janitor.common;
 
-import bio.terra.generated.model.*;
+import bio.terra.rbs.generated.model.*;
 
 /** An interface for switching on the different resource types within a {@link CloudResourceUid}. */
 public interface CloudResourceUidVisitor<R> {
