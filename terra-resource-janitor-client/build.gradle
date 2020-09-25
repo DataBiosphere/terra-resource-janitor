@@ -41,8 +41,8 @@ swaggerSources {
             outputDir = file("${openapiClientTargetDir}")
             configFile = file("${openapiSourceConfig}")
             rawOptions = [
-                    "--api-package", "${this.group}.controller",
-                    "--model-package", "${this.group}.model",
+                    "--api-package", "${this.group}.janitor.controller",
+                    "--model-package", "${this.group}.janitor.model",
                     "--group-id", "${this.group}",
                     "--artifact-id", "terra-resource-janitor-client",
                     "--artifact-version", "${this.version}",

@@ -1,6 +1,6 @@
 package bio.terra.janitor.db;
 
-import bio.terra.generated.model.CloudResourceUid;
+import bio.terra.janitor.generated.model.CloudResourceUid;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
