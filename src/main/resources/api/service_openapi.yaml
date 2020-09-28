@@ -95,6 +95,7 @@ paths:
             $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
         - name: state
           in: query
+          description: What state to set the resources, i.e. ABANDON or READY.
           required: true
           schema:
             $ref: '#/components/schemas/ResourceState'

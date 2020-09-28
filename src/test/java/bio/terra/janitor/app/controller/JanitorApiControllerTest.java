@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.db.TrackedResourceState;
+import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.service.iam.AuthHeaderKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;

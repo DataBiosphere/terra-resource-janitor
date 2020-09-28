@@ -3,10 +3,10 @@ package bio.terra.janitor.service.pubsub;
 import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.exception.InvalidMessageException;
 import bio.terra.janitor.db.TrackedResourceState;
+import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.service.janitor.TrackedResourceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;

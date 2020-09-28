@@ -1,8 +1,8 @@
 package bio.terra.janitor.service.janitor;
 
-import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.common.exception.BadRequestException;
 import bio.terra.janitor.db.*;
+import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.service.iam.IamService;
 import java.util.*;

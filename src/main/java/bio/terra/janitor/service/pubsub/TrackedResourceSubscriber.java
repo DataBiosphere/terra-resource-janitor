@@ -2,9 +2,9 @@ package bio.terra.janitor.service.pubsub;
 
 import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
 
-import bio.terra.janitor.generated.model.CreateResourceRequestBody;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.exception.InvalidMessageException;
+import bio.terra.janitor.generated.model.CreateResourceRequestBody;
 import bio.terra.janitor.service.janitor.TrackedResourceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;

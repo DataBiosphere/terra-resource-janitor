@@ -2,9 +2,9 @@ package bio.terra.janitor.db;
 
 import static bio.terra.janitor.db.ResourceType.*;
 
-import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.common.CloudResourceUidVisitor;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
+import bio.terra.janitor.generated.model.*;
 
 /** Gets {@link ResourceType} by visiting {@link CloudResourceUid}. */
 public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType> {
