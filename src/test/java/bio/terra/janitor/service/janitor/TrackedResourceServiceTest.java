@@ -1,16 +1,19 @@
 package bio.terra.janitor.service.janitor;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.NotFoundException;
+import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.TrackedResourceId;
+import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.generated.model.*;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,6 +24,12 @@ import org.springframework.test.annotation.DirtiesContext;
 public class TrackedResourceServiceTest extends BaseUnitTest {
   private static final OffsetDateTime DEFAULT_TIME = OffsetDateTime.now();
   @Autowired private TrackedResourceService trackedResourceService;
+  @Autowired private JanitorDao janitorDao;
+
+  private static CloudResourceUid createUniqueId() {
+    return new CloudResourceUid()
+        .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
+  }
 
   /** Returns a map of the resource ids to their TrackedResourceStates as strings. */
   private static Map<String, String> extractStates(TrackedResourceInfoList resourceList) {
@@ -30,9 +39,7 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
 
   @Test
   public void createResource_Duplicates() {
-    CloudResourceUid resourceUid =
-        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName("foo"));
-
+    CloudResourceUid resourceUid = createUniqueId();
     String firstId =
         trackedResourceService
             .createResource(
@@ -41,10 +48,9 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
                     .creation(DEFAULT_TIME)
                     .expiration(DEFAULT_TIME))
             .getId();
-    Map<String, String> retrievedStates =
-        extractStates(trackedResourceService.getResources(resourceUid));
-    assertThat(retrievedStates, Matchers.hasEntry(firstId, "READY"));
-    assertThat(retrievedStates, Matchers.aMapWithSize(1));
+    assertEquals(
+        ImmutableMap.of(firstId, "READY"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
 
     // Add a resource with the same CloudResourceUid that expired before the first resource.
     String secondId =
@@ -55,10 +61,9 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
                     .creation(DEFAULT_TIME)
                     .expiration(DEFAULT_TIME.minusMinutes(10)))
             .getId();
-    retrievedStates = extractStates(trackedResourceService.getResources(resourceUid));
-    assertThat(retrievedStates, Matchers.hasEntry(firstId, "READY"));
-    assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
-    assertThat(retrievedStates, Matchers.aMapWithSize(2));
+    assertEquals(
+        ImmutableMap.of(firstId, "READY", secondId, "DUPLICATED"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
 
     // Add a resource with the same CloudResourceUid that expired after the first resource.
     String thirdId =
@@ -69,18 +74,14 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
                     .creation(DEFAULT_TIME)
                     .expiration(DEFAULT_TIME.plusMinutes(20)))
             .getId();
-    retrievedStates = extractStates(trackedResourceService.getResources(resourceUid));
-    assertThat(retrievedStates, Matchers.hasEntry(firstId, "DUPLICATED"));
-    assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
-    assertThat(retrievedStates, Matchers.hasEntry(thirdId, "READY"));
-    assertThat(retrievedStates, Matchers.aMapWithSize(3));
+    assertEquals(
+        ImmutableMap.of(firstId, "DUPLICATED", secondId, "DUPLICATED", thirdId, "READY"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
   }
 
   @Test
-  public void abandonThenBumpResources() throws Exception {
-    CloudResourceUid resourceUid =
-        new CloudResourceUid()
-            .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
+  public void abandonThenBumpResources() {
+    CloudResourceUid resourceUid = createUniqueId();
     String firstId =
         trackedResourceService
             .createResource(
@@ -103,19 +104,95 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
 
     trackedResourceService.abandonResource(resourceUid);
 
-    Map<String, String> retrievedStates =
-        extractStates(trackedResourceService.getResources(resourceUid));
-    assertThat(retrievedStates, Matchers.hasEntry(firstId, "ABANDONED"));
-    assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
-    assertThat(retrievedStates, Matchers.aMapWithSize(2));
+    assertEquals(
+        ImmutableMap.of(firstId, "ABANDONED", secondId, "DUPLICATED"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
 
     // Bump the resource
     trackedResourceService.bumpResource(resourceUid);
 
-    retrievedStates = extractStates(trackedResourceService.getResources(resourceUid));
-    assertThat(retrievedStates, Matchers.hasEntry(firstId, "READY"));
-    assertThat(retrievedStates, Matchers.hasEntry(secondId, "DUPLICATED"));
-    assertThat(retrievedStates, Matchers.aMapWithSize(2));
+    assertEquals(
+        ImmutableMap.of(firstId, "READY", secondId, "DUPLICATED"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
+  }
+
+  @Test
+  public void abandonResource_cleaning() {
+    CloudResourceUid resourceUid = createUniqueId();
+    String cleaningId =
+        trackedResourceService
+            .createResource(
+                new CreateResourceRequestBody()
+                    .resourceUid(resourceUid)
+                    .creation(DEFAULT_TIME)
+                    .expiration(DEFAULT_TIME))
+            .getId();
+    janitorDao.updateResourceState(
+        TrackedResourceId.create(UUID.fromString(cleaningId)), TrackedResourceState.CLEANING);
+
+    assertEquals(
+        ImmutableMap.of(cleaningId, "CLEANING"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
+    trackedResourceService.abandonResource(resourceUid);
+    assertEquals(
+        ImmutableMap.of(cleaningId, "ABANDONED"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
+  }
+
+  @Test
+  public void abandonResource_error() {
+    CloudResourceUid resourceUid = createUniqueId();
+    String errorId =
+        trackedResourceService
+            .createResource(
+                new CreateResourceRequestBody()
+                    .resourceUid(resourceUid)
+                    .creation(DEFAULT_TIME)
+                    .expiration(DEFAULT_TIME))
+            .getId();
+    janitorDao.updateResourceState(
+        TrackedResourceId.create(UUID.fromString(errorId)), TrackedResourceState.ERROR);
+
+    assertEquals(
+        ImmutableMap.of(errorId, "ERROR"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
+    trackedResourceService.abandonResource(resourceUid);
+    assertEquals(
+        ImmutableMap.of(errorId, "ABANDONED"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
+  }
+
+  @Test
+  public void bumpResources_errorBumped() {
+    CloudResourceUid resourceUid = createUniqueId();
+    String abandonId =
+        trackedResourceService
+            .createResource(
+                new CreateResourceRequestBody()
+                    .resourceUid(resourceUid)
+                    .creation(DEFAULT_TIME)
+                    .expiration(DEFAULT_TIME.plusMinutes(10)))
+            .getId();
+    trackedResourceService.abandonResource(resourceUid);
+
+    String errorId =
+        trackedResourceService
+            .createResource(
+                new CreateResourceRequestBody()
+                    .resourceUid(resourceUid)
+                    .creation(DEFAULT_TIME)
+                    .expiration(DEFAULT_TIME))
+            .getId();
+    janitorDao.updateResourceState(
+        TrackedResourceId.create(UUID.fromString(errorId)), TrackedResourceState.ERROR);
+
+    assertEquals(
+        ImmutableMap.of(abandonId, "ABANDONED", errorId, "ERROR"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
+    trackedResourceService.bumpResource(resourceUid);
+    assertEquals(
+        ImmutableMap.of(abandonId, "ABANDONED", errorId, "READY"),
+        extractStates(trackedResourceService.getResources(resourceUid)));
   }
 
   @Test
