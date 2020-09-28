@@ -124,7 +124,7 @@ public class TrackedResourceService {
   /**
    * Updates the READY resource state to ABANDONED.
    *
-   * <p>Throws {@link NotFoundException}if there were no resources to abandon.
+   * <p>Throws {@link NotFoundException} if there were no resources to abandon.
    */
   public void abandonResource(CloudResourceUid cloudResourceUid) {
     List<TrackedResource> abandonedResources =
@@ -161,7 +161,7 @@ public class TrackedResourceService {
   /**
    * Updates the ABANDONED/ERROR resource state to READY.
    *
-   * <p>Throws {@link NotFoundException}if there were no resources to update.
+   * <p>Throws {@link NotFoundException} if there were no resources to update.
    *
    * <p>There may be one ERROR resource and multiple ABANDONED resources. We should always update
    * the ERROR resource so that it is resolved. After that, we tie-break on the latest expiration
