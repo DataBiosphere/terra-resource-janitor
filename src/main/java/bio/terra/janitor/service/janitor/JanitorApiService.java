@@ -5,7 +5,9 @@ import bio.terra.janitor.db.*;
 import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.service.iam.IamService;
+import com.google.common.collect.ImmutableSet;
 import java.util.*;
+import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,30 +16,61 @@ import org.springframework.stereotype.Component;
 public class JanitorApiService {
   private final IamService iamService;
   private final TrackedResourceService trackedResourceService;
+  private final JanitorDao janitorDao;
 
   @Autowired
-  public JanitorApiService(IamService iamService, TrackedResourceService trackedResourceService) {
+  public JanitorApiService(
+      IamService iamService, TrackedResourceService trackedResourceService, JanitorDao janitorDao) {
     this.iamService = iamService;
     this.trackedResourceService = trackedResourceService;
+    this.janitorDao = janitorDao;
   }
 
   public CreatedResource createResource(
       CreateResourceRequestBody body, AuthenticatedUserRequest userReq) {
     iamService.requireAdminUser(userReq);
-    return trackedResourceService.createResource(body);
+    TrackedResource resource =
+        trackedResourceService.createResource(ModelUtils.createTrackRequest(body));
+    return new CreatedResource().id(resource.trackedResourceId().toString());
   }
 
   /** Retrieves the info about a tracked resource if there exists a resource for that id. */
   public Optional<TrackedResourceInfo> getResource(String id, AuthenticatedUserRequest userReq) {
     iamService.requireAdminUser(userReq);
-    return trackedResourceService.getResource(id);
+
+    UUID uuid;
+    try {
+      uuid = UUID.fromString(id);
+    } catch (IllegalArgumentException e) {
+      // id did not match expected UUID format.
+      return Optional.empty();
+    }
+    TrackedResourceId trackedResourceId = TrackedResourceId.create(uuid);
+    return janitorDao.retrieveResourceAndLabels(trackedResourceId).map(ModelUtils::createInfo);
   }
 
-  /** Retrieves the resources with the {@link CloudResourceUid}. */
+  /** Retrieves the resources matching the filters. */
   public TrackedResourceInfoList getResources(
-      CloudResourceUid cloudResourceUid, AuthenticatedUserRequest userReq) {
+      @Nullable CloudResourceUid cloudResourceUid,
+      @Nullable ResourceState state,
+      Integer offset,
+      Integer limit,
+      AuthenticatedUserRequest userReq) {
     iamService.requireAdminUser(userReq);
-    return trackedResourceService.getResources(cloudResourceUid);
+
+    TrackedResourceFilter.Builder filter =
+        TrackedResourceFilter.builder()
+            .cloudResourceUid(Optional.ofNullable(cloudResourceUid))
+            .limit(limit)
+            .offset(offset);
+    if (state != null) {
+      filter.allowedStates(ImmutableSet.of(ModelUtils.convert(state)));
+    }
+    TrackedResourceInfoList resourceList = new TrackedResourceInfoList();
+    janitorDao.retrieveResourcesAndLabels(filter.build()).stream()
+        .map(ModelUtils::createInfo)
+        .forEach(resourceList::addResourcesItem);
+    return resourceList;
   }
 
   /**

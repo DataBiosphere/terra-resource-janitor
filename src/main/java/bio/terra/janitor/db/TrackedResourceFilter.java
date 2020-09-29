@@ -28,6 +28,9 @@ public abstract class TrackedResourceFilter {
   /** If present, only return up to {@code limit} resources. */
   public abstract OptionalInt limit();
 
+  /** If present, offset the returned resources by this much. Only useful with a limit. */
+  public abstract OptionalInt offset();
+
   /** Creates a new builder that allows all resources. */
   public static Builder builder() {
     return new AutoValue_TrackedResourceFilter.Builder()
@@ -43,9 +46,17 @@ public abstract class TrackedResourceFilter {
 
     public abstract Builder cloudResourceUid(CloudResourceUid cloudResourceUid);
 
+    public abstract Builder cloudResourceUid(Optional<CloudResourceUid> cloudResourceUid);
+
     public abstract Builder expiredBy(Instant expiredBy);
 
     public abstract Builder limit(int value);
+
+    public abstract Builder limit(Integer value);
+
+    public abstract Builder offset(int offset);
+
+    public abstract Builder offset(Integer offset);
 
     abstract TrackedResourceFilter autoBuild();
 

@@ -70,9 +70,27 @@ paths:
         - name: cloudResourceUid
           in: query
           description: The cloud resource uid of the tracked resources.
-          required: true
           schema:
             $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+        - name: state
+          in: query
+          description: The state of the tracked resource's cleanup to limit results to.
+          schema:
+            $ref: '#/components/schemas/ResourceState'
+        - name: offset
+          in: query
+          description: The number of items to skip before starting to collect resources.
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: limit
+          in: query
+          description: The numbers of resources to return.
+          schema:
+            type: integer
+            minimum: 0
+            default: 20
       responses:
         200:
           description: OK
@@ -95,7 +113,7 @@ paths:
             $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
         - name: state
           in: query
-          description: What state to set the resources, i.e. ABANDON or READY.
+          description: What state to set the resources. Only ABANDON and READY are supported.
           required: true
           schema:
             $ref: '#/components/schemas/ResourceState'
@@ -222,7 +240,7 @@ components:
           $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
         state:
           description: The state of the tracked resource's cleanup.
-          type: string
+          $ref: '#/components/schemas/ResourceState'
         creation:
           description: When the Janitor started tracking this resource.
           type: string
@@ -248,10 +266,14 @@ components:
 
     ResourceState:
       type: string
-      description: Supported state to update a resource.
+      description: Possible tracked resource cleaning states.
       enum:
         - READY
+        - CLEANING
+        - DONE
+        - ERROR
         - ABANDONED
+        - DUPLIATED
 
   responses:
     ErrorResponse:

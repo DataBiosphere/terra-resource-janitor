@@ -118,6 +118,17 @@ public class JanitorDao {
         new StringBuilder(
             "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource ");
     MapSqlParameterSource params = new MapSqlParameterSource();
+    addFilterClauses(filter, sql, params);
+    sql.append(";");
+    return jdbcTemplate.query(sql.toString(), params, TRACKED_RESOURCE_ROW_MAPPER);
+  }
+
+  /**
+   * Modify the input {code sql} and {@code params} to append the clauses and parameters for {@code
+   * filter}.
+   */
+  private static void addFilterClauses(
+      TrackedResourceFilter filter, StringBuilder sql, MapSqlParameterSource params) {
     List<String> whereClauses = new ArrayList<>();
     if (!filter.allowedStates().isEmpty()) {
       whereClauses.add("state IN(:filter_allowed_states)");
@@ -146,12 +157,14 @@ public class JanitorDao {
     if (!whereClauses.isEmpty()) {
       sql.append(whereClauses.stream().collect(Collectors.joining(" AND ", " WHERE ", "")));
     }
-    if (filter.limit().isPresent()) {
-      sql = sql.append(" LIMIT :filter_limit ");
+    if (filter.limit().isPresent() && filter.limit().getAsInt() > 0) {
+      sql.append(" LIMIT :filter_limit ");
       params.addValue("filter_limit", filter.limit().getAsInt());
     }
-    sql.append(";");
-    return jdbcTemplate.query(sql.toString(), params, TRACKED_RESOURCE_ROW_MAPPER);
+    if (filter.offset().isPresent() && filter.offset().getAsInt() > 0) {
+      sql.append(" OFFSET :offset ");
+      params.addValue("offset", filter.offset().getAsInt());
+    }
   }
 
   /** Return the resource and flight associated with the {@code flightId}, if they exist. */
@@ -214,17 +227,17 @@ public class JanitorDao {
                 CLEANUP_FLIGHT_ROW_MAPPER.mapRow(rs, rowNum)));
   }
 
-  /** Returns {@link TrackedResourceAndLabels} with a matching {@link CloudResourceUid}. */
+  /** Returns {@link TrackedResourceAndLabels} matching {@link TrackedResourceFilter}. */
   @Transactional(propagation = Propagation.SUPPORTS)
-  public List<TrackedResourceAndLabels> retrieveResourcesWith(CloudResourceUid cloudResourceUid) {
-    String sql =
-        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
-            + "l.key, l.value FROM tracked_resource tr "
-            + "LEFT JOIN label l ON tr.id = l.tracked_resource_id "
-            + "WHERE tr.resource_uid = :cloud_resource_uid::jsonb";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("cloud_resource_uid", serialize(cloudResourceUid));
-    return jdbcTemplate.query(sql, params, new TrackedResourceAndLabelsExtractor());
+  public List<TrackedResourceAndLabels> retrieveResourcesAndLabels(TrackedResourceFilter filter) {
+    StringBuilder sql =
+        new StringBuilder(
+            "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+                + "l.key, l.value FROM tracked_resource tr "
+                + "LEFT JOIN label l ON tr.id = l.tracked_resource_id ");
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    addFilterClauses(filter, sql, params);
+    return jdbcTemplate.query(sql.toString(), params, new TrackedResourceAndLabelsExtractor());
   }
 
   /** Creates a {@link CleanupFlight} associated with {@code trackedResourceId}. */

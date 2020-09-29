@@ -265,19 +265,25 @@ public class JanitorDaoTest extends BaseUnitTest {
     janitorDao.createResource(otherUidResource, otherLabels);
 
     assertThat(
-        janitorDao.retrieveResourcesWith(resourceUid2),
+        janitorDao.retrieveResourcesAndLabels(
+            TrackedResourceFilter.builder().cloudResourceUid(resourceUid2).build()),
         Matchers.containsInAnyOrder(
             TrackedResourceAndLabels.create(otherUidResource, otherLabels)));
     assertThat(
-        janitorDao.retrieveResourcesWith(resourceUid1),
+        janitorDao.retrieveResourcesAndLabels(
+            TrackedResourceFilter.builder().cloudResourceUid(resourceUid1).build()),
         Matchers.containsInAnyOrder(
             TrackedResourceAndLabels.create(resource1, labels1),
             TrackedResourceAndLabels.create(resource2, labels2),
             TrackedResourceAndLabels.create(resource3, labels3)));
 
     assertThat(
-        janitorDao.retrieveResourcesWith(
-            new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId("project3"))),
+        janitorDao.retrieveResourcesAndLabels(
+            TrackedResourceFilter.builder()
+                .cloudResourceUid(
+                    new CloudResourceUid()
+                        .googleProjectUid(new GoogleProjectUid().projectId("project3")))
+                .build()),
         Matchers.empty());
   }
 
