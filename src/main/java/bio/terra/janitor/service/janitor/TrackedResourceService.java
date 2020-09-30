@@ -83,6 +83,7 @@ public class TrackedResourceService {
         for (TrackedResource duplicateResource : duplicateResources) {
           janitorDao.updateResourceState(
               duplicateResource.trackedResourceId(), TrackedResourceState.DUPLICATED);
+          logger.info("Duplicated resource, trackedResourceId: {}", duplicateResource.trackedResourceId());
         }
       } else {
         // There is a duplicating resource with a later or equal expiration time. The new
@@ -163,9 +164,8 @@ public class TrackedResourceService {
    *
    * <p>Throws {@link NotFoundException} if there were no resources to update.
    *
-   * <p>There may be one ERROR resource and multiple ABANDONED resources. We should always update
-   * the ERROR resource so that it is resolved. After that, we tie-break on the latest expiration
-   * date.
+   * <p>There should be at most one ABANDONED/ERROR resources - the others should have been
+   * DUPLICATED.
    */
   public void bumpResource(CloudResourceUid cloudResourceUid) {
     TrackedResourceId bumpedId =
@@ -181,14 +181,16 @@ public class TrackedResourceService {
         getResourceWithState(
             cloudResourceUid, TrackedResourceState.ABANDONED, TrackedResourceState.ERROR);
 
+    if (resources.size() > 1) {
+      logger.error(
+          "More than one ABANDONED or ERROR state resources are found during bump for"
+              + " resource {}.",
+          cloudResourceUid);
+    }
+
+    // Pick the latest expiration, though there should have only been one resource.
     TrackedResource toBump =
-        resources.stream()
-            .max(
-                Comparator.comparing(
-                        (TrackedResource resource) ->
-                            resource.trackedResourceState().equals(TrackedResourceState.ERROR))
-                    .thenComparing(TrackedResource::expiration))
-            .get();
+        resources.stream().max(Comparator.comparing(TrackedResource::expiration)).get();
     janitorDao.updateResourceState(toBump.trackedResourceId(), TrackedResourceState.READY);
     return toBump.trackedResourceId();
   }

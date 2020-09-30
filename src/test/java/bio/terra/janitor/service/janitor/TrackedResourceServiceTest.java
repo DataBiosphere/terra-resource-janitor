@@ -163,39 +163,6 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void bumpResources_errorBumped() {
-    CloudResourceUid resourceUid = createUniqueId();
-    String abandonId =
-        trackedResourceService
-            .createResource(
-                new CreateResourceRequestBody()
-                    .resourceUid(resourceUid)
-                    .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME.plusMinutes(10)))
-            .getId();
-    trackedResourceService.abandonResource(resourceUid);
-
-    String errorId =
-        trackedResourceService
-            .createResource(
-                new CreateResourceRequestBody()
-                    .resourceUid(resourceUid)
-                    .creation(DEFAULT_TIME)
-                    .expiration(DEFAULT_TIME))
-            .getId();
-    janitorDao.updateResourceState(
-        TrackedResourceId.create(UUID.fromString(errorId)), TrackedResourceState.ERROR);
-
-    assertEquals(
-        ImmutableMap.of(abandonId, "ABANDONED", errorId, "ERROR"),
-        extractStates(trackedResourceService.getResources(resourceUid)));
-    trackedResourceService.bumpResource(resourceUid);
-    assertEquals(
-        ImmutableMap.of(abandonId, "ABANDONED", errorId, "READY"),
-        extractStates(trackedResourceService.getResources(resourceUid)));
-  }
-
-  @Test
   public void abandonResources_notFound() throws Exception {
     CloudResourceUid resourceUid =
         new CloudResourceUid()
