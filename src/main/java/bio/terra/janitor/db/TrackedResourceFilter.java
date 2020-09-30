@@ -52,11 +52,7 @@ public abstract class TrackedResourceFilter {
 
     public abstract Builder limit(int value);
 
-    public abstract Builder limit(Integer value);
-
     public abstract Builder offset(int offset);
-
-    public abstract Builder offset(Integer offset);
 
     abstract TrackedResourceFilter autoBuild();
 

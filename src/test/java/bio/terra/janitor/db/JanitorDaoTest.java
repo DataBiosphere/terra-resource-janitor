@@ -211,6 +211,31 @@ public class JanitorDaoTest extends BaseUnitTest {
                 .limit(5)
                 .build()),
         Matchers.containsInAnyOrder(readyResource));
+
+    assertThat(
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .allowedStates(ImmutableSet.of(TrackedResourceState.ERROR))
+                .limit(0)
+                .build()),
+        Matchers.containsInAnyOrder(errorResource, lateExpiredResource));
+
+    List<TrackedResource> limit1 =
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .allowedStates(ImmutableSet.of(TrackedResourceState.ERROR))
+                .limit(1)
+                .build());
+    assertThat(limit1, Matchers.hasSize(1));
+    List<TrackedResource> limit1Offset1 =
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .allowedStates(ImmutableSet.of(TrackedResourceState.ERROR))
+                .limit(1)
+                .offset(1)
+                .build());
+    assertThat(limit1Offset1, Matchers.hasSize(1));
+    assertNotEquals(limit1.get(0), limit1Offset1.get(0));
   }
 
   @Test

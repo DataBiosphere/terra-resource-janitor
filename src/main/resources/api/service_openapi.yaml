@@ -86,11 +86,11 @@ paths:
             default: 0
         - name: limit
           in: query
-          description: The numbers of resources to return.
+          description: The numbers of resources to return. 0 is no limit.
           schema:
             type: integer
             minimum: 0
-            default: 20
+            default: 0
       responses:
         200:
           description: OK

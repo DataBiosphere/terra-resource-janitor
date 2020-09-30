@@ -1,5 +1,6 @@
 package bio.terra.janitor.app.controller;
 
+import bio.terra.janitor.common.exception.BadRequestException;
 import bio.terra.janitor.generated.controller.JanitorApi;
 import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
@@ -52,6 +53,9 @@ public class JanitorApiController implements JanitorApi {
       @Valid ResourceState state,
       @Min(0) @Valid Integer offset,
       @Min(0) @Valid Integer limit) {
+    if (limit == 0 && offset > 0) {
+      throw new BadRequestException("No offset allowed when there is no limit set.");
+    }
     return new ResponseEntity<>(
         janitorApiService.getResources(
             cloudResourceUid, state, offset, limit, getAuthenticatedRequest()),

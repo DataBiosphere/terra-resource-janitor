@@ -119,7 +119,6 @@ public class JanitorDao {
             "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource ");
     MapSqlParameterSource params = new MapSqlParameterSource();
     addFilterClauses(filter, sql, params);
-    sql.append(";");
     return jdbcTemplate.query(sql.toString(), params, TRACKED_RESOURCE_ROW_MAPPER);
   }
 
