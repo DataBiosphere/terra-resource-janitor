@@ -83,7 +83,8 @@ public class TrackedResourceService {
         for (TrackedResource duplicateResource : duplicateResources) {
           janitorDao.updateResourceState(
               duplicateResource.trackedResourceId(), TrackedResourceState.DUPLICATED);
-          logger.info("Duplicated resource, trackedResourceId: {}", duplicateResource.trackedResourceId());
+          logger.info(
+              "Duplicated resource, trackedResourceId: {}", duplicateResource.trackedResourceId());
         }
       } else {
         // There is a duplicating resource with a later or equal expiration time. The new
