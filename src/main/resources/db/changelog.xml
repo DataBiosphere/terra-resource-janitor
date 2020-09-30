@@ -2,4 +2,5 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
     <include file="changesets/20200625_initial_schema.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20200903_drop_cleanup_log.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20200925_create_resource_uid.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
