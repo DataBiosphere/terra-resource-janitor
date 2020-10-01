@@ -171,7 +171,7 @@ public class JanitorApiControllerTest {
         new CreateResourceRequestBody()
             .resourceUid(resourceUid)
             .creation(CREATION)
-            .expiration(EXPIRATION)
+            .expiration(EXPIRATION.plusMinutes(1))
             .labels(DEFAULT_LABELS);
 
     String createResponse1 =
@@ -201,7 +201,7 @@ public class JanitorApiControllerTest {
     String id1 = objectMapper.readValue(createResponse1, CreatedResource.class).getId();
     String id2 = objectMapper.readValue(createResponse2, CreatedResource.class).getId();
 
-    String getResponse =
+    String getResponseResourceUid =
         this.mvc
             .perform(
                 get("/api/janitor/v1/resource")
@@ -213,11 +213,54 @@ public class JanitorApiControllerTest {
             .getResponse()
             .getContentAsString();
     TrackedResourceInfoList resourceInfoList =
-        objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
+        objectMapper.readValue(getResponseResourceUid, TrackedResourceInfoList.class);
     assertThat(
         resourceInfoList.getResources().stream()
             .map(TrackedResourceInfo::getId)
             .collect(Collectors.toList()),
         Matchers.containsInAnyOrder(id1, id2));
+
+    String getResponseResourceState =
+        this.mvc
+            .perform(
+                get("/api/janitor/v1/resource")
+                    .queryParam("state", ResourceState.READY.toString())
+                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    resourceInfoList =
+        objectMapper.readValue(getResponseResourceState, TrackedResourceInfoList.class);
+    assertThat(
+        resourceInfoList.getResources().stream()
+            .map(TrackedResourceInfo::getId)
+            .collect(Collectors.toList()),
+        Matchers.containsInAnyOrder(id2));
+
+    String getResponseLimit =
+        this.mvc
+            .perform(
+                get("/api/janitor/v1/resource")
+                    .queryParam("limit", String.valueOf(1))
+                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    resourceInfoList = objectMapper.readValue(getResponseLimit, TrackedResourceInfoList.class);
+    assertThat(resourceInfoList.getResources(), Matchers.hasSize(1));
+
+    this.mvc
+        .perform(
+            get("/api/janitor/v1/resource")
+                // Offset but no limit.
+                .queryParam("limit", String.valueOf(0))
+                .queryParam("offset", String.valueOf(1))
+                .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+        .andDo(MockMvcResultHandlers.print())
+        .andExpect(status().is(400));
   }
 }

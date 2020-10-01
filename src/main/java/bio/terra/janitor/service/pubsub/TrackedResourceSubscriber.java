@@ -5,6 +5,7 @@ import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.exception.InvalidMessageException;
 import bio.terra.janitor.generated.model.CreateResourceRequestBody;
+import bio.terra.janitor.service.janitor.ModelUtils;
 import bio.terra.janitor.service.janitor.TrackedResourceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
@@ -75,7 +76,7 @@ public class TrackedResourceSubscriber {
         CreateResourceRequestBody body =
             objectMapper.readValue(
                 message.getData().toStringUtf8(), CreateResourceRequestBody.class);
-        trackedResourceService.createResource(body);
+        trackedResourceService.createResource(ModelUtils.createTrackRequest(body));
         consumer.ack();
       } catch (Exception e) {
         logger.warn("Invalid track resource pubsub message: " + message.toString(), e);

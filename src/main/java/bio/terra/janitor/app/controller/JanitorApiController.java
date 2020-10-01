@@ -1,5 +1,6 @@
 package bio.terra.janitor.app.controller;
 
+import bio.terra.janitor.common.exception.BadRequestException;
 import bio.terra.janitor.generated.controller.JanitorApi;
 import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,9 +49,17 @@ public class JanitorApiController implements JanitorApi {
 
   @Override
   public ResponseEntity<TrackedResourceInfoList> getResources(
-      @NotNull @Valid CloudResourceUid cloudResourceUid) {
+      @Valid CloudResourceUid cloudResourceUid,
+      @Valid ResourceState state,
+      @Min(0) @Valid Integer offset,
+      @Min(0) @Valid Integer limit) {
+    if (limit == 0 && offset > 0) {
+      throw new BadRequestException("No offset allowed when there is no limit set.");
+    }
     return new ResponseEntity<>(
-        janitorApiService.getResources(cloudResourceUid, getAuthenticatedRequest()), HttpStatus.OK);
+        janitorApiService.getResources(
+            cloudResourceUid, state, offset, limit, getAuthenticatedRequest()),
+        HttpStatus.OK);
   }
 
   @Override

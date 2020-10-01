@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.exception.InvalidMessageException;
-import bio.terra.janitor.db.TrackedResourceState;
+import bio.terra.janitor.db.*;
 import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.service.janitor.TrackedResourceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +15,7 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ public class TrackedResourceSubscriberTest extends BaseUnitTest {
   private ObjectMapper objectMapper;
 
   @Autowired private TrackedResourceService trackedResourceService;
+  @Autowired private JanitorDao janitorDao;
 
   @Test
   public void receiveMessage() throws Exception {
@@ -57,16 +59,18 @@ public class TrackedResourceSubscriberTest extends BaseUnitTest {
         new TrackedResourceSubscriber.ResourceReceiver(objectMapper, trackedResourceService);
 
     resourceReceiver.receiveMessage(PubsubMessage.newBuilder().setData(data).build(), consumer);
-    trackedResourceService.getResources(resource);
+    List<TrackedResourceAndLabels> resources =
+        janitorDao.retrieveResourcesAndLabels(
+            TrackedResourceFilter.builder().cloudResourceUid(resource).build());
 
-    TrackedResourceInfoList resourceInfoList = trackedResourceService.getResources(resource);
-    assertEquals(1, resourceInfoList.getResources().size());
-    TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
-    assertEquals(resource, trackedResourceInfo.getResourceUid());
-    assertEquals(publishTime, trackedResourceInfo.getCreation());
-    assertEquals(publishTime, trackedResourceInfo.getExpiration());
-    assertEquals(labels, trackedResourceInfo.getLabels());
-    assertEquals(TrackedResourceState.READY.toString(), trackedResourceInfo.getState());
+    assertEquals(1, resources.size());
+    TrackedResourceAndLabels trackedResourceAndLabels = resources.get(0);
+    TrackedResource trackedResource = trackedResourceAndLabels.trackedResource();
+    assertEquals(resource, trackedResource.cloudResourceUid());
+    assertEquals(publishTime.toInstant(), trackedResource.creation());
+    assertEquals(publishTime.toInstant(), trackedResource.expiration());
+    assertEquals(labels, trackedResourceAndLabels.labels());
+    assertEquals(TrackedResourceState.READY, trackedResource.trackedResourceState());
   }
 
   @Test

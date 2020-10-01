@@ -6,12 +6,7 @@ import bio.terra.janitor.generated.model.*;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +28,10 @@ public class TrackedResourceService {
     this.transactionTemplate = transactionTemplate;
   }
 
-  /** Internal method to Create a new {@link TrackedResource} without user credentials. */
-  public CreatedResource createResource(CreateResourceRequestBody body) {
-    TrackedResourceId id =
-        transactionTemplate.execute(status -> createResourceAndUpdateDuplicates(body, status));
-    return new CreatedResource().id(id.toString());
+  /** Create a new {@link TrackedResource} tracking a resource. */
+  public TrackedResource createResource(TrackRequest trackRequest) {
+    return transactionTemplate.execute(
+        status -> createResourceAndUpdateDuplicates(trackRequest, status));
   }
 
   /**
@@ -48,16 +42,16 @@ public class TrackedResourceService {
    * <p>Several parts of the Janitor system assume that there is at most one non-DONE, non-DUPLICATE
    * TrackedResource per CloudResourceUid. Change with care.
    */
-  private TrackedResourceId createResourceAndUpdateDuplicates(
-      CreateResourceRequestBody body, TransactionStatus unused) {
+  private TrackedResource createResourceAndUpdateDuplicates(
+      TrackRequest trackRequest, TransactionStatus unused) {
     TrackedResourceId id = TrackedResourceId.create(UUID.randomUUID());
     TrackedResource resource =
         TrackedResource.builder()
             .trackedResourceId(id)
             .trackedResourceState(TrackedResourceState.READY)
-            .cloudResourceUid(body.getResourceUid())
-            .creation(body.getCreation().toInstant())
-            .expiration(body.getExpiration().toInstant())
+            .cloudResourceUid(trackRequest.cloudResourceUid())
+            .creation(trackRequest.creation())
+            .expiration(trackRequest.expiration())
             .build();
     List<TrackedResource> duplicateResources =
         janitorDao.retrieveResourcesMatching(
@@ -96,34 +90,8 @@ public class TrackedResourceService {
             resource.toBuilder().trackedResourceState(TrackedResourceState.DUPLICATED).build();
       }
     }
-    janitorDao.createResource(resource, body.getLabels());
-    return id;
-  }
-
-  /** Retrieves the info about a tracked resource if their exists a resource for that id. */
-  public Optional<TrackedResourceInfo> getResource(String id) {
-    UUID uuid;
-    try {
-      uuid = UUID.fromString(id);
-    } catch (IllegalArgumentException e) {
-      // id did not match expected UUID format.
-      return Optional.empty();
-    }
-    TrackedResourceId trackedResourceId = TrackedResourceId.create(uuid);
-    Optional<TrackedResourceAndLabels> resourceAndLabels =
-        janitorDao.retrieveResourceAndLabels(trackedResourceId);
-    return resourceAndLabels.map(TrackedResourceService::createInfo);
-  }
-
-  /** Retrieves the resources with the {@link CloudResourceUid}. */
-  public TrackedResourceInfoList getResources(CloudResourceUid cloudResourceUid) {
-    List<TrackedResourceAndLabels> resourcesWithLabels =
-        janitorDao.retrieveResourcesWith(cloudResourceUid);
-    TrackedResourceInfoList resourceList = new TrackedResourceInfoList();
-    resourcesWithLabels.stream()
-        .map(TrackedResourceService::createInfo)
-        .forEach(resourceList::addResourcesItem);
-    return resourceList;
+    janitorDao.createResource(resource, trackRequest.labels());
+    return resource;
   }
 
   /**
@@ -218,16 +186,5 @@ public class TrackedResourceService {
           String.format("Resource: %s not found with state %s", resourceUid, states));
     }
     return resources;
-  }
-
-  private static TrackedResourceInfo createInfo(TrackedResourceAndLabels resourceAndLabels) {
-    TrackedResource resource = resourceAndLabels.trackedResource();
-    return new TrackedResourceInfo()
-        .id(resource.trackedResourceId().toString())
-        .resourceUid(resource.cloudResourceUid())
-        .state(resource.trackedResourceState().toString())
-        .creation(OffsetDateTime.ofInstant(resource.creation(), ZoneOffset.UTC))
-        .expiration(OffsetDateTime.ofInstant(resource.expiration(), ZoneOffset.UTC))
-        .labels(resourceAndLabels.labels());
   }
 }

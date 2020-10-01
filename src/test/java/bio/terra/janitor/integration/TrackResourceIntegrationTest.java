@@ -13,7 +13,6 @@ import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
-import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import bio.terra.janitor.service.iam.AuthHeaderKeys;
@@ -325,7 +324,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals(publishTime, trackedResourceInfo.getCreation());
     assertEquals(publishTime, trackedResourceInfo.getExpiration());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
-    assertEquals(TrackedResourceState.DONE.toString(), trackedResourceInfo.getState());
+    assertEquals(ResourceState.DONE, trackedResourceInfo.getState());
   }
 
   /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
@@ -390,11 +389,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
       trackedResourceInfoList = objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
       if (trackedResourceInfoList != null
           && trackedResourceInfoList.getResources().size() > 0
-          && trackedResourceInfoList
-              .getResources()
-              .get(0)
-              .getState()
-              .equals(TrackedResourceState.DONE.toString())) {
+          && trackedResourceInfoList.getResources().get(0).getState().equals(ResourceState.DONE)) {
         return trackedResourceInfoList;
       }
       ++numPolls;
