@@ -76,6 +76,12 @@ public class JanitorApiController implements JanitorApi {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Override
+  public ResponseEntity<Void> bumpErrors() {
+    janitorApiService.bumpErrors(getAuthenticatedRequest());
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
   /** Required if using Swagger-CodeGen, but actually we don't need this. */
   @Override
   public Optional<ObjectMapper> getObjectMapper() {

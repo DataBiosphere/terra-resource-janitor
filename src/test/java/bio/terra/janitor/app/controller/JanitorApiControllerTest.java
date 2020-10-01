@@ -263,4 +263,22 @@ public class JanitorApiControllerTest {
         .andDo(MockMvcResultHandlers.print())
         .andExpect(status().is(400));
   }
+
+  @Test
+  public void bumpErrors() throws Exception {
+    this.mvc
+        .perform(
+            put("/api/janitor/v1/resource/bumpErrors")
+                .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+        .andDo(MockMvcResultHandlers.print())
+        .andExpect(status().is(204));
+  }
+
+  @Test
+  public void bumpErrors_notAuthorized() throws Exception {
+    this.mvc
+        .perform(put("/api/janitor/v1/resource/bumpErrors"))
+        .andDo(MockMvcResultHandlers.print())
+        .andExpect(status().isUnauthorized());
+  }
 }

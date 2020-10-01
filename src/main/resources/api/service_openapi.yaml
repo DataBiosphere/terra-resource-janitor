@@ -154,6 +154,19 @@ paths:
           description: Get request error
           $ref: '#/components/responses/ErrorResponse'
 
+  '/api/janitor/v1/resource/bumpErrors':
+    put:
+      description: Bump all the ERRORs to READY, allowing many resources to be retried for cleanup.
+      operationId: bumpErrors
+      tags:
+        - janitor
+      responses:
+        204:
+          description: OK
+        403:
+          description: Permission denied
+          $ref: '#/components/responses/ErrorResponse'
+
 components:
   parameters:
     Id:
