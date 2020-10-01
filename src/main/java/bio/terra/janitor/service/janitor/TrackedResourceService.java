@@ -38,6 +38,9 @@ public class TrackedResourceService {
    * Create a new {@link TrackedResource} and update other resources with the same {@link
    * CloudResourceUid} as duplicated as appropriate. Returns the created resources {@link
    * TrackedResourceId}. This should be done as a part of a single database transaction.
+   *
+   * <p>Several parts of the Janitor system assume that there is at most one non-DONE, non-DUPLICATE
+   * TrackedResource per CloudResourceUid. Change with care.
    */
   private TrackedResource createResourceAndUpdateDuplicates(
       TrackRequest trackRequest, TransactionStatus unused) {
