@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: createIndex-resource-uid
+      author: wchamber
+      changes:
+        - createIndex:
+            tableName: tracked_resource
+            indexName: IDX_TR_CLOUD_RESOURCE_ID
+            columns:
+              - column:
+                  name: resource_uid
