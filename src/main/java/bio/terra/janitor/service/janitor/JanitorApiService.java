@@ -94,4 +94,17 @@ public class JanitorApiService {
       throw new BadRequestException(String.format("Invalid change state: %s", state));
     }
   }
+
+  /** Update all ERROR tracked resources to READY. */
+  public void bumpErrors(AuthenticatedUserRequest userReq) {
+    iamService.requireAdminUser(userReq);
+    List<TrackedResource> errorResources =
+        janitorDao.retrieveResourcesMatching(
+            TrackedResourceFilter.builder()
+                .allowedStates(ImmutableSet.of(TrackedResourceState.ERROR))
+                .build());
+    for (TrackedResource resource : errorResources) {
+      trackedResourceService.bumpResource(resource.cloudResourceUid());
+    }
+  }
 }
