@@ -34,6 +34,11 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
 
     String projectId = resourceUid.getGoogleProjectUid().getProjectId();
     try {
+      // We cannot distinguish between not having access to a project and the project no longer
+      // existing. Google returns 403 for both cases to prevent project id probing. For now, we
+      // think that due to how long it takes to delete a project vs marking it as ready for
+      // deletion, we assume a 403 is for the forbidden case and is an actual error of not being
+      // able to clean up with a resource. Therefore, we don't do special handling of the 403 here.
       Project project = resourceManagerCow.projects().get(projectId).execute();
 
       if (project == null
