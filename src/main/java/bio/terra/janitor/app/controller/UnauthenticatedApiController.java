@@ -4,7 +4,6 @@ import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.generated.controller.UnauthenticatedApi;
 import bio.terra.janitor.generated.model.SystemStatus;
 import bio.terra.janitor.generated.model.SystemStatusSystems;
-import bio.terra.janitor.service.cleanup.FlightScheduler;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Connection;
@@ -23,8 +22,7 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
 
   @Autowired
   UnauthenticatedApiController(
-      JanitorJdbcConfiguration jdbcConfiguration,
-      StairwayComponent stairwayComponent) {
+      JanitorJdbcConfiguration jdbcConfiguration, StairwayComponent stairwayComponent) {
     this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
     this.stairwayComponent = stairwayComponent;
   }
