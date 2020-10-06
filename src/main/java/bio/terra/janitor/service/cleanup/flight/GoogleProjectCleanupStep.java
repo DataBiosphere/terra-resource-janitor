@@ -7,7 +7,6 @@ import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.cloudresourcemanager.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.CloudResourceManagerScopes;
@@ -36,12 +35,13 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
           new CloudResourceManagerCow(
               clientConfig,
               new CloudResourceManager.Builder(
-                  Defaults.httpTransport(),
-                  Defaults.jsonFactory(),
-                  setHttpTimeout(
-                      new HttpCredentialsAdapter(
-                          GoogleCredentials.getApplicationDefault()
-                              .createScoped(CloudResourceManagerScopes.all())))));
+                      Defaults.httpTransport(),
+                      Defaults.jsonFactory(),
+                      setHttpTimeout(
+                          new HttpCredentialsAdapter(
+                              GoogleCredentials.getApplicationDefault()
+                                  .createScoped(CloudResourceManagerScopes.all()))))
+                  .setApplicationName(clientConfig.getClientName()));
     } catch (GeneralSecurityException | IOException e) {
       logger.warn("Failed to get application default Google Credentials", e);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -73,15 +73,13 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
     }
   }
 
+  /** Sets longer timeout because ResourceManager operation may take longer than default timeout. */
   private static HttpRequestInitializer setHttpTimeout(
       final HttpRequestInitializer requestInitializer) {
-    return new HttpRequestInitializer() {
-      @Override
-      public void initialize(HttpRequest httpRequest) throws IOException {
-        requestInitializer.initialize(httpRequest);
-        httpRequest.setConnectTimeout(3 * 60000); // 3 minutes connect timeout
-        httpRequest.setReadTimeout(3 * 60000); // 3 minutes read timeout
-      }
+    return httpRequest -> {
+      requestInitializer.initialize(httpRequest);
+      httpRequest.setConnectTimeout(3 * 60000); // 3 minutes connect timeout
+      httpRequest.setReadTimeout(3 * 60000); // 3 minutes read timeout
     };
   }
 }
