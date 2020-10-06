@@ -20,16 +20,13 @@ import org.springframework.stereotype.Controller;
 public class UnauthenticatedApiController implements UnauthenticatedApi {
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final StairwayComponent stairwayComponent;
-  private final FlightScheduler flightScheduler;
 
   @Autowired
   UnauthenticatedApiController(
       JanitorJdbcConfiguration jdbcConfiguration,
-      StairwayComponent stairwayComponent,
-      FlightScheduler flightScheduler) {
+      StairwayComponent stairwayComponent) {
     this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
     this.stairwayComponent = stairwayComponent;
-    this.flightScheduler = flightScheduler;
   }
 
   @Override
