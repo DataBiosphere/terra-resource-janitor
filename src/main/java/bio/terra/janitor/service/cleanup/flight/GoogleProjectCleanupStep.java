@@ -1,12 +1,17 @@
 package bio.terra.janitor.service.cleanup.flight;
 
 import bio.terra.cloudres.common.ClientConfig;
+import bio.terra.cloudres.google.api.services.common.Defaults;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.services.cloudresourcemanager.CloudResourceManager;
+import com.google.api.services.cloudresourcemanager.CloudResourceManagerScopes;
 import com.google.api.services.cloudresourcemanager.model.Project;
+import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -24,9 +29,19 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
   @Override
   protected StepResult cleanUp(CloudResourceUid resourceUid) {
     CloudResourceManagerCow resourceManagerCow;
+
     try {
       resourceManagerCow =
-          CloudResourceManagerCow.create(clientConfig, GoogleCredentials.getApplicationDefault());
+          new CloudResourceManagerCow(
+              clientConfig,
+              new CloudResourceManager.Builder(
+                      Defaults.httpTransport(),
+                      Defaults.jsonFactory(),
+                      setHttpTimeout(
+                          new HttpCredentialsAdapter(
+                              GoogleCredentials.getApplicationDefault()
+                                  .createScoped(CloudResourceManagerScopes.all()))))
+                  .setApplicationName(clientConfig.getClientName()));
     } catch (GeneralSecurityException | IOException e) {
       logger.warn("Failed to get application default Google Credentials", e);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -56,5 +71,15 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
       // Catch all exceptions from GOOGLE and consider this retryable error.
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
+  }
+
+  /** Sets longer timeout because ResourceManager operation may take longer than default timeout. */
+  private static HttpRequestInitializer setHttpTimeout(
+      final HttpRequestInitializer requestInitializer) {
+    return httpRequest -> {
+      requestInitializer.initialize(httpRequest);
+      httpRequest.setConnectTimeout(3 * 60000); // 3 minutes connect timeout
+      httpRequest.setReadTimeout(3 * 60000); // 3 minutes read timeout
+    };
   }
 }

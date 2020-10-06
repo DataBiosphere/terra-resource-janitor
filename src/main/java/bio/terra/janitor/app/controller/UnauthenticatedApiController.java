@@ -4,7 +4,6 @@ import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.generated.controller.UnauthenticatedApi;
 import bio.terra.janitor.generated.model.SystemStatus;
 import bio.terra.janitor.generated.model.SystemStatusSystems;
-import bio.terra.janitor.service.cleanup.FlightScheduler;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Connection;
@@ -20,16 +19,12 @@ import org.springframework.stereotype.Controller;
 public class UnauthenticatedApiController implements UnauthenticatedApi {
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final StairwayComponent stairwayComponent;
-  private final FlightScheduler flightScheduler;
 
   @Autowired
   UnauthenticatedApiController(
-      JanitorJdbcConfiguration jdbcConfiguration,
-      StairwayComponent stairwayComponent,
-      FlightScheduler flightScheduler) {
+      JanitorJdbcConfiguration jdbcConfiguration, StairwayComponent stairwayComponent) {
     this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
     this.stairwayComponent = stairwayComponent;
-    this.flightScheduler = flightScheduler;
   }
 
   @Override

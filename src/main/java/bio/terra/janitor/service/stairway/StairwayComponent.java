@@ -60,7 +60,7 @@ public class StairwayComponent {
   }
 
   public void initialize() {
-    logger.warn("stairway username {}", stairwayJdbcConfiguration.getUsername());
+    logger.info("stairway username {}", stairwayJdbcConfiguration.getUsername());
     try {
       // TODO(CA-941): Determine if Stairway and Janitor database migrations need to be coordinated.
       stairway.initialize(
