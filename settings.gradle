@@ -1,2 +1,4 @@
 rootProject.name = 'terra-resource-janitor'
 include 'terra-resource-janitor-client'
+
+enableFeaturePreview('ONE_LOCKFILE_PER_PROJECT')
