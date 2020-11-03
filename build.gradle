@@ -128,6 +128,9 @@ java {
 ext {
     // where to place the Cloud Profiler agent in the container
     cloudProfilerLocation = '/opt/cprof'
+
+    // location for jib extras, including the Java agent
+    jibExtraDirectory = "${buildDir}/jib-agents"
 }
 task downloadProfilerAgent(type: Download) {
     // where to download the Cloud Profiler agent https://cloud.google.com/profiler/docs/profiling-java
@@ -136,7 +139,7 @@ task downloadProfilerAgent(type: Download) {
 }
 task extractProfilerAgent(dependsOn: downloadProfilerAgent, type: Copy) {
     from tarTree(downloadProfilerAgent.dest)
-    into "${buildDir}/jib-agents/${cloudProfilerLocation}"
+    into "${jibExtraDirectory}/${cloudProfilerLocation}"
 }
 
 jib {
