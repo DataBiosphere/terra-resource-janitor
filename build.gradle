@@ -85,7 +85,7 @@ dependencies {
     // Versioned direct deps
     implementation group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.7.3'
     implementation group: 'com.google.guava', name: 'guava', version: '29.0-jre'
-    implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
+    implementation group: 'org.webjars', name: 'webjars-locator-core', version: '0.46'
     implementation group: 'com.google.cloud', name: 'google-cloud-pubsub', version: '1.104.1'
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
     implementation group: 'org.liquibase' , name: 'liquibase-core', version: '3.10.0'
@@ -106,7 +106,7 @@ dependencies {
 
     // Swagger deps
     swaggerCodegen group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli'
-    runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.35.2"
+    runtimeOnly group: 'org.webjars.npm', name: 'swagger-ui-dist', version: '3.35.2'
     implementation group: 'io.swagger.core.v3', name: 'swagger-annotations'
 
     // Test deps
@@ -124,10 +124,10 @@ dependencyLocking {
 }
 
 // for scans
-if (hasProperty("buildScan")) {
+if (hasProperty('buildScan')) {
     buildScan {
-        termsOfServiceUrl = "https://gradle.com/terms-of-service"
-        termsOfServiceAgree = "yes"
+        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+        termsOfServiceAgree = 'yes'
     }
 }
 
