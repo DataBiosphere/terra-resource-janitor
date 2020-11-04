@@ -108,6 +108,16 @@ The db instance name can be also found under `...crl_janitor/postgres/instance` 
 Note that you must stop the local postgres first to free the 5432 port.
 See [this document](https://cloud.google.com/sql/docs/postgres/connect-admin-proxy) for more details.
 
+### Dependencies
+We use [Gradle's dependency locking](https://docs.gradle.org/current/userguide/dependency_locking.html)
+to ensure that builds use the same transitive dependencies, so they're reproducible. This means that
+adding or updating a dependency requires telling Gradle to save the change. If you're getting errors
+that mention "dependency lock state" after changing a dep, you need to do this step.
+
+```sh
+./gradlew dependencies --write-locks
+```
+
 ## Testing
 
 ### Unit tests
