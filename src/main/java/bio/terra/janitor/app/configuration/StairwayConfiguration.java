@@ -9,7 +9,12 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "janitor.stairway")
 public class StairwayConfiguration {
-  private String name;
+  /**
+   * Using a fixed Stairway name helps us keep the same record of Stairway instance. Otherwise,
+   * Stairway creates random name after re-deploy, hence we can not recover previous PENDING flight.
+   */
+  private String name = "janitor-stairway";
+
   private String clusterName;
   private boolean forceCleanStart;
   private boolean migrateUpgrade;

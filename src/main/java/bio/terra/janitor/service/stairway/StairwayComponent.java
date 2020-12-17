@@ -45,10 +45,12 @@ public class StairwayComponent {
         stairwayConfiguration.getClusterName(),
         stairwayConfiguration.getClusterName());
     // TODO(CA-941): Configure the workqueue pubsub subscription and topic for multi-instance.
+    // TODO(PF-314): Cleanup old flightlogs.
     Stairway.Builder builder =
         Stairway.newBuilder()
             .maxParallelFlights(stairwayConfiguration.getMaxParallelFlights())
             .applicationContext(applicationContext)
+            .keepFlightLog(true)
             .stairwayName(stairwayConfiguration.getName())
             .stairwayClusterName(stairwayConfiguration.getClusterName())
             .stairwayHook(new CleanupLoggingHook());
@@ -68,7 +70,7 @@ public class StairwayComponent {
           stairwayConfiguration.isForceCleanStart(),
           stairwayConfiguration.isMigrateUpgrade());
       // TODO(CA-941): Get obsolete Stairway instances from k8s for multi-instance stairway.
-      stairway.recoverAndStart(ImmutableList.of());
+      stairway.recoverAndStart(ImmutableList.of(stairwayConfiguration.getName()));
     } catch (StairwayException | InterruptedException e) {
       status = Status.ERROR;
       throw new RuntimeException("Error starting Stairway", e);
