@@ -60,10 +60,6 @@ public class TrackedResourceService {
                 .forbiddenStates(
                     ImmutableSet.of(TrackedResourceState.DONE, TrackedResourceState.DUPLICATED))
                 .build());
-    System.out.println("~~~~~~~~~~~~~~~~duplicateResources");
-    System.out.println(duplicateResources);
-    System.out.println("~~~~~~~~~~~~~~~~resource");
-    System.out.println(resource);
     if (!duplicateResources.isEmpty()) {
       if (duplicateResources.size() > 1) {
         // If all resources are created through this function, they should be duplicated
