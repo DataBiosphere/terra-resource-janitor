@@ -171,7 +171,7 @@ public class JanitorApiControllerTest {
         new CreateResourceRequestBody()
             .resourceUid(resourceUid)
             .creation(CREATION)
-            .expiration(EXPIRATION.plusMinutes(1))
+            .expiration(EXPIRATION.plusMinutes(10))
             .labels(DEFAULT_LABELS);
 
     String createResponse1 =
