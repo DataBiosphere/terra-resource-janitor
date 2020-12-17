@@ -69,6 +69,10 @@ public class TrackedResourceService {
             "There was more than one not DONE or DUPLICATE resource with the same CloudResourceUid {}",
             resource.cloudResourceUid());
       }
+      System.out.println("~~~~~~~~~~~~duplicateResources");
+      System.out.println(duplicateResources);
+      System.out.println("~~~~~~~~~~~~duplicateResources");
+      System.out.println(resource);
       Instant lastExpiration =
           duplicateResources.stream()
               .map(TrackedResource::expiration)

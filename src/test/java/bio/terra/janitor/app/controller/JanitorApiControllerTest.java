@@ -201,6 +201,10 @@ public class JanitorApiControllerTest {
     String id1 = objectMapper.readValue(createResponse1, CreatedResource.class).getId();
     String id2 = objectMapper.readValue(createResponse2, CreatedResource.class).getId();
 
+    System.out.println("~~~~~~~~`id1");
+    System.out.println(id1);
+    System.out.println("~~~~~~~~`id2");
+    System.out.println(id2);
     String getResponseResourceUid =
         this.mvc
             .perform(
