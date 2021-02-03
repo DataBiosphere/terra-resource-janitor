@@ -1,5 +1,6 @@
 package bio.terra.janitor.service.stairway;
 
+import bio.terra.common.stairway.TracingHook;
 import bio.terra.janitor.app.configuration.StairwayConfiguration;
 import bio.terra.janitor.app.configuration.StairwayJdbcConfiguration;
 import bio.terra.janitor.service.cleanup.CleanupLoggingHook;
@@ -53,7 +54,8 @@ public class StairwayComponent {
             .keepFlightLog(true)
             .stairwayName(stairwayConfiguration.getName())
             .stairwayClusterName(stairwayConfiguration.getClusterName())
-            .stairwayHook(new CleanupLoggingHook());
+            .stairwayHook(new CleanupLoggingHook())
+            .stairwayHook(new TracingHook());
     try {
       stairway = builder.build();
     } catch (StairwayExecutionException e) {
