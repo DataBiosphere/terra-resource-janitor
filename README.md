@@ -49,15 +49,22 @@ Swagger in local server: http://127.0.0.1:8080/swagger-ui.html
 
 You can connect to local janitor DB by running: 
 ```
-psql postgresql://127.0.0.1:5432/testdb -U dbuser
+psql postgresql://127.0.0.1:5432/janitor_db -U janitor_user
 ```
 enter `dbpwd` as password
 
 To connect to stairway db, run: 
 ```
-psql postgresql://127.0.0.1:5432/testdb_stairway -U dbuser_stairway
+psql postgresql://127.0.0.1:5432/janitor_stairway -U janitor_user_stairway
 ```
 enter `dbpwd_stairway` as password
+
+### Using an installed Postgres
+If you use an installed Postgres, then you do not need to launch the postgres in docker with `run_postgres.sh start`.
+However, you do need to do a one-time creation of the databases and user in the installed Postgres by running:
+```shell script
+psql -U postgres -f local-dev/local-postgres-init.sql
+```
 
 ## Deploy to GKE cluster:
 The provided setup script clones the terra-helm and terra-helmfile git repos,
@@ -129,7 +136,7 @@ local-dev/run_postgres.sh start
 
 Then run unit tests:
 ```
-./gradlew test
+./gradlew unittest
 ```
 Stop the local postgres:
 ```

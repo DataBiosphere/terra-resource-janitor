@@ -1,8 +1,8 @@
 package bio.terra.janitor.app;
 
+import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.service.cleanup.FlightScheduler;
-import bio.terra.janitor.service.migirate.MigrateService;
 import bio.terra.janitor.service.pubsub.TrackedResourceSubscriber;
 import bio.terra.janitor.service.stackdriver.StackdriverExporter;
 import bio.terra.janitor.service.stairway.StairwayComponent;
@@ -18,7 +18,7 @@ public final class StartupInitializer {
   public static void initialize(ApplicationContext applicationContext) {
     applicationContext.getBean(StackdriverExporter.class).initialize();
     // Initialize or upgrade the database depending on the configuration
-    MigrateService migrateService = applicationContext.getBean(MigrateService.class);
+    LiquibaseMigrator migrateService = applicationContext.getBean(LiquibaseMigrator.class);
     JanitorJdbcConfiguration janitorJdbcConfiguration =
         applicationContext.getBean(JanitorJdbcConfiguration.class);
 
