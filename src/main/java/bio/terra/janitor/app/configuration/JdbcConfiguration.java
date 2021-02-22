@@ -68,6 +68,7 @@ public class JdbcConfiguration {
     ObjectPool<PoolableConnection> connectionPool =
         new GenericObjectPool<>(poolableConnectionFactory);
 
+
     poolableConnectionFactory.setPool(connectionPool);
 
 
