@@ -6,7 +6,7 @@ janitor:
     recreate-db-on-start: true
     update-db-on-start: true
     uri: jdbc:postgresql://127.0.0.1:5432/janitor_db
-    username: janitor_user
+    username: dbuser
   iam:
     config-based-authz-enabled: true
     # n.b. this list is stored as a JSON string and parsed by the application. The surrounding
@@ -19,6 +19,6 @@ janitor:
     db:
       password: dbpwd_stairway
       uri: jdbc:postgresql://127.0.0.1:5432/janitor_stairway
-      username: janitor_user_stairway
+      username: dbuser_stairway
     force-clean-start: true
     migrate-upgrade: true

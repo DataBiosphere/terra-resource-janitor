@@ -49,13 +49,13 @@ Swagger in local server: http://127.0.0.1:8080/swagger-ui.html
 
 You can connect to local janitor DB by running: 
 ```
-psql postgresql://127.0.0.1:5432/janitor_db -U janitor_user
+psql postgresql://127.0.0.1:5432/janitor_db -U dbuser
 ```
 enter `dbpwd` as password
 
 To connect to stairway db, run: 
 ```
-psql postgresql://127.0.0.1:5432/janitor_stairway -U janitor_user_stairway
+psql postgresql://127.0.0.1:5432/janitor_stairway -U dbuser_stairway
 ```
 enter `dbpwd_stairway` as password
 

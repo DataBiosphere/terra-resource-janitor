@@ -1,10 +1,10 @@
 #!/bin/bash
 
-export DATABASE_USER=janitor_user
+export DATABASE_USER=dbuser
 export DATABASE_USER_PASSWORD=dbpwd
 export DATABASE_NAME=janitor_db
 export JANITOR_STACKDRIVER_ENABLED=false
-export STAIRWAY_DATABASE_USER=janitor_user_stairway
+export STAIRWAY_DATABASE_USER=dbuser_stairway
 export STAIRWAY_DATABASE_USER_PASSWORD=dbpwd_stairway
 export STAIRWAY_DATABASE_NAME=janitor_stairway
 export TRACK_RESOURCE_PUBSUB_ENABLED=false
