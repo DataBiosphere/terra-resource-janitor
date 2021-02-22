@@ -70,6 +70,8 @@ public class JdbcConfiguration {
 
     poolableConnectionFactory.setPool(connectionPool);
 
+
+
     dataSource = new PoolingDataSource<>(connectionPool);
   }
 
