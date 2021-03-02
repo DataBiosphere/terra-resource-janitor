@@ -2,6 +2,7 @@ package bio.terra.janitor.service.janitor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import bio.terra.common.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.db.TrackedResourceId;
@@ -10,7 +11,6 @@ import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.CreateResourceRequestBody;
 import bio.terra.janitor.generated.model.GoogleProjectUid;
 import bio.terra.janitor.generated.model.ResourceState;
-import bio.terra.janitor.service.iam.AuthenticatedUserRequest;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -23,6 +23,8 @@ import org.springframework.test.annotation.DirtiesContext;
 public class JanitorApiServiceTest extends BaseUnitTest {
   private static final OffsetDateTime DEFAULT_TIME = OffsetDateTime.now();
   private static final String ADMIN_USER_EMAIL = "test1@email.com";
+  private static final String ADMIN_SUBJECT_ID = "test1";
+  private static final String ADMIN_TOKEN = "1234.ab-CD";
 
   @Autowired private JanitorApiService janitorApiService;
   @Autowired private JanitorDao janitorDao;
@@ -40,7 +42,11 @@ public class JanitorApiServiceTest extends BaseUnitTest {
   }
 
   private static AuthenticatedUserRequest createAdminRequest() {
-    return new AuthenticatedUserRequest().email(ADMIN_USER_EMAIL);
+    return AuthenticatedUserRequest.builder()
+        .setEmail(ADMIN_USER_EMAIL)
+        .setSubjectId(ADMIN_SUBJECT_ID)
+        .setToken(ADMIN_TOKEN)
+        .build();
   }
 
   @Test

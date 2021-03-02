@@ -1,6 +1,6 @@
 package bio.terra.janitor.app.controller;
 
-import bio.terra.janitor.common.exception.ErrorReportException;
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.janitor.generated.model.ErrorReport;
 import java.util.List;
 import org.slf4j.Logger;

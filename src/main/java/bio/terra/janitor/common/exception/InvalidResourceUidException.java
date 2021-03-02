@@ -1,5 +1,7 @@
 package bio.terra.janitor.common.exception;
 
+import bio.terra.common.exception.BadRequestException;
+
 /**
  * Exception when {@link bio.terra.janitor.generated.model.CloudResourceUid} in request is invalid.
  */

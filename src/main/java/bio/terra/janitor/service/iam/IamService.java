@@ -1,7 +1,8 @@
 package bio.terra.janitor.service.iam;
 
+import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.app.configuration.IamConfiguration;
-import bio.terra.janitor.common.exception.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
