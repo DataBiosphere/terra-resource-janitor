@@ -15,7 +15,6 @@ import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
 import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
-import bio.terra.janitor.service.iam.AuthHeaderKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.services.cloudresourcemanager.model.Operation;
@@ -64,6 +63,13 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
+
+  private static final String CLAIM_EMAIL_KEY = "OIDC_CLAIM_email";
+  private static final String CLAIM_SUBJECT_KEY = "OIDC_CLAIM_user_id";
+  private static final String CLAIM_TOKEN_KEY = "OIDC_ACCESS_token";
+  private static final String ADMIN_USER_EMAIL = "test1@email.com";
+  private static final String ADMIN_SUBJECT_ID = "test1";
+  private static final String ADMIN_TOKEN = "1234.ab-CD";
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -379,7 +385,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
               .perform(
                   get("/api/janitor/v1/resource")
                       .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resource))
-                      .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), "test1@email.com"))
+                      .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                      .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                      .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN))
               .andDo(MockMvcResultHandlers.print())
               .andExpect(status().isOk())
               .andReturn()

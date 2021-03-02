@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.generated.model.*;
-import bio.terra.janitor.service.iam.AuthHeaderKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
@@ -47,7 +46,14 @@ public class JanitorApiControllerTest {
   private static final OffsetDateTime CREATION = OffsetDateTime.now(ZoneOffset.UTC);
   private static final OffsetDateTime EXPIRATION =
       OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(10);
+  private static final String CLAIM_EMAIL_KEY = "OIDC_CLAIM_email";
+  private static final String CLAIM_SUBJECT_KEY = "OIDC_CLAIM_user_id";
+  private static final String CLAIM_TOKEN_KEY = "OIDC_ACCESS_token";
+  private static final String CLAIM_AUTH_KEY = "Authorization";
   private static final String ADMIN_USER_EMAIL = "test1@email.com";
+  private static final String ADMIN_SUBJECT_ID = "test1";
+  private static final String ADMIN_TOKEN = "1234.ab-CD";
+  private static final String ADMIN_BEARER_TOKEN = "Bearer ".concat(ADMIN_TOKEN);
 
   @Autowired private MockMvc mvc;
 
@@ -72,7 +78,9 @@ public class JanitorApiControllerTest {
             .perform(
                 post("/api/janitor/v1/resource")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL)
+                    .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                    .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                    .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN)
                     .content(objectMapper.writeValueAsString(body)))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
@@ -86,7 +94,9 @@ public class JanitorApiControllerTest {
         this.mvc
             .perform(
                 get(String.format("/api/janitor/v1/resource/%s", createdResource.getId()))
-                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+                    .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                    .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                    .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(createdResource.getId()))
@@ -122,7 +132,9 @@ public class JanitorApiControllerTest {
             post("/api/janitor/v1/resource")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body))
-                .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+                .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN))
         .andDo(MockMvcResultHandlers.print())
         .andExpect(status().isBadRequest());
   }
@@ -149,11 +161,40 @@ public class JanitorApiControllerTest {
   }
 
   @Test
+  public void createResource_notAuthorizedBadToken() throws Exception {
+    CloudResourceUid resourceUid =
+        new CloudResourceUid()
+            .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString()));
+    CreateResourceRequestBody body =
+        new CreateResourceRequestBody()
+            .resourceUid(resourceUid)
+            .creation(CREATION)
+            .expiration(EXPIRATION)
+            .labels(DEFAULT_LABELS);
+
+    this.mvc
+        .perform(
+            post("/api/janitor/v1/resource")
+                .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+
+                // This should cause failure, as ADMIN_TOKEN is not a properly formatted token for
+                // the "Authorization' header.
+                .header(CLAIM_AUTH_KEY, ADMIN_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+        .andDo(MockMvcResultHandlers.print())
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
   public void getResource_notFound() throws Exception {
     this.mvc
         .perform(
             get(String.format("/api/janitor/v1/resource/not-a-real-id"))
-                .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+                .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN))
         .andDo(MockMvcResultHandlers.print())
         .andExpect(status().isNotFound());
   }
@@ -182,7 +223,9 @@ public class JanitorApiControllerTest {
                 post("/api/janitor/v1/resource")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(body1))
-                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+                    .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                    .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                    .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
             .andReturn()
@@ -194,7 +237,9 @@ public class JanitorApiControllerTest {
                 post("/api/janitor/v1/resource")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(body2))
-                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+                    .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                    .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                    .header(CLAIM_AUTH_KEY, ADMIN_BEARER_TOKEN))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
             .andReturn()
@@ -208,7 +253,9 @@ public class JanitorApiControllerTest {
             .perform(
                 get("/api/janitor/v1/resource")
                     .queryParam("cloudResourceUid", objectMapper.writeValueAsString(resourceUid))
-                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+                    .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                    .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                    .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
             .andReturn()
@@ -227,7 +274,9 @@ public class JanitorApiControllerTest {
             .perform(
                 get("/api/janitor/v1/resource")
                     .queryParam("state", ResourceState.READY.toString())
-                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+                    .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                    .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                    .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
             .andReturn()
@@ -246,7 +295,9 @@ public class JanitorApiControllerTest {
             .perform(
                 get("/api/janitor/v1/resource")
                     .queryParam("limit", String.valueOf(1))
-                    .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+                    .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                    .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                    .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isOk())
             .andReturn()
@@ -261,7 +312,9 @@ public class JanitorApiControllerTest {
                 // Offset but no limit.
                 .queryParam("limit", String.valueOf(0))
                 .queryParam("offset", String.valueOf(1))
-                .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+                .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN))
         .andDo(MockMvcResultHandlers.print())
         .andExpect(status().is(400));
   }
@@ -271,7 +324,9 @@ public class JanitorApiControllerTest {
     this.mvc
         .perform(
             put("/api/janitor/v1/resource/bumpErrors")
-                .header(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName(), ADMIN_USER_EMAIL))
+                .header(CLAIM_EMAIL_KEY, ADMIN_USER_EMAIL)
+                .header(CLAIM_SUBJECT_KEY, ADMIN_SUBJECT_ID)
+                .header(CLAIM_TOKEN_KEY, ADMIN_TOKEN))
         .andDo(MockMvcResultHandlers.print())
         .andExpect(status().is(204));
   }

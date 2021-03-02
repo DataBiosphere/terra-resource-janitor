@@ -1,6 +1,6 @@
 package bio.terra.janitor.common;
 
-import bio.terra.janitor.common.exception.ErrorReportException;
+import bio.terra.common.exception.ErrorReportException;
 import org.springframework.http.HttpStatus;
 
 /** Exception when resource met criteria is not found. */
