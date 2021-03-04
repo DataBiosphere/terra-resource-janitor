@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/** A component for setting up Stackdriver stats & tracing exporting. */
+/** A component for setting up Stackdriver stats and tracing exporting. */
 @Component
 public class StackdriverExporter {
   private final Logger logger = LoggerFactory.getLogger(StackdriverExporter.class);
