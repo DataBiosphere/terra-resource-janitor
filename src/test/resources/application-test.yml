@@ -7,6 +7,9 @@ janitor:
     update-db-on-start: true
     uri: jdbc:postgresql://127.0.0.1:5432/testdb
     username: dbuser
+    # See PF-485 and JdbcConfiguration#isJmxEnabled() for more details.  If/when we stop using
+    # @DirtiesContext, this can be removed.
+    jmx-enabled: false
   iam:
     config-based-authz-enabled: true
     # n.b. this list is stored as a JSON string and parsed by the application. The surrounding
@@ -20,5 +23,8 @@ janitor:
       password: dbpwd_stairway
       uri: jdbc:postgresql://127.0.0.1:5432/testdb_stairway
       username: dbuser_stairway
+      # See PF-485 and JdbcConfiguration#isJmxEnabled() for more details.  If/when we stop using
+      # @DirtiesContext, this can be removed.
+      jmx-enabled: false
     force-clean-start: true
     migrate-upgrade: true
