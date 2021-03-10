@@ -14,7 +14,7 @@ plugins {
 
 allprojects {
     group = 'bio.terra'
-    version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.0.1-SNAPSHOT'
+    version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.2.0-SNAPSHOT'
     sourceCompatibility = JavaVersion.VERSION_11
     ext {
         artifactGroup = "${group}.janitor"
@@ -40,7 +40,7 @@ allprojects {
             dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.5"
             dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.22"
 
-            dependency group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema', version: "0.0.2-SNAPSHOT"
+            dependency group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema', version: "0.5.0"
         }
     }
 
@@ -68,9 +68,9 @@ dependencies {
     implementation group: 'bio.terra', name: 'stairway', version: '0.0.37-SNAPSHOT'
     implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.17-SNAPSHOT"
     implementation group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema'
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.0.9-SNAPSHOT'
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.0.4-SNAPSHOT'
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage', version: '0.0.8-SNAPSHOT'
+    implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.4.0'
+    implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.4.0'
+    implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage', version: '0.5.0'
 
     // Versioned direct deps
     implementation group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.7.3'
