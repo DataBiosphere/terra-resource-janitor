@@ -14,7 +14,7 @@ plugins {
 
 allprojects {
     group = 'bio.terra'
-    version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.0.1-SNAPSHOT'
+    version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.2.0-SNAPSHOT'
     sourceCompatibility = JavaVersion.VERSION_11
     ext {
         artifactGroup = "${group}.janitor"
@@ -40,7 +40,7 @@ allprojects {
             dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.5"
             dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.22"
 
-            dependency group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema', version: "0.4.0"
+            dependency group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema', version: "0.5.0"
         }
     }
 
