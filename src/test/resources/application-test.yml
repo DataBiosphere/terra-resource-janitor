@@ -28,3 +28,7 @@ janitor:
       jmx-enabled: false
     force-clean-start: true
     migrate-upgrade: true
+
+terra.common:
+  tracing:
+    stackdriverExportEnabled: false
