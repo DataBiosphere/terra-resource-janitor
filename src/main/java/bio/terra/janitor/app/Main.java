@@ -7,7 +7,12 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @ComponentScan(
-    basePackages = {"bio.terra.janitor", "bio.terra.common.iam", "bio.terra.common.migrate"})
+    basePackages = {
+      "bio.terra.janitor",
+      "bio.terra.common.iam",
+      "bio.terra.common.migrate",
+      "bio.terra.common.tracing"
+    })
 public class Main {
   public static void main(String[] args) {
     SpringApplication.run(Main.class, args);
