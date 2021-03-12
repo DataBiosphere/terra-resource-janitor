@@ -34,6 +34,11 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   }
 
   @Override
+  public ResourceType visit(GoogleAiNotebookInstanceUid resource) {
+    return GOOGLE_NOTEBOOK_INSTANCE;
+  }
+
+  @Override
   public ResourceType noResourceVisited(CloudResourceUid resource) {
     throw new InvalidResourceUidException("invalid CloudResourceUid for" + resource);
   }
