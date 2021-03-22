@@ -14,6 +14,8 @@ public interface CloudResourceUidVisitor<R> {
 
   R visit(GoogleBigQueryDatasetUid resource);
 
+  R visit(GoogleAiNotebookInstanceUid resource);
+
   R noResourceVisited(CloudResourceUid resource);
 
   static <R> R visit(CloudResourceUid resource, CloudResourceUidVisitor<R> visitor) {
@@ -27,6 +29,8 @@ public interface CloudResourceUidVisitor<R> {
       return visitor.visit(resource.getGoogleBigQueryDatasetUid());
     } else if (resource.getGoogleBigQueryTableUid() != null) {
       return visitor.visit(resource.getGoogleBigQueryTableUid());
+    } else if (resource.getGoogleAiNotebookInstanceUid() != null) {
+      return visitor.visit(resource.getGoogleAiNotebookInstanceUid());
     } else {
       return visitor.noResourceVisited(resource);
     }

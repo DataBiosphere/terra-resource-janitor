@@ -131,7 +131,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     CloudResourceUid resource =
         new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
-    publishAndVerifyCleanupDone(resource);
+    publishAndVerify(resource, ResourceState.DONE);
 
     // Resource is removed
     assertNull(storageCow.get(bucketName));
@@ -153,7 +153,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     CloudResourceUid resource =
         new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName(bucketName));
 
-    publishAndVerifyCleanupDone(resource);
+    publishAndVerify(resource, ResourceState.DONE);
   }
 
   @Test
@@ -172,7 +172,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         new CloudResourceUid()
             .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
-    publishAndVerifyCleanupDone(resource);
+    publishAndVerify(resource, ResourceState.DONE);
 
     // Resource is removed
     assertNull(storageCow.get(blobId));
@@ -197,7 +197,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         new CloudResourceUid()
             .googleBlobUid(new GoogleBlobUid().bucketName(bucketName).blobName(blobId.getName()));
 
-    publishAndVerifyCleanupDone(resource);
+    publishAndVerify(resource, ResourceState.DONE);
 
     // Resource is removed
     assertNull(storageCow.get(blobId));
@@ -227,7 +227,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
                 new GoogleBigQueryDatasetUid().projectId(projectId).datasetId(datasetName));
 
     // Publish a message to cleanup the dataset and make sure content inside is also deleted.
-    publishAndVerifyCleanupDone(datasetUid);
+    publishAndVerify(datasetUid, ResourceState.DONE);
 
     // Resource is removed
     assertNull(bigQueryCow.getDataset(datasetName));
@@ -242,7 +242,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
                     .projectId(projectId)
                     .datasetId(datasetName)
                     .tableId(tableName));
-    publishAndVerifyCleanupDone(tableUid);
+    publishAndVerify(tableUid, ResourceState.DONE);
   }
 
   @Test
@@ -269,12 +269,25 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
                     .projectId(projectId)
                     .datasetId(datasetName)
                     .tableId(tableName));
-    publishAndVerifyCleanupDone(tableUid);
+    publishAndVerify(tableUid, ResourceState.DONE);
 
     // Resource is removed
     assertNull(bigQueryCow.getTable(tableId));
     // Cleanup the dataset
     assertTrue(bigQueryCow.delete(datasetName));
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_googleNotebookUnsupported() throws Exception {
+    CloudResourceUid notebookUid =
+        new CloudResourceUid()
+            .googleAiNotebookInstanceUid(
+                new GoogleAiNotebookInstanceUid()
+                    .projectId(projectId)
+                    .location("uswest1-b")
+                    .instanceId("foo"));
+    // Do not actually create the notebook. Cleanup is unsupported so far, so we expect an error.
+    publishAndVerify(notebookUid, ResourceState.ERROR);
   }
 
   @Test
@@ -286,7 +299,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     CloudResourceUid resource =
         new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
 
-    publishAndVerifyCleanupDone(resource);
+    publishAndVerify(resource, ResourceState.DONE);
 
     // Project is ready for deletion
     Project project = resourceManagerCow.projects().get(projectId).execute();
@@ -301,7 +314,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     CloudResourceUid resource =
         new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
 
-    publishAndVerifyCleanupDone(resource);
+    publishAndVerify(resource, ResourceState.DONE);
 
     // Project is ready for deletion
     Project project = resourceManagerCow.projects().get(projectId).execute();
@@ -309,9 +322,11 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   }
 
   /**
-   * Publish message to Janitor to track resource and verify the resource by GET resource endpoint.
+   * Publish message to Janitor to track resource and verify the resource reaches the expected state
+   * by GET resource endpoint.
    */
-  private void publishAndVerifyCleanupDone(CloudResourceUid resource) throws Exception {
+  private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
+      throws Exception {
     OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
 
     ByteString data =
@@ -322,7 +337,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
     TrackedResourceInfoList resourceInfoList =
-        pollUntilResourceCleanFinished(resource, Duration.ofSeconds(5), 10);
+        pollUntilResourceState(resource, expectedState, Duration.ofSeconds(5), 10);
 
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
@@ -330,7 +345,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals(publishTime, trackedResourceInfo.getCreation());
     assertEquals(publishTime, trackedResourceInfo.getExpiration());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
-    assertEquals(ResourceState.DONE, trackedResourceInfo.getState());
+    assertEquals(expectedState, trackedResourceInfo.getState());
   }
 
   /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
@@ -368,14 +383,15 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   }
 
   /** Generates a random project id start with a letter and 30 characters long. */
-  public static String randomProjectId() {
+  private static String randomProjectId() {
     // Project ids must starting with a letter and be no more than 30 characters long.
     return "p" + randomName().substring(0, 29);
   }
 
-  /** Poll from get resource endpoint until it get resources from Janitor. */
-  public TrackedResourceInfoList pollUntilResourceCleanFinished(
-      CloudResourceUid resource, Duration period, int maxNumPolls) throws Exception {
+  /** Poll from get resource endpoint until it gets resources from Janitor in the expected state. */
+  private TrackedResourceInfoList pollUntilResourceState(
+      CloudResourceUid resource, ResourceState expectedState, Duration period, int maxNumPolls)
+      throws Exception {
     TrackedResourceInfoList trackedResourceInfoList = null;
     int numPolls = 0;
     while (numPolls < maxNumPolls) {
@@ -397,7 +413,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
       trackedResourceInfoList = objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
       if (trackedResourceInfoList != null
           && trackedResourceInfoList.getResources().size() > 0
-          && trackedResourceInfoList.getResources().get(0).getState().equals(ResourceState.DONE)) {
+          && trackedResourceInfoList.getResources().get(0).getState().equals(expectedState)) {
         return trackedResourceInfoList;
       }
       ++numPolls;

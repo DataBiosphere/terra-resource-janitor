@@ -25,6 +25,8 @@ public class BackwardsCompatibilityTest extends BaseUnitTest {
         ResourceType.GOOGLE_BIGQUERY_DATASET, ResourceType.valueOf("GOOGLE_BIGQUERY_DATASET"));
     assertEquals(ResourceType.GOOGLE_BLOB, ResourceType.valueOf("GOOGLE_BLOB"));
     assertEquals(ResourceType.GOOGLE_BUCKET, ResourceType.valueOf("GOOGLE_BUCKET"));
+    assertEquals(
+        ResourceType.GOOGLE_NOTEBOOK_INSTANCE, ResourceType.valueOf("GOOGLE_NOTEBOOK_INSTANCE"));
     assertEquals(ResourceType.GOOGLE_PROJECT, ResourceType.valueOf("GOOGLE_PROJECT"));
   }
 
