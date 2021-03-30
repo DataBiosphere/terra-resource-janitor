@@ -144,7 +144,8 @@ jib {
                         '-cprof_service=bio.terra.janitor' +
                         ',-cprof_service_version=' + version +
                         ',-cprof_enable_heap_sampling=true' +
-                        ',-logtostderr'
+                        ',-logtostderr' +
+                        ',-minloglevel=2'
         ]
     }
 }
