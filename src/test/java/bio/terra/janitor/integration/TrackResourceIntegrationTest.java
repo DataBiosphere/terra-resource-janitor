@@ -9,6 +9,8 @@ import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
+import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
@@ -16,10 +18,13 @@ import bio.terra.janitor.common.BaseIntegrationTest;
 import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.services.cloudresourcemanager.model.Operation;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.cloudresourcemanager.model.ResourceId;
+import com.google.api.services.notebooks.v1.model.Instance;
+import com.google.api.services.notebooks.v1.model.VmImage;
 import com.google.cloud.bigquery.*;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.storage.BlobId;
@@ -30,6 +35,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -55,6 +61,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
   private Publisher publisher;
 
+  private AIPlatformNotebooksCow notebooksCow;
   private StorageCow storageCow;
   private BigQueryCow bigQueryCow;
   private CloudResourceManagerCow resourceManagerCow;
@@ -86,6 +93,10 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
                     testConfiguration.getClientGoogleCredentialsOrDie()))
             .build();
 
+    notebooksCow =
+        AIPlatformNotebooksCow.create(
+            testConfiguration.createClientConfig(),
+            testConfiguration.getResourceAccessGoogleCredentialsOrDie());
     storageCow =
         new StorageCow(
             testConfiguration.createClientConfig(),
@@ -93,7 +104,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
                 .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
                 .setProjectId(projectId)
                 .build());
-
     bigQueryCow =
         new BigQueryCow(
             testConfiguration.createClientConfig(),
@@ -101,7 +111,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
                 .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
                 .setProjectId(projectId)
                 .build());
-
     resourceManagerCow =
         CloudResourceManagerCow.create(
             testConfiguration.createClientConfig(),
@@ -278,16 +287,66 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
-  public void subscribeAndCleanupResource_googleNotebookUnsupported() throws Exception {
+  public void subscribeAndCleanupResource_googleNotebookInstance() throws Exception {
+    InstanceName instanceName =
+        InstanceName.builder()
+            .projectId(projectId)
+            .location("us-west1-b")
+            .instanceId(randomNotebookInstanceId())
+            .build();
+    createNotebookInstance(instanceName);
+
     CloudResourceUid notebookUid =
         new CloudResourceUid()
             .googleAiNotebookInstanceUid(
                 new GoogleAiNotebookInstanceUid()
-                    .projectId(projectId)
-                    .location("uswest1-b")
-                    .instanceId("foo"));
-    // Do not actually create the notebook. Cleanup is unsupported so far, so we expect an error.
-    publishAndVerify(notebookUid, ResourceState.ERROR);
+                    .projectId(instanceName.projectId())
+                    .location(instanceName.location())
+                    .instanceId(instanceName.instanceId()));
+    publishAndVerify(notebookUid, ResourceState.DONE);
+
+    GoogleJsonResponseException e =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> notebooksCow.instances().get(instanceName).execute());
+    assertEquals(404, e.getStatusCode());
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_alreadyDeletedGoogleNotebookInstance() throws Exception {
+    InstanceName instanceName =
+        InstanceName.builder()
+            .projectId(projectId)
+            .location("us-west1-b")
+            .instanceId(randomNotebookInstanceId())
+            .build();
+    createNotebookInstance(instanceName);
+    assertEquals(
+        instanceName.formatName(), notebooksCow.instances().get(instanceName).execute().getName());
+
+    OperationCow<?> deleteOperation =
+        notebooksCow
+            .operations()
+            .operationCow(notebooksCow.instances().delete(instanceName).execute());
+    deleteOperation =
+        OperationUtils.pollUntilComplete(
+            deleteOperation, Duration.ofSeconds(10), Duration.ofMinutes(5));
+    assertNull(deleteOperation.getOperationAdapter().getError());
+
+    CloudResourceUid notebookUid =
+        new CloudResourceUid()
+            .googleAiNotebookInstanceUid(
+                new GoogleAiNotebookInstanceUid()
+                    .projectId(instanceName.projectId())
+                    .location(instanceName.location())
+                    .instanceId(instanceName.instanceId()));
+    publishAndVerify(notebookUid, ResourceState.DONE);
+
+    GoogleJsonResponseException e =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> notebooksCow.instances().get(instanceName).execute());
+    assertEquals(404, e.getStatusCode());
   }
 
   @Test
@@ -372,6 +431,33 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertNull(operationCow.getOperation().getError());
   }
 
+  /**
+   * Creates a notebook instance for the {@link InstanceName}. Blocks until the instance is created
+   * successfully or fails
+   */
+  private void createNotebookInstance(InstanceName instanceName)
+      throws IOException, InterruptedException {
+    OperationCow<com.google.api.services.notebooks.v1.model.Operation> operation =
+        notebooksCow
+            .operations()
+            .operationCow(
+                notebooksCow.instances().create(instanceName, defaultInstance()).execute());
+    operation =
+        OperationUtils.pollUntilComplete(operation, Duration.ofSeconds(30), Duration.ofMinutes(12));
+    assertTrue(operation.getOperation().getDone());
+    assertNull(operation.getOperation().getError());
+  }
+
+  /** Creates an {@link Instance} that's ready to be created. */
+  private static Instance defaultInstance() {
+    return new Instance()
+        // A VM or Container image is required.
+        .setVmImage(
+            new VmImage().setProject("deeplearning-platform-release").setImageFamily("common-cpu"))
+        // The machine type to used is required.
+        .setMachineType("e2-standard-2");
+  }
+
   /** Generates a random name to use for a cloud resource. */
   private static String randomName() {
     return UUID.randomUUID().toString();
@@ -386,6 +472,12 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private static String randomProjectId() {
     // Project ids must starting with a letter and be no more than 30 characters long.
     return "p" + randomName().substring(0, 29);
+  }
+
+  /** Generates a random notebook instance id. */
+  private static String randomNotebookInstanceId() {
+    // Instance ids must start with a letter, be all lower case letters, numbers, and dashses.
+    return "n" + randomName().toLowerCase();
   }
 
   /** Poll from get resource endpoint until it gets resources from Janitor in the expected state. */
