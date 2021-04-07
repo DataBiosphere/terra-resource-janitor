@@ -139,7 +139,26 @@ local-dev/run_postgres.sh stop
 Janitor uses a list of user email address as administrator user to access its admin endpoint.
 The value can be set in `iam.adminUserList` configuration.
 ### For Broad Engineers:
-The file is stored in Vault. 
+#### To use `tools` Janitor
+`tools` Janitor is used by Broad deployed Terra APPs. `tools` Janitor's client service account(created by [Terraform](https://github.com/broadinstitute/terraform-ap-modules/blob/54bf1f9669ade3d4f5e8fb0197f1dd4239448dea/crl-janitor/sa.tf#L76)) has permission to access
+admin endpoint. To use this:
+
+Step 1:
+```
+docker run --rm --cap-add IPC_LOCK -e "VAULT_TOKEN=$(cat ~/.vault-token)" -e "VAULT_ADDR=https://clotho.broadinstitute.org:8200" vault:1.1.0 vault read -format json secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa | jq -r '.data.key' | base64 --decode > janitor-client-sa.json```
+```
+Step2: 
+```
+gcloud auth activate-service-account --key-file=janitor-client-sa.json
+```
+Step3:
+```
+gcloud auth print-access-token
+```
+Set this token in HTTP authorization request header.
+
+#### To use other environment Janitor
+The admin user list file is stored in Vault. 
 To read user list, run:
 ```
 docker run -e VAULT_TOKEN=$(cat ~/.vault-token) -it broadinstitute/dsde-toolbox:dev vault read config/terra/crl-janitor/common/iam 
