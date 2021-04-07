@@ -155,7 +155,7 @@ Step3:
 ```
 gcloud auth print-access-token
 ```
-Set this token in HTTP authorization request header.
+Go to [tools Janitor Swagger](https://crljanitor.tools.integ.envs.broadinstitute.org/swagger-ui.html) Paste this token into Swagger's `bearerAuth`
 
 #### To use other environment Janitor
 The admin user list file is stored in Vault. 
