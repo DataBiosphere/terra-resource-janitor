@@ -7,34 +7,42 @@ import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.GoogleBigQueryTableUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import com.google.cloud.bigquery.*;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.auth.oauth2.GoogleCredentials;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Step to cleanup Google BigQuery Table resource. */
 public class GoogleBigQueryTableCleanupStep extends ResourceCleanupStep {
   private final Logger logger = LoggerFactory.getLogger(GoogleBigQueryTableCleanupStep.class);
-  private final BigQueryCow bigQueryCow;
 
   public GoogleBigQueryTableCleanupStep(ClientConfig clientConfig, JanitorDao janitorDao) {
     super(clientConfig, janitorDao);
-    this.bigQueryCow = new BigQueryCow(clientConfig, BigQueryOptions.getDefaultInstance());
   }
 
   @Override
   protected StepResult cleanUp(CloudResourceUid resourceUid) {
-    GoogleBigQueryTableUid bigQueryTableUid = resourceUid.getGoogleBigQueryTableUid();
-    TableId tableId =
-        TableId.of(
-            bigQueryTableUid.getProjectId(),
-            bigQueryTableUid.getDatasetId(),
-            bigQueryTableUid.getTableId());
+    GoogleBigQueryTableUid tableUid = resourceUid.getGoogleBigQueryTableUid();
     try {
-      bigQueryCow.delete(tableId);
+      BigQueryCow bigQueryCow =
+          BigQueryCow.create(clientConfig, GoogleCredentials.getApplicationDefault());
+      bigQueryCow
+          .tables()
+          .delete(tableUid.getProjectId(), tableUid.getDatasetId(), tableUid.getTableId())
+          .execute();
       return StepResult.getStepResultSuccess();
-    } catch (BigQueryException e) {
-      logger.warn("Google BigQueryException occurs during BigQuery Table Cleanup", e);
-      // Catch all exceptions from GOOGLE and consider this retryable error.
+    } catch (GoogleJsonResponseException e) {
+      // If the dataset has already been deleted, this step is complete.
+      if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        return StepResult.getStepResultSuccess();
+      }
+      logger.warn("Exception during BigQuery Table Cleanup", e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    } catch (IOException | GeneralSecurityException e) {
+      logger.warn("Exception during BigQuery Table Cleanup", e);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
   }
