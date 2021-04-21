@@ -20,12 +20,15 @@ import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.services.bigquery.model.Dataset;
+import com.google.api.services.bigquery.model.DatasetReference;
+import com.google.api.services.bigquery.model.Table;
+import com.google.api.services.bigquery.model.TableReference;
 import com.google.api.services.cloudresourcemanager.model.Operation;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.cloudresourcemanager.model.ResourceId;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.api.services.notebooks.v1.model.VmImage;
-import com.google.cloud.bigquery.*;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -42,6 +45,7 @@ import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -105,12 +109,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
                 .setProjectId(projectId)
                 .build());
     bigQueryCow =
-        new BigQueryCow(
+        BigQueryCow.create(
             testConfiguration.createClientConfig(),
-            BigQueryOptions.newBuilder()
-                .setCredentials(testConfiguration.getResourceAccessGoogleCredentialsOrDie())
-                .setProjectId(projectId)
-                .build());
+            testConfiguration.getResourceAccessGoogleCredentialsOrDie());
     resourceManagerCow =
         CloudResourceManagerCow.create(
             testConfiguration.createClientConfig(),
@@ -218,17 +219,40 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     // Creates dataset and table.
     String datasetName = randomNameWithUnderscore();
     String tableName = randomNameWithUnderscore();
-    TableId tableId = TableId.of(datasetName, tableName);
-    assertNull(bigQueryCow.getDataset(datasetName));
-    bigQueryCow.create(DatasetInfo.newBuilder(datasetName).build());
-    bigQueryCow.create(
-        TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build()).build());
+    GoogleJsonResponseException datasetNotFoundException =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> bigQueryCow.datasets().get(projectId, datasetName).execute());
+    assertEquals(HttpStatus.SC_NOT_FOUND, datasetNotFoundException.getStatusCode());
+    DatasetReference datasetReference =
+        new DatasetReference().setProjectId(projectId).setDatasetId(datasetName);
+    Dataset datasetToCreate = new Dataset().setDatasetReference(datasetReference);
+    bigQueryCow.datasets().insert(projectId, datasetToCreate).execute();
+    TableReference tableReference =
+        new TableReference()
+            .setProjectId(projectId)
+            .setDatasetId(datasetName)
+            .setTableId(tableName);
+    Table tableToCreate = new Table().setTableReference(tableReference);
+    bigQueryCow.tables().insert(projectId, datasetName, tableToCreate).execute();
 
     // Verify resources are created in GCP
     assertEquals(
         datasetName,
-        bigQueryCow.getDataset(datasetName).getDatasetInfo().getDatasetId().getDataset());
-    assertEquals(tableName, bigQueryCow.getTable(tableId).getTableInfo().getTableId().getTable());
+        bigQueryCow
+            .datasets()
+            .get(projectId, datasetName)
+            .execute()
+            .getDatasetReference()
+            .getDatasetId());
+    assertEquals(
+        tableName,
+        bigQueryCow
+            .tables()
+            .get(projectId, datasetName, tableName)
+            .execute()
+            .getTableReference()
+            .getTableId());
 
     CloudResourceUid datasetUid =
         new CloudResourceUid()
@@ -239,8 +263,16 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publishAndVerify(datasetUid, ResourceState.DONE);
 
     // Resource is removed
-    assertNull(bigQueryCow.getDataset(datasetName));
-    assertNull(bigQueryCow.getTable(tableId));
+    GoogleJsonResponseException datasetDeleted =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> bigQueryCow.datasets().get(projectId, datasetName).execute());
+    assertEquals(HttpStatus.SC_NOT_FOUND, datasetDeleted.getStatusCode());
+    GoogleJsonResponseException tableDeleted =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> bigQueryCow.tables().get(projectId, datasetName, tableName).execute());
+    assertEquals(HttpStatus.SC_NOT_FOUND, tableDeleted.getStatusCode());
 
     // Try to publish another message to cleanup the same table and verify Janitor works fine for
     // tables already deleted by other flight.
@@ -259,17 +291,40 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     // Creates dataset and table.
     String datasetName = randomNameWithUnderscore();
     String tableName = randomNameWithUnderscore();
-    TableId tableId = TableId.of(datasetName, tableName);
-    assertNull(bigQueryCow.getDataset(datasetName));
-    bigQueryCow.create(DatasetInfo.newBuilder(datasetName).build());
-    bigQueryCow.create(
-        TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build()).build());
+    GoogleJsonResponseException datasetNotFoundException =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> bigQueryCow.datasets().get(projectId, datasetName).execute());
+    assertEquals(HttpStatus.SC_NOT_FOUND, datasetNotFoundException.getStatusCode());
+    DatasetReference datasetReference =
+        new DatasetReference().setProjectId(projectId).setDatasetId(datasetName);
+    Dataset datasetToCreate = new Dataset().setDatasetReference(datasetReference);
+    bigQueryCow.datasets().insert(projectId, datasetToCreate).execute();
+    TableReference tableReference =
+        new TableReference()
+            .setProjectId(projectId)
+            .setDatasetId(datasetName)
+            .setTableId(tableName);
+    Table tableToCreate = new Table().setTableReference(tableReference);
+    bigQueryCow.tables().insert(projectId, datasetName, tableToCreate).execute();
 
     // Verify resources are created in GCP
     assertEquals(
         datasetName,
-        bigQueryCow.getDataset(datasetName).getDatasetInfo().getDatasetId().getDataset());
-    assertEquals(tableName, bigQueryCow.getTable(tableId).getTableInfo().getTableId().getTable());
+        bigQueryCow
+            .datasets()
+            .get(projectId, datasetName)
+            .execute()
+            .getDatasetReference()
+            .getDatasetId());
+    assertEquals(
+        tableName,
+        bigQueryCow
+            .tables()
+            .get(projectId, datasetName, tableName)
+            .execute()
+            .getTableReference()
+            .getTableId());
 
     CloudResourceUid tableUid =
         new CloudResourceUid()
@@ -281,9 +336,13 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publishAndVerify(tableUid, ResourceState.DONE);
 
     // Resource is removed
-    assertNull(bigQueryCow.getTable(tableId));
+    GoogleJsonResponseException tableDeleted =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> bigQueryCow.tables().get(projectId, datasetName, tableName).execute());
+    assertEquals(HttpStatus.SC_NOT_FOUND, tableDeleted.getStatusCode());
     // Cleanup the dataset
-    assertTrue(bigQueryCow.delete(datasetName));
+    bigQueryCow.datasets().delete(projectId, datasetName).execute();
   }
 
   @Test
