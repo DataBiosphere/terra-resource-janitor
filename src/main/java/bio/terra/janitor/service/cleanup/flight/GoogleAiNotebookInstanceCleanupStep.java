@@ -1,8 +1,8 @@
 package bio.terra.janitor.service.cleanup.flight;
 
-import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
+import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.janitor.db.JanitorDao;
@@ -10,39 +10,52 @@ import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.api.services.notebooks.v1.model.Status;
-import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class GoogleAiNotebookInstanceCleanupStep extends ResourceCleanupStep {
   private final Logger logger = LoggerFactory.getLogger(GoogleAiNotebookInstanceCleanupStep.class);
+  private final AIPlatformNotebooksCow notebooksCow;
+  private final CloudResourceManagerCow resourceManagerCow;
 
-  public GoogleAiNotebookInstanceCleanupStep(ClientConfig clientConfig, JanitorDao janitorDao) {
-    super(clientConfig, janitorDao);
+  public GoogleAiNotebookInstanceCleanupStep(
+      AIPlatformNotebooksCow notebooksCow,
+      CloudResourceManagerCow resourceManagerCow,
+      JanitorDao janitorDao) {
+    super(janitorDao);
+    this.notebooksCow = notebooksCow;
+    this.resourceManagerCow = resourceManagerCow;
   }
 
   @Override
   protected StepResult cleanUp(CloudResourceUid resourceUid) {
-    AIPlatformNotebooksCow notebooksCow;
-    try {
-      notebooksCow =
-          AIPlatformNotebooksCow.create(clientConfig, GoogleCredentials.getApplicationDefault());
-    } catch (GeneralSecurityException | IOException e) {
-      logger.warn("Failed to get applicatoin default Google Credentials", e);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
-
     InstanceName instanceName =
         InstanceName.builder()
             .projectId(resourceUid.getGoogleAiNotebookInstanceUid().getProjectId())
             .location(resourceUid.getGoogleAiNotebookInstanceUid().getLocation())
             .instanceId(resourceUid.getGoogleAiNotebookInstanceUid().getInstanceId())
             .build();
+
+    try {
+      // If the project is already being deleted, trying to delete the instance will 403.
+      // But if the project is already being deleted, there's no need to also delete the instance.
+      if (projectDeleteInProgress(instanceName.projectId())) {
+        logger.info("Project for instance {} already being deleted.", instanceName.formatName());
+        return StepResult.getStepResultSuccess();
+      }
+    } catch (GoogleJsonResponseException e) {
+      // Swallow response exceptions retrieving the project.
+      logger.info(
+          "Unable to retrieve project for instance {}. Naively continuing to attempt delete.",
+          instanceName.formatName());
+    } catch (IOException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
 
     try {
       OperationCow<Operation> deleteOperation =
@@ -69,5 +82,12 @@ public class GoogleAiNotebookInstanceCleanupStep extends ResourceCleanupStep {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  private boolean projectDeleteInProgress(String projectId) throws IOException {
+    Project project = resourceManagerCow.projects().get(projectId).execute();
+    return (project == null
+        || project.getLifecycleState().equals("DELETE_REQUESTED")
+        || project.getLifecycleState().equals("DELETE_IN_PROGRESS"));
   }
 }

@@ -1,6 +1,5 @@
 package bio.terra.janitor.service.cleanup.flight;
 
-import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.janitor.db.JanitorDao;
@@ -9,7 +8,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.StorageException;
-import com.google.cloud.storage.StorageOptions;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -20,9 +18,9 @@ public class GoogleBucketCleanupStep extends ResourceCleanupStep {
   private final Logger logger = LoggerFactory.getLogger(GoogleBucketCleanupStep.class);
   private final StorageCow storageCow;
 
-  public GoogleBucketCleanupStep(ClientConfig clientConfig, JanitorDao janitorDao) {
-    super(clientConfig, janitorDao);
-    this.storageCow = new StorageCow(clientConfig, StorageOptions.getDefaultInstance());
+  public GoogleBucketCleanupStep(StorageCow storageCow, JanitorDao janitorDao) {
+    super(janitorDao);
+    this.storageCow = storageCow;
   }
 
   @Override
