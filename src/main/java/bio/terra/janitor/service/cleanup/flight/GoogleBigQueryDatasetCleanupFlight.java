@@ -1,9 +1,6 @@
 package bio.terra.janitor.service.cleanup.flight;
 
-import static bio.terra.janitor.app.configuration.BeanNames.CRL_CLIENT_CONFIG;
-import static bio.terra.janitor.app.configuration.BeanNames.JANITOR_DAO;
-
-import bio.terra.cloudres.common.ClientConfig;
+import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
@@ -14,15 +11,14 @@ import org.springframework.context.ApplicationContext;
 public class GoogleBigQueryDatasetCleanupFlight extends Flight {
   public GoogleBigQueryDatasetCleanupFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
-    JanitorDao janitorDao =
-        ((ApplicationContext) applicationContext).getBean(JANITOR_DAO, JanitorDao.class);
-    ClientConfig clientConfig =
-        ((ApplicationContext) applicationContext).getBean(CRL_CLIENT_CONFIG, ClientConfig.class);
+    ApplicationContext appContext = (ApplicationContext) applicationContext;
+    JanitorDao janitorDao = appContext.getBean(JanitorDao.class);
+    BigQueryCow bigQueryCow = appContext.getBean(BigQueryCow.class);
     RetryRuleFixedInterval retryRule =
         new RetryRuleFixedInterval(/* intervalSeconds =*/ 180, /* maxCount =*/ 5);
 
     addStep(new InitialCleanupStep(janitorDao));
-    addStep(new GoogleBigQueryDatasetCleanupStep(clientConfig, janitorDao), retryRule);
+    addStep(new GoogleBigQueryDatasetCleanupStep(bigQueryCow, janitorDao), retryRule);
     addStep(new FinalCleanupStep(janitorDao));
   }
 }

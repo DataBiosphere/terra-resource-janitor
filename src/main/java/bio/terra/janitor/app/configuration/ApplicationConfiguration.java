@@ -2,7 +2,6 @@ package bio.terra.janitor.app.configuration;
 
 import static bio.terra.janitor.app.configuration.BeanNames.*;
 
-import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.janitor.app.StartupInitializer;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,12 +30,6 @@ public class ApplicationConfiguration {
         .registerModule(new JavaTimeModule())
         .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
         .setDefaultPropertyInclusion(JsonInclude.Include.NON_ABSENT);
-  }
-
-  @Bean(CRL_CLIENT_CONFIG)
-  public ClientConfig clientConfig() {
-    // Janitor only uses CRL Cows to delete resources. Cleanup is not needed.
-    return ClientConfig.Builder.newBuilder().setClient("terra-crl-janitor").build();
   }
 
   /**

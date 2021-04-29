@@ -3,7 +3,6 @@ package bio.terra.janitor.service.cleanup.flight;
 import static bio.terra.janitor.service.cleanup.FlightMapKeys.CLOUD_RESOURCE_UID;
 import static bio.terra.janitor.service.cleanup.FlightMapKeys.TRACKED_RESOURCE_ID;
 
-import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.*;
@@ -15,12 +14,10 @@ import org.slf4j.LoggerFactory;
 public abstract class ResourceCleanupStep implements Step {
   private Logger logger = LoggerFactory.getLogger(ResourceCleanupStep.class);
 
-  private final JanitorDao janitorDao;
-  final ClientConfig clientConfig;
+  protected final JanitorDao janitorDao;
 
-  public ResourceCleanupStep(ClientConfig clientConfig, JanitorDao janitorDao) {
+  public ResourceCleanupStep(JanitorDao janitorDao) {
     this.janitorDao = janitorDao;
-    this.clientConfig = clientConfig;
   }
 
   @Override
