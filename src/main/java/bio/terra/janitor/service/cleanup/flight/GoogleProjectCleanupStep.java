@@ -31,10 +31,7 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
       // deletion, we assume a 403 is for the forbidden case and is an actual error of not being
       // able to clean up with a resource. Therefore, we don't do special handling of the 403 here.
       Project project = resourceManagerCow.projects().get(projectId).execute();
-
-      if (project == null
-          || project.getLifecycleState().equals("DELETE_REQUESTED")
-          || project.getLifecycleState().equals("DELETE_IN_PROGRESS")) {
+      if (GoogleUtils.deleteInProgress(project)) {
         // Skip is project is deleted or being deleted.
         logger.info("Project id: {} is deleted or being deleted", projectId);
         return StepResult.getStepResultSuccess();

@@ -44,7 +44,8 @@ public class GoogleAiNotebookInstanceCleanupStep extends ResourceCleanupStep {
     try {
       // If the project is already being deleted, trying to delete the instance will 403.
       // But if the project is already being deleted, there's no need to also delete the instance.
-      if (projectDeleteInProgress(instanceName.projectId())) {
+      Project project = resourceManagerCow.projects().get(instanceName.projectId()).execute();
+      if (GoogleUtils.deleteInProgress(project)) {
         logger.info("Project for instance {} already being deleted.", instanceName.formatName());
         return StepResult.getStepResultSuccess();
       }
@@ -82,12 +83,5 @@ public class GoogleAiNotebookInstanceCleanupStep extends ResourceCleanupStep {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
-  }
-
-  private boolean projectDeleteInProgress(String projectId) throws IOException {
-    Project project = resourceManagerCow.projects().get(projectId).execute();
-    return (project == null
-        || project.getLifecycleState().equals("DELETE_REQUESTED")
-        || project.getLifecycleState().equals("DELETE_IN_PROGRESS"));
   }
 }
