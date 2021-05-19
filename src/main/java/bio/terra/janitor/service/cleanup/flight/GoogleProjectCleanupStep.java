@@ -5,8 +5,10 @@ import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import com.google.api.services.cloudresourcemanager.model.Project;
+import bio.terra.stairway.exception.RetryException;
+import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.io.IOException;
+import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +24,8 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
   }
 
   @Override
-  protected StepResult cleanUp(CloudResourceUid resourceUid) {
+  protected StepResult cleanUp(CloudResourceUid resourceUid)
+      throws InterruptedException, RetryException {
     String projectId = resourceUid.getGoogleProjectUid().getProjectId();
     try {
       // We cannot distinguish between not having access to a project and the project no longer
@@ -36,8 +39,12 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
         logger.info("Project id: {} is deleted or being deleted", projectId);
         return StepResult.getStepResultSuccess();
       }
-
-      resourceManagerCow.projects().delete(projectId).execute();
+      GoogleUtils.pollUntilSuccess(
+          resourceManagerCow
+              .operations()
+              .operationCow(resourceManagerCow.projects().delete(projectId).execute()),
+          Duration.ofSeconds(5),
+          Duration.ofMinutes(5));
       return StepResult.getStepResultSuccess();
     } catch (IOException e) {
       logger.warn("IOException occurs during Google project Cleanup", e);
