@@ -6,6 +6,7 @@ import static bio.terra.janitor.service.cleanup.FlightMapKeys.TRACKED_RESOURCE_I
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.*;
+import bio.terra.stairway.exception.RetryException;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,8 @@ public abstract class ResourceCleanupStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) {
+  public StepResult doStep(FlightContext flightContext)
+      throws InterruptedException, RetryException {
     FlightMap flightMap = flightContext.getInputParameters();
     CloudResourceUid cloudResourceUid = flightMap.get(CLOUD_RESOURCE_UID, CloudResourceUid.class);
     TrackedResourceId trackedResourceId =
@@ -68,5 +70,6 @@ public abstract class ResourceCleanupStep implements Step {
   }
 
   /** The actual resource cleanup logic. */
-  protected abstract StepResult cleanUp(CloudResourceUid resourceUid);
+  protected abstract StepResult cleanUp(CloudResourceUid resourceUid)
+      throws InterruptedException, RetryException;
 }
