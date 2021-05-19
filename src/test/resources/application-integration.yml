@@ -10,7 +10,7 @@ janitor:
       subscription: crljanitor-toolsalpha-pubsub-sub
   test:
     janitor-client-service-account-path: rendered/client-sa-account.json
-    parent-resource-id: 1074206284898
+    parent-resource-id: folders/1074206284898
     prod-janitor-client-credential-file-path: rendered/tools-client-sa-account.json
     prod-track-resource-project-id: terra-kernel-k8s
     prod-track-resource-topic-id: crljanitor-tools-pubsub-topic

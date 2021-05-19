@@ -24,9 +24,8 @@ import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.bigquery.model.DatasetReference;
 import com.google.api.services.bigquery.model.Table;
 import com.google.api.services.bigquery.model.TableReference;
-import com.google.api.services.cloudresourcemanager.model.Operation;
-import com.google.api.services.cloudresourcemanager.model.Project;
-import com.google.api.services.cloudresourcemanager.model.ResourceId;
+import com.google.api.services.cloudresourcemanager.v3.model.Operation;
+import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.api.services.notebooks.v1.model.VmImage;
 import com.google.cloud.pubsub.v1.Publisher;
@@ -70,7 +69,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private BigQueryCow bigQueryCow;
   private CloudResourceManagerCow resourceManagerCow;
   private String projectId;
-  private ResourceId parentResourceId;
 
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
@@ -116,9 +114,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         CloudResourceManagerCow.create(
             testConfiguration.createClientConfig(),
             testConfiguration.getResourceAccessGoogleCredentialsOrDie());
-
-    parentResourceId =
-        new ResourceId().setType("folder").setId(testConfiguration.getParentResourceId());
   }
 
   @AfterEach
@@ -421,7 +416,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
     // Project is ready for deletion
     Project project = resourceManagerCow.projects().get(projectId).execute();
-    assertEquals("DELETE_REQUESTED", project.getLifecycleState());
+    assertEquals("DELETE_REQUESTED", project.getState());
   }
 
   @Test
@@ -436,7 +431,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
     // Project is ready for deletion
     Project project = resourceManagerCow.projects().get(projectId).execute();
-    assertEquals("DELETE_REQUESTED", project.getLifecycleState());
+    assertEquals("DELETE_REQUESTED", project.getState());
   }
 
   /**
@@ -480,7 +475,10 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     Operation operation =
         resourceManagerCow
             .projects()
-            .create(new Project().setProjectId(projectId).setParent(parentResourceId))
+            .create(
+                new Project()
+                    .setProjectId(projectId)
+                    .setParent(testConfiguration.getParentResourceId()))
             .execute();
     OperationCow<Operation> operationCow = resourceManagerCow.operations().operationCow(operation);
     operationCow =
