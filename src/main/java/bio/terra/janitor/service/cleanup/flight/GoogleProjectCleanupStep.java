@@ -7,8 +7,10 @@ import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
 import java.time.Duration;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,12 +41,20 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
           // fail.
         case ACTIVE:
           // If the project is still active, delete the project now.
-          GoogleUtils.pollUntilSuccess(
-              resourceManagerCow
-                  .operations()
-                  .operationCow(resourceManagerCow.projects().delete(projectId).execute()),
-              Duration.ofSeconds(5),
-              Duration.ofMinutes(5));
+          try {
+            GoogleUtils.pollUntilSuccess(
+                resourceManagerCow
+                    .operations()
+                    .operationCow(resourceManagerCow.projects().delete(projectId).execute()),
+                Duration.ofSeconds(5),
+                Duration.ofMinutes(5));
+          } catch (GoogleJsonResponseException e) {
+            if (e.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+              // There's no use in retrying a forbidden error.
+              return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+            }
+            throw e;
+          }
         case DELETE_IN_PROGRESS:
           // If the project is already being deleted, there's nothing else to do.
           logger.info("Project id: {} is already being deleted", projectId);
