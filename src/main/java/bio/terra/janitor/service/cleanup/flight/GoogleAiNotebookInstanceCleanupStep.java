@@ -11,11 +11,11 @@ import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.api.services.notebooks.v1.model.Status;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,18 +43,26 @@ public class GoogleAiNotebookInstanceCleanupStep extends ResourceCleanupStep {
             .build();
 
     try {
-      // If the project is already being deleted, trying to delete the instance will 403.
-      // But if the project is already being deleted, there's no need to also delete the instance.
-      Project project = resourceManagerCow.projects().get(instanceName.projectId()).execute();
-      if (GoogleUtils.deleteInProgress(project)) {
-        logger.info("Project for instance {} already being deleted.", instanceName.formatName());
-        return StepResult.getStepResultSuccess();
+      GoogleUtils.ProjectStatus projectStatus =
+          GoogleUtils.checkProjectStatus(
+              instanceName.projectId(), /* parentResource= */ Optional.empty(), resourceManagerCow);
+      switch (projectStatus) {
+        case DELETE_IN_PROGRESS:
+          logger.info("Project for instance {} already being deleted.", instanceName.formatName());
+          return StepResult.getStepResultSuccess();
+        case PROBABLY_DOES_NOT_EXIST:
+          logger.info(
+              "Project for instance {} probably does not exist.", instanceName.formatName());
+          return StepResult.getStepResultSuccess();
+        case ACTIVE:
+          // Continue to try to delete the instance.
+          break;
+        case FORBIDDEN:
+          logger.info(
+              "Unable to retrieve project for instance {}. Naively continuing to attempt delete.",
+              instanceName.formatName());
+          break;
       }
-    } catch (GoogleJsonResponseException e) {
-      // Swallow response exceptions retrieving the project.
-      logger.info(
-          "Unable to retrieve project for instance {}. Naively continuing to attempt delete.",
-          instanceName.formatName());
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }

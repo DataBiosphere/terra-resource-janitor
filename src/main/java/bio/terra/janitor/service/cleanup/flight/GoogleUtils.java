@@ -8,7 +8,6 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.api.services.cloudresourcemanager.v3.model.TestIamPermissionsRequest;
 import com.google.api.services.cloudresourcemanager.v3.model.TestIamPermissionsResponse;
-import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
@@ -32,17 +31,13 @@ public class GoogleUtils {
    * project, the project probably never existed. If we do not know the parent resource, or do not
    * have permissions on the project we assume a 403 is truly foribdden.
    */
-  public static ProjectStatus tryGetProject(
+  public static ProjectStatus checkProjectStatus(
       String projectId, Optional<String> parentResource, CloudResourceManagerCow resourceManager)
       throws IOException {
     try {
       Project project = resourceManager.projects().get(projectId).execute();
       // We were able to retrieve the project.
-      return ProjectStatus.create(
-          Optional.of(project),
-          deleteInProgress(project)
-              ? ProjectStatus.Status.DELETE_IN_PROGRESS
-              : ProjectStatus.Status.ACTIVE);
+      return deleteInProgress(project) ? ProjectStatus.DELETE_IN_PROGRESS : ProjectStatus.ACTIVE;
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() != HttpStatus.SC_FORBIDDEN) {
         // Got an unexpected exception, throw to the caller.
@@ -51,11 +46,11 @@ public class GoogleUtils {
     }
     // If we reach here, we were forbidden from retrieving the project. We now try to determine if
     // we have enough permissions to assume the project does not exist.
-    if (parentResource.isEmpty()
-        || !hasProjectGetPermission(parentResource.get(), resourceManager)) {
-      return ProjectStatus.create(Optional.empty(), ProjectStatus.Status.FORBIDDEN);
+    if (!parentResource.isEmpty()
+        && hasProjectGetPermission(parentResource.get(), resourceManager)) {
+      return ProjectStatus.PROBABLY_DOES_NOT_EXIST;
     } else {
-      return ProjectStatus.create(Optional.empty(), ProjectStatus.Status.PROBABLY_DOES_NOT_EXIST);
+      return ProjectStatus.FORBIDDEN;
     }
   }
 
@@ -80,29 +75,20 @@ public class GoogleUtils {
     return iamResponse.getPermissions().contains(GET_PROJECT_PERMISSION);
   }
 
-  /** An optional Project and our best determination of the project's status. */
-  @AutoValue
-  public abstract static class ProjectStatus {
-    /** The project, if it could be retrieved, i.e. Status is ACTIVE or DELETE_IN_PROGRESS */
-    public abstract Optional<Project> project();
-
-    enum Status {
-      // The project is exists and is active.
-      ACTIVE,
-      // The project is in the process of being deleted. It is partially unavailable.
-      DELETE_IN_PROGRESS,
-      // We could not find the project, but we think we should have the permissions to do so. It's
-      // likely that the project does not exist now, and maybe never existed.
-      PROBABLY_DOES_NOT_EXIST,
-      // We could not retrieve the project. It may or may not exist.
-      FORBIDDEN,
-    }
-
-    public abstract Status status();
-
-    public static ProjectStatus create(Optional<Project> project, Status status) {
-      return new AutoValue_GoogleUtils_ProjectStatus(project, status);
-    }
+  /**
+   * Our best determination of a project that may be deleted status. See {@link
+   * #checkProjectStatus(String, Optional, CloudResourceManagerCow)}.
+   */
+  enum ProjectStatus {
+    // The project is exists and is active.
+    ACTIVE,
+    // The project is in the process of being deleted. It is partially unavailable.
+    DELETE_IN_PROGRESS,
+    // We could not find the project, but we think we should have the permissions to do so. It's
+    // likely that the project does not exist now, and maybe never existed.
+    PROBABLY_DOES_NOT_EXIST,
+    // We could not retrieve the project. It may or may not exist.
+    FORBIDDEN,
   }
 
   /** Returns whether a project is deleted or in the process of being deleted. */

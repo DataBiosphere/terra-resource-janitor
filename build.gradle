@@ -46,8 +46,6 @@ allprojects {
 }
 
 repositories {
-    // DO NOT SUBMIT
-    mavenLocal()
     mavenCentral()
     maven {
         url 'https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/'
