@@ -43,7 +43,7 @@ public class ModelUtils {
         .build();
   }
 
-  private static ResourceMetadata createMetadata(
+  private static @Nullable ResourceMetadata createMetadata(
       @Nullable bio.terra.janitor.generated.model.ResourceMetadata model) {
     if (model == null) {
       return ResourceMetadata.none();

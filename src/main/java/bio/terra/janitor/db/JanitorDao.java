@@ -425,9 +425,8 @@ public class JanitorDao {
    */
   @VisibleForTesting
   static @Nullable String serialize(ResourceMetadata metadata) {
-    ObjectMapper mapper = SERDES_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     try {
-      return mapper.writeValueAsString(MetadataModelV1.from(metadata));
+      return SERDES_MAPPER.writeValueAsString(MetadataModelV1.from(metadata));
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to serialize ResourceMetadata");
     }

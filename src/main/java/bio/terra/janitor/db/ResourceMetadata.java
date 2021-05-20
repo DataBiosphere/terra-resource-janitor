@@ -4,9 +4,11 @@ import com.google.auto.value.AutoValue;
 import java.util.Optional;
 
 /**
- * Additional data about a tracked resource. This may be specific to a single resource type and
- * unlike the {@link bio.terra.janitor.generated.model.CloudResourceUid} does not help to uniquely
- * identify a resource.
+ * Additional data about a tracked resource.
+ *
+ * <p>This metadata may be specific to a single resource type and, unlike the {@link
+ * bio.terra.janitor.generated.model.CloudResourceUid}, does not help to uniquely identify a
+ * resource.
  */
 @AutoValue
 public abstract class ResourceMetadata {
