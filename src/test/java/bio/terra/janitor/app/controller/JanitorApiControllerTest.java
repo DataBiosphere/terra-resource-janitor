@@ -46,6 +46,7 @@ public class JanitorApiControllerTest {
   private static final OffsetDateTime CREATION = OffsetDateTime.now(ZoneOffset.UTC);
   private static final OffsetDateTime EXPIRATION =
       OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(10);
+  private static final String PROJECT_PARENT = "folders/1234";
   private static final String CLAIM_EMAIL_KEY = "OIDC_CLAIM_email";
   private static final String CLAIM_SUBJECT_KEY = "OIDC_CLAIM_user_id";
   private static final String CLAIM_TOKEN_KEY = "OIDC_ACCESS_token";
@@ -69,6 +70,7 @@ public class JanitorApiControllerTest {
     CreateResourceRequestBody body =
         new CreateResourceRequestBody()
             .resourceUid(resourceUid)
+            .resourceMetadata(new ResourceMetadata().googleProjectParent(PROJECT_PARENT))
             .creation(CREATION)
             .expiration(EXPIRATION)
             .labels(DEFAULT_LABELS);
@@ -114,6 +116,7 @@ public class JanitorApiControllerTest {
     assertEquals(CREATION, trackedResourceInfo.getCreation());
     assertEquals(EXPIRATION, trackedResourceInfo.getExpiration());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
+    assertEquals(PROJECT_PARENT, trackedResourceInfo.getMetadata().getGoogleProjectParent());
   }
 
   @Test

@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /** Helper class for converting to and from the request/response model format. */
 public class ModelUtils {
@@ -43,7 +44,10 @@ public class ModelUtils {
   }
 
   private static ResourceMetadata createMetadata(
-      bio.terra.janitor.generated.model.ResourceMetadata model) {
+      @Nullable bio.terra.janitor.generated.model.ResourceMetadata model) {
+    if (model == null) {
+      return ResourceMetadata.none();
+    }
     return ResourceMetadata.builder()
         .googleProjectParent(Optional.ofNullable(model.getGoogleProjectParent()))
         .build();
@@ -54,6 +58,7 @@ public class ModelUtils {
     return new TrackedResourceInfo()
         .id(resource.trackedResourceId().toString())
         .resourceUid(resource.cloudResourceUid())
+        .metadata(convert(resource.metadata()))
         .state(convert(resource.trackedResourceState()))
         .creation(OffsetDateTime.ofInstant(resource.creation(), ZoneOffset.UTC))
         .expiration(OffsetDateTime.ofInstant(resource.expiration(), ZoneOffset.UTC))
@@ -65,6 +70,15 @@ public class ModelUtils {
     Preconditions.checkNotNull(
         converted, String.format("Unable to convert TrackedResourceState %s", state));
     return converted;
+  }
+
+  public static bio.terra.janitor.generated.model.ResourceMetadata convert(
+      ResourceMetadata metadata) {
+    if (metadata.equals(ResourceMetadata.none())) {
+      return null;
+    }
+    return new bio.terra.janitor.generated.model.ResourceMetadata()
+        .googleProjectParent(metadata.googleProjectParent().orElse(null));
   }
 
   public static TrackedResourceState convert(ResourceState state) {
