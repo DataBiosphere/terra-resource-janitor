@@ -52,6 +52,7 @@ public class TrackedResourceService {
             .cloudResourceUid(trackRequest.cloudResourceUid())
             .creation(trackRequest.creation())
             .expiration(trackRequest.expiration())
+            .metadata(trackRequest.metadata())
             .build();
     List<TrackedResource> duplicateResources =
         janitorDao.retrieveResourcesMatching(

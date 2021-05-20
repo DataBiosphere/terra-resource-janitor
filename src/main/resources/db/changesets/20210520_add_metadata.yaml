@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-metadata-column
+      author: wchamber
+      changes:
+        - addColumn:
+            tableName: tracked_resource
+            columns:
+              name: metadata
+              type: jsonb
+              constraints:
+                nullable: true

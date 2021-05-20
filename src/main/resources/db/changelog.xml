@@ -3,4 +3,5 @@
     <include file="changesets/20200625_initial_schema.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20200903_drop_cleanup_log.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20200925_create_resource_uid.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20210520_add_metadata.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

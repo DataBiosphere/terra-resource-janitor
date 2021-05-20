@@ -4,6 +4,7 @@ import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -15,6 +16,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.DataAccessUtils;
@@ -33,6 +35,14 @@ public class JanitorDao {
   /** The labels key used to distinguish janitor clients. */
   private static final String CLIENT_LABEL_KEY = "client";
 
+  /**
+   * This mapper must stay constant over time to ensure that older versions of obvious can be read.
+   * Change here must be accompanied by an upgrade process to ensure that all data is rewritten in
+   * the new form.
+   */
+  private static final ObjectMapper SERDES_MAPPER =
+      new ObjectMapper().setDefaultPropertyInclusion(JsonInclude.Include.NON_ABSENT);
+
   @Autowired
   public JanitorDao(JanitorJdbcConfiguration jdbcConfiguration) {
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
@@ -46,8 +56,8 @@ public class JanitorDao {
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void createResource(TrackedResource resource, Map<String, String> labels) {
     String sql =
-        "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state) values "
-            + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state)";
+        "INSERT INTO tracked_resource (id, resource_uid, resource_type, creation, expiration, state, metadata) values "
+            + "(:id, :resource_uid::jsonb, :resource_type, :creation, :expiration, :state, :metadata::jsonb)";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -58,7 +68,8 @@ public class JanitorDao {
                 new ResourceTypeVisitor().accept(resource.cloudResourceUid()).toString())
             .addValue("creation", resource.creation().atOffset(ZoneOffset.UTC))
             .addValue("state", resource.trackedResourceState().toString())
-            .addValue("expiration", resource.expiration().atOffset(ZoneOffset.UTC));
+            .addValue("expiration", resource.expiration().atOffset(ZoneOffset.UTC))
+            .addValue("metadata", serialize(resource.metadata()));
 
     jdbcTemplate.update(sql, params);
 
@@ -85,7 +96,7 @@ public class JanitorDao {
   @Transactional(propagation = Propagation.SUPPORTS)
   public Optional<TrackedResource> retrieveTrackedResource(TrackedResourceId trackedResourceId) {
     String sql =
-        "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource tr "
+        "SELECT id, resource_uid, creation, expiration, state, metadata FROM tracked_resource tr "
             + "WHERE id = :id";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", trackedResourceId.uuid());
@@ -102,7 +113,7 @@ public class JanitorDao {
       TrackedResourceId trackedResourceId, TrackedResourceState newState) {
     String sql =
         "UPDATE tracked_resource SET state = :state WHERE id = :id "
-            + "RETURNING id, resource_uid, creation, expiration, state";
+            + "RETURNING id, resource_uid, creation, expiration, state, metadata";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("state", newState.toString())
@@ -116,7 +127,7 @@ public class JanitorDao {
   public List<TrackedResource> retrieveResourcesMatching(TrackedResourceFilter filter) {
     StringBuilder sql =
         new StringBuilder(
-            "SELECT id, resource_uid, creation, expiration, state FROM tracked_resource ");
+            "SELECT id, resource_uid, creation, expiration, state, metadata FROM tracked_resource ");
     MapSqlParameterSource params = new MapSqlParameterSource();
     addFilterClauses(filter, sql, params);
     return jdbcTemplate.query(sql.toString(), params, TRACKED_RESOURCE_ROW_MAPPER);
@@ -170,7 +181,7 @@ public class JanitorDao {
   @Transactional(propagation = Propagation.SUPPORTS)
   public Optional<TrackedResourceAndFlight> retrieveResourceAndFlight(String flightId) {
     String sql =
-        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, tr.metadata, "
             + "cf.flight_id, cf.flight_state FROM tracked_resource tr "
             + "JOIN cleanup_flight cf ON tr.id = cf.tracked_resource_id "
             + "WHERE cf.flight_id = :flight_id";
@@ -193,7 +204,7 @@ public class JanitorDao {
   public Optional<TrackedResourceAndLabels> retrieveResourceAndLabels(
       TrackedResourceId trackedResourceId) {
     String sql =
-        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, tr.metadata, "
             + "l.key, l.value FROM tracked_resource tr "
             + "LEFT JOIN label l ON tr.id = l.tracked_resource_id "
             + "WHERE tr.id = :id";
@@ -209,7 +220,7 @@ public class JanitorDao {
   public List<TrackedResourceAndFlight> retrieveResourcesWith(
       CleanupFlightState flightState, int limit) {
     String sql =
-        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+        "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, tr.metadata, "
             + "cf.flight_id, cf.flight_state FROM tracked_resource tr "
             + "JOIN cleanup_flight cf ON tr.id = cf.tracked_resource_id "
             + "WHERE cf.flight_state = :flight_state LIMIT :limit";
@@ -231,7 +242,7 @@ public class JanitorDao {
   public List<TrackedResourceAndLabels> retrieveResourcesAndLabels(TrackedResourceFilter filter) {
     StringBuilder sql =
         new StringBuilder(
-            "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, "
+            "SELECT tr.id, tr.resource_uid, tr.creation, tr.expiration, tr.state, tr.metadata, "
                 + "l.key, l.value FROM tracked_resource tr "
                 + "LEFT JOIN label l ON tr.id = l.tracked_resource_id ");
     MapSqlParameterSource params = new MapSqlParameterSource();
@@ -341,6 +352,7 @@ public class JanitorDao {
               .creation(rs.getObject("creation", OffsetDateTime.class).toInstant())
               .expiration(rs.getObject("expiration", OffsetDateTime.class).toInstant())
               .trackedResourceState(TrackedResourceState.valueOf(rs.getString("state")))
+              .metadata(deserializeMetadata(rs.getString("metadata")))
               .build();
 
   private static final RowMapper<CleanupFlight> CLEANUP_FLIGHT_ROW_MAPPER =
@@ -389,10 +401,8 @@ public class JanitorDao {
    */
   @VisibleForTesting
   static String serialize(CloudResourceUid resource) {
-    ObjectMapper mapper =
-        new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     try {
-      return mapper.writeValueAsString(resource);
+      return SERDES_MAPPER.writeValueAsString(resource);
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to serialize CloudResourceUid");
     }
@@ -401,9 +411,59 @@ public class JanitorDao {
   @VisibleForTesting
   static CloudResourceUid deserialize(String resource) {
     try {
-      return new ObjectMapper().readValue(resource, CloudResourceUid.class);
+      return SERDES_MAPPER.readValue(resource, CloudResourceUid.class);
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to deserialize CloudResourceUid: " + resource);
+    }
+  }
+
+  /**
+   * Serializes {@link ResourceMetadata} into json format string.
+   *
+   * <p>It only contains non null fields and should not be changed since this is how the database
+   * will store {@link CloudResourceUid} in json format.
+   */
+  @VisibleForTesting
+  static @Nullable String serialize(ResourceMetadata metadata) {
+    ObjectMapper mapper = SERDES_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    try {
+      return mapper.writeValueAsString(MetadataModelV1.from(metadata));
+    } catch (JsonProcessingException e) {
+      throw new InvalidResourceUidException("Failed to serialize ResourceMetadata");
+    }
+  }
+
+  @VisibleForTesting
+  static ResourceMetadata deserializeMetadata(@Nullable String resource) {
+    if (resource == null) {
+      // Allow existing entries without a metadata column to be deserialized.
+      return ResourceMetadata.none();
+    }
+    try {
+      return SERDES_MAPPER.readValue(resource, MetadataModelV1.class).toMetadata();
+    } catch (JsonProcessingException e) {
+      throw new InvalidResourceUidException("Failed to deserialize ResourceMetadata: " + resource);
+    }
+  }
+
+  /** POJO class to use for JSON serializing a {@link ResourceMetadata}. */
+  @VisibleForTesting
+  static class MetadataModelV1 {
+    /** Version marker to store in the db so that we can update the format later if we need to. */
+    @JsonProperty final long version = 1;
+
+    @JsonProperty @Nullable String googleProjectParent;
+
+    public static MetadataModelV1 from(ResourceMetadata metadata) {
+      MetadataModelV1 model = new MetadataModelV1();
+      model.googleProjectParent = metadata.googleProjectParent().orElse(null);
+      return model;
+    }
+
+    public ResourceMetadata toMetadata() {
+      return ResourceMetadata.builder()
+          .googleProjectParent(Optional.ofNullable(googleProjectParent))
+          .build();
     }
   }
 }

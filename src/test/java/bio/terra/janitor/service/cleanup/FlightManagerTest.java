@@ -48,6 +48,7 @@ public class FlightManagerTest extends BaseUnitTest {
                 .googleBucketUid(new GoogleBucketUid().bucketName(UUID.randomUUID().toString())))
         .creation(CREATION)
         .expiration(EXPIRATION)
+        .metadata(ResourceMetadata.none())
         .build();
   }
 

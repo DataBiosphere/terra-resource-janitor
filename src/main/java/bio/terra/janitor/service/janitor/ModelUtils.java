@@ -1,5 +1,6 @@
 package bio.terra.janitor.service.janitor;
 
+import bio.terra.janitor.db.ResourceMetadata;
 import bio.terra.janitor.db.TrackRequest;
 import bio.terra.janitor.db.TrackedResource;
 import bio.terra.janitor.db.TrackedResourceAndLabels;
@@ -13,6 +14,7 @@ import com.google.common.collect.EnumBiMap;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Optional;
 
 /** Helper class for converting to and from the request/response model format. */
 public class ModelUtils {
@@ -36,6 +38,14 @@ public class ModelUtils {
         .creation(body.getCreation().toInstant())
         .expiration(body.getExpiration().toInstant())
         .labels(body.getLabels() == null ? ImmutableMap.of() : body.getLabels())
+        .metadata(createMetadata(body.getResourceMetadata()))
+        .build();
+  }
+
+  private static ResourceMetadata createMetadata(
+      bio.terra.janitor.generated.model.ResourceMetadata model) {
+    return ResourceMetadata.builder()
+        .googleProjectParent(Optional.ofNullable(model.getGoogleProjectParent()))
         .build();
   }
 

@@ -20,6 +20,8 @@ public abstract class TrackedResource {
 
   public abstract Instant expiration();
 
+  public abstract ResourceMetadata metadata();
+
   public static Builder builder() {
     return new AutoValue_TrackedResource.Builder();
   }
@@ -37,6 +39,8 @@ public abstract class TrackedResource {
     public abstract Builder creation(Instant creationTime);
 
     public abstract Builder expiration(Instant expirationTime);
+
+    public abstract Builder metadata(ResourceMetadata value);
 
     public abstract TrackedResource build();
   }

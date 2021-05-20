@@ -72,6 +72,7 @@ public class FlightSchedulerTest extends BaseUnitTest {
             new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName("foo")))
         .creation(expiredBy)
         .expiration(expiredBy)
+        .metadata(ResourceMetadata.none())
         .build();
   }
 
