@@ -54,8 +54,7 @@ public abstract class ResourceCleanupStep implements Step {
             state.toString());
         return StepResult.getStepResultSuccess();
       case CLEANING:
-        // TODO(yonghao): Update cleanup log
-        return cleanUp(cloudResourceUid);
+        return cleanUp(cloudResourceUid, trackedResource.get().metadata());
       default:
         throw new UnsupportedOperationException(
             String.format(
@@ -70,6 +69,6 @@ public abstract class ResourceCleanupStep implements Step {
   }
 
   /** The actual resource cleanup logic. */
-  protected abstract StepResult cleanUp(CloudResourceUid resourceUid)
+  protected abstract StepResult cleanUp(CloudResourceUid resourceUid, ResourceMetadata metadata)
       throws InterruptedException, RetryException;
 }

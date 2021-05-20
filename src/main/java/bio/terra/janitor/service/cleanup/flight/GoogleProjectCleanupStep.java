@@ -2,11 +2,15 @@ package bio.terra.janitor.service.cleanup.flight;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.ResourceMetadata;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
+import com.google.api.services.cloudresourcemanager.v3.model.TestIamPermissionsRequest;
+import com.google.api.services.cloudresourcemanager.v3.model.TestIamPermissionsResponse;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
 import org.slf4j.Logger;
@@ -24,10 +28,24 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
   }
 
   @Override
-  protected StepResult cleanUp(CloudResourceUid resourceUid)
+  protected StepResult cleanUp(CloudResourceUid resourceUid, ResourceMetadata metadata)
       throws InterruptedException, RetryException {
     String projectId = resourceUid.getGoogleProjectUid().getProjectId();
     try {
+      if (metadata.googleProjectParent().isPresent()
+          && metadata.googleProjectParent().get().contains("folders/")) {
+        String folderName = metadata.googleProjectParent().get();
+        TestIamPermissionsResponse iamResponse =
+            resourceManagerCow
+                .folders()
+                .testIamPermissions(
+                    folderName,
+                    new TestIamPermissionsRequest()
+                        .setPermissions(ImmutableList.of("resourcemanager.projects.get")))
+                .execute();
+        iamResponse.getPermissions().contains("resourcemanager.projects.get");
+      }
+
       // We cannot distinguish between not having access to a project and the project no longer
       // existing. Google returns 403 for both cases to prevent project id probing. For now, we
       // think that due to how long it takes to delete a project vs marking it as ready for

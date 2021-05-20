@@ -6,6 +6,7 @@ import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.ResourceMetadata;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -33,7 +34,7 @@ public class GoogleAiNotebookInstanceCleanupStep extends ResourceCleanupStep {
   }
 
   @Override
-  protected StepResult cleanUp(CloudResourceUid resourceUid) {
+  protected StepResult cleanUp(CloudResourceUid resourceUid, ResourceMetadata metadata) {
     InstanceName instanceName =
         InstanceName.builder()
             .projectId(resourceUid.getGoogleAiNotebookInstanceUid().getProjectId())

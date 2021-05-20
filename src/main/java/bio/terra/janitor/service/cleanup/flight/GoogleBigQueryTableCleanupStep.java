@@ -2,6 +2,7 @@ package bio.terra.janitor.service.cleanup.flight;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.ResourceMetadata;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.GoogleBigQueryTableUid;
 import bio.terra.stairway.StepResult;
@@ -23,7 +24,7 @@ public class GoogleBigQueryTableCleanupStep extends ResourceCleanupStep {
   }
 
   @Override
-  protected StepResult cleanUp(CloudResourceUid resourceUid) {
+  protected StepResult cleanUp(CloudResourceUid resourceUid, ResourceMetadata metadata) {
     GoogleBigQueryTableUid tableUid = resourceUid.getGoogleBigQueryTableUid();
     try {
       bigQueryCow

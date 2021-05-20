@@ -3,6 +3,7 @@ package bio.terra.janitor.service.cleanup.flight;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.ResourceMetadata;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -24,7 +25,7 @@ public class GoogleBucketCleanupStep extends ResourceCleanupStep {
   }
 
   @Override
-  protected StepResult cleanUp(CloudResourceUid resourceUid) {
+  protected StepResult cleanUp(CloudResourceUid resourceUid, ResourceMetadata metadata) {
     // TODO(yonghao): Set bucket lifetime to 0 and wait once Stairway supports waiting. This is more
     // robust for buckets with many or very large objects.
     try {

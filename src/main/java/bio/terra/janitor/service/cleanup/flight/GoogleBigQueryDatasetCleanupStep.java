@@ -2,6 +2,7 @@ package bio.terra.janitor.service.cleanup.flight;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.ResourceMetadata;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.GoogleBigQueryDatasetUid;
 import bio.terra.stairway.StepResult;
@@ -23,7 +24,7 @@ public class GoogleBigQueryDatasetCleanupStep extends ResourceCleanupStep {
   }
 
   @Override
-  protected StepResult cleanUp(CloudResourceUid resourceUid) {
+  protected StepResult cleanUp(CloudResourceUid resourceUid, ResourceMetadata metadata) {
     GoogleBigQueryDatasetUid datasetUid = resourceUid.getGoogleBigQueryDatasetUid();
     try {
       // Because deleteContents is true, this call will delete datasets even if they still have
