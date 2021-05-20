@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.NotFoundException;
 import bio.terra.janitor.db.*;
+import bio.terra.janitor.db.ResourceMetadata;
 import bio.terra.janitor.generated.model.*;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
@@ -53,6 +54,7 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
                     .cloudResourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
                     .expiration(DEFAULT_TIME)
+                    .metadata(ResourceMetadata.none())
                     .build())
             .trackedResourceId();
     assertEquals(
@@ -67,6 +69,7 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
                     .cloudResourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
                     .expiration(DEFAULT_TIME.minusSeconds(10))
+                    .metadata(ResourceMetadata.none())
                     .build())
             .trackedResourceId();
     assertEquals(
@@ -82,6 +85,7 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
                     .cloudResourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
                     .expiration(DEFAULT_TIME.plusSeconds(20))
+                    .metadata(ResourceMetadata.none())
                     .build())
             .trackedResourceId();
     assertEquals(
@@ -105,6 +109,7 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
                     .cloudResourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
                     .expiration(DEFAULT_TIME)
+                    .metadata(ResourceMetadata.none())
                     .build())
             .trackedResourceId();
 
@@ -117,6 +122,7 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
                     .cloudResourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
                     .expiration(DEFAULT_TIME)
+                    .metadata(ResourceMetadata.none())
                     .build())
             .trackedResourceId();
 
@@ -146,6 +152,7 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
                     .cloudResourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
                     .expiration(DEFAULT_TIME)
+                    .metadata(ResourceMetadata.none())
                     .build())
             .trackedResourceId();
     janitorDao.updateResourceState(cleaningId, TrackedResourceState.CLEANING);
@@ -169,6 +176,7 @@ public class TrackedResourceServiceTest extends BaseUnitTest {
                     .cloudResourceUid(resourceUid)
                     .creation(DEFAULT_TIME)
                     .expiration(DEFAULT_TIME)
+                    .metadata(ResourceMetadata.none())
                     .build())
             .trackedResourceId();
     janitorDao.updateResourceState(errorId, TrackedResourceState.ERROR);

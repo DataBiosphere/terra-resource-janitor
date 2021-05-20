@@ -50,7 +50,8 @@ public class JanitorDaoTest extends BaseUnitTest {
             new CloudResourceUid()
                 .googleProjectUid(new GoogleProjectUid().projectId(UUID.randomUUID().toString())))
         .creation(CREATION)
-        .expiration(EXPIRATION);
+        .expiration(EXPIRATION)
+        .metadata(ResourceMetadata.none());
   }
 
   @Test
@@ -60,6 +61,24 @@ public class JanitorDaoTest extends BaseUnitTest {
     String serialized = "{\"googleProjectUid\":{\"projectId\":\"my-project\"}}";
     assertEquals(serialized, JanitorDao.serialize(cloudResourceUid));
     assertEquals(cloudResourceUid, JanitorDao.deserialize(serialized));
+  }
+
+  @Test
+  public void serializeResourceMetadata() {
+    ResourceMetadata metadata =
+        ResourceMetadata.builder().googleProjectParent("folders/1234").build();
+    String serialized = "{\"version\":1,\"googleProjectParent\":\"folders/1234\"}";
+    assertEquals(serialized, JanitorDao.serialize(metadata));
+    assertEquals(metadata, JanitorDao.deserializeMetadata(serialized));
+  }
+
+  @Test
+  public void serializeResourceMetadataNone() {
+    ResourceMetadata none = ResourceMetadata.none();
+    String serialized = "{\"version\":1}";
+    assertEquals(serialized, JanitorDao.serialize(none));
+    assertEquals(none, JanitorDao.deserializeMetadata(serialized));
+    assertEquals(none, JanitorDao.deserializeMetadata(null));
   }
 
   @Test
@@ -74,6 +93,7 @@ public class JanitorDaoTest extends BaseUnitTest {
             .cloudResourceUid(cloudResourceUid)
             .creation(CREATION)
             .expiration(EXPIRATION)
+            .metadata(ResourceMetadata.builder().googleProjectParent("folders/1234").build())
             .build();
     janitorDao.createResource(resource, DEFAULT_LABELS);
 

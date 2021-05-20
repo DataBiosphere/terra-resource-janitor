@@ -21,6 +21,9 @@ public abstract class TrackRequest {
   /** The labels to associate with the resource. */
   public abstract ImmutableMap<String, String> labels();
 
+  /** Additional metadata about the resource. */
+  public abstract ResourceMetadata metadata();
+
   public static Builder builder() {
     return new AutoValue_TrackRequest.Builder().labels(ImmutableMap.of());
   }
@@ -35,6 +38,8 @@ public abstract class TrackRequest {
     public abstract Builder expiration(Instant expiration);
 
     public abstract Builder labels(Map<String, String> labels);
+
+    public abstract Builder metadata(ResourceMetadata value);
 
     public abstract TrackRequest build();
   }

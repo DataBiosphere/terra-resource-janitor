@@ -218,6 +218,8 @@ components:
         resourceUid:
           # CloudResourceUid is referred from CRL's cloud-resource-schema.
           $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+        resourceMetadata:
+          $ref: '#/components/schemas/ResourceMetadata'
         labels:
           description: The labels for the resource
           type: object
@@ -251,6 +253,8 @@ components:
         resourceUid:
           description: The CloudResourceUid of the tracked resource.
           $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+        metadata:
+          $ref: '#/components/schemas/ResourceMetadata'
         state:
           description: The state of the tracked resource's cleanup.
           $ref: '#/components/schemas/ResourceState'
@@ -287,6 +291,16 @@ components:
         - ERROR
         - ABANDONED
         - DUPLIATED
+
+    ResourceMetadata:
+      type: object
+      description: Additional information about a resource that does not uniquely identify.
+      properties:
+        googleProjectParent:
+          type: string
+          description: |
+            The parent resource name of a Google Project resource, e.g. "folders/1234" or
+            "organizations/1234". This must only be set for Google Project resources.
 
   responses:
     ErrorResponse:
