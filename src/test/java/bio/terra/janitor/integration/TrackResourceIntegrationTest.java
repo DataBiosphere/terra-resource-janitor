@@ -483,7 +483,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
     TrackedResourceInfoList resourceInfoList =
-        pollUntilResourceState(request.getResourceUid(), expectedState, Duration.ofSeconds(5), 10);
+        pollUntilResourceState(request.getResourceUid(), expectedState, Duration.ofSeconds(5), 60);
 
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
