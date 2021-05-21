@@ -37,7 +37,7 @@ public class GoogleUtils {
     try {
       Project project = resourceManager.projects().get(projectId).execute();
       // We were able to retrieve the project.
-      return deleteInProgress(project) ? ProjectStatus.DELETE_IN_PROGRESS : ProjectStatus.ACTIVE;
+      return deleteInProgress(project) ? ProjectStatus.DELETING : ProjectStatus.ACTIVE;
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() != HttpStatus.SC_FORBIDDEN) {
         // Got an unexpected exception, throw to the caller.
@@ -83,7 +83,7 @@ public class GoogleUtils {
     // The project is exists and is active.
     ACTIVE,
     // The project is in the process of being deleted. It is partially unavailable.
-    DELETE_IN_PROGRESS,
+    DELETING,
     // We could not find the project, but we think we should have the permissions to do so. It's
     // likely that the project does not exist now, and maybe never existed.
     PROBABLY_DOES_NOT_EXIST,

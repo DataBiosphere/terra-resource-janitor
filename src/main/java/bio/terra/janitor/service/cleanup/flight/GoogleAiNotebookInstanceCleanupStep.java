@@ -47,7 +47,7 @@ public class GoogleAiNotebookInstanceCleanupStep extends ResourceCleanupStep {
           GoogleUtils.checkProjectStatus(
               instanceName.projectId(), /* parentResource= */ Optional.empty(), resourceManagerCow);
       switch (projectStatus) {
-        case DELETE_IN_PROGRESS:
+        case DELETING:
           logger.info("Project for instance {} already being deleted.", instanceName.formatName());
           return StepResult.getStepResultSuccess();
         case PROBABLY_DOES_NOT_EXIST:

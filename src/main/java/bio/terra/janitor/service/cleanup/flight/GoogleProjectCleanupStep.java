@@ -55,7 +55,7 @@ public class GoogleProjectCleanupStep extends ResourceCleanupStep {
             }
             throw e;
           }
-        case DELETE_IN_PROGRESS:
+        case DELETING:
           // If the project is already being deleted, there's nothing else to do.
           logger.info("Project id: {} is already being deleted", projectId);
           return StepResult.getStepResultSuccess();
