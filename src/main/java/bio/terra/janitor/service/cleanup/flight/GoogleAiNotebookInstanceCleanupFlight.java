@@ -18,7 +18,7 @@ public class GoogleAiNotebookInstanceCleanupFlight extends Flight {
     AIPlatformNotebooksCow notebooksCow = appContext.getBean(AIPlatformNotebooksCow.class);
     CloudResourceManagerCow resourceManagerCow = appContext.getBean(CloudResourceManagerCow.class);
     RetryRuleFixedInterval retryRule =
-        new RetryRuleFixedInterval(/* intervalSeconds =*/ 180, /* maxCount =*/ 5);
+        new RetryRuleFixedInterval(/* intervalSeconds =*/ 30, /* maxCount =*/ 5);
 
     addStep(new InitialCleanupStep(janitorDao));
     addStep(
