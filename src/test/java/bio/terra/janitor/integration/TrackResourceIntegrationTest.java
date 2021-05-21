@@ -434,29 +434,62 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("DELETE_REQUESTED", project.getState());
   }
 
+  @Test
+  public void subscribeAndCleanupResource_neverCreatedGoogleProject_withMetadataOk()
+      throws Exception {
+    String projectId = randomProjectId();
+    // Don't create the project.
+
+    CloudResourceUid resource =
+        new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
+
+    // If we know that the project should have been created where we have permissions to retrieve it
+    // by metadata, we can successfully recognize that the project never existed.
+    CreateResourceRequestBody request =
+        newExpiredCreateResourceMessage(resource, OffsetDateTime.now(ZoneOffset.UTC))
+            .resourceMetadata(
+                new ResourceMetadata()
+                    .googleProjectParent(testConfiguration.getParentResourceId()));
+    publishAndVerify(request, ResourceState.DONE);
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_neverCreatedGoogleProject_withoutMetadataError()
+      throws Exception {
+    String projectId = randomProjectId();
+    // Don't create the project.
+
+    CloudResourceUid resource =
+        new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId(projectId));
+
+    // We can't tell if the project never existed or we don't have permissions to delete it.
+    publishAndVerify(resource, ResourceState.ERROR);
+  }
+
+  private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
+      throws Exception {
+    OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
+    publishAndVerify(newExpiredCreateResourceMessage(resource, publishTime), expectedState);
+  }
+
   /**
    * Publish message to Janitor to track resource and verify the resource reaches the expected state
    * by GET resource endpoint.
    */
-  private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
+  private void publishAndVerify(CreateResourceRequestBody request, ResourceState expectedState)
       throws Exception {
-    OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
-
-    ByteString data =
-        ByteString.copyFromUtf8(
-            objectMapper.writeValueAsString(
-                newExpiredCreateResourceMessage(resource, publishTime)));
+    ByteString data = ByteString.copyFromUtf8(objectMapper.writeValueAsString(request));
 
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
     TrackedResourceInfoList resourceInfoList =
-        pollUntilResourceState(resource, expectedState, Duration.ofSeconds(5), 10);
+        pollUntilResourceState(request.getResourceUid(), expectedState, Duration.ofSeconds(5), 10);
 
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
-    assertEquals(resource, trackedResourceInfo.getResourceUid());
-    assertEquals(publishTime, trackedResourceInfo.getCreation());
-    assertEquals(publishTime, trackedResourceInfo.getExpiration());
+    assertEquals(request.getResourceUid(), trackedResourceInfo.getResourceUid());
+    assertEquals(request.getCreation(), trackedResourceInfo.getCreation());
+    assertEquals(request.getExpiration(), trackedResourceInfo.getExpiration());
     assertEquals(DEFAULT_LABELS, trackedResourceInfo.getLabels());
     assertEquals(expectedState, trackedResourceInfo.getState());
   }

@@ -2,6 +2,7 @@ package bio.terra.janitor.service.cleanup.flight;
 
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.ResourceMetadata;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -21,7 +22,7 @@ public class GoogleBlobCleanupStep extends ResourceCleanupStep {
   }
 
   @Override
-  protected StepResult cleanUp(CloudResourceUid resourceUid) {
+  protected StepResult cleanUp(CloudResourceUid resourceUid, ResourceMetadata metadata) {
     try {
       BlobId blobId =
           BlobId.of(
