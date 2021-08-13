@@ -5,6 +5,5 @@
 # Except...
 !.gitignore
 !local-postgres-init.sql
-!README.md
 !*.sh
 !*.template
