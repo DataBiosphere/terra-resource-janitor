@@ -1,0 +1,10 @@
+# Ignore everything in this directory...
+*
+./terra-helmfile/**
+
+# Except...
+!.gitignore
+!local-postgres-init.sql
+!README.md
+!*.sh
+!*.template
