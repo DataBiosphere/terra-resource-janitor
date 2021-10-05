@@ -21,6 +21,8 @@ public class StairwayConfiguration {
   private int maxParallelFlights;
   private Duration quietDownTimeout;
   private Duration terminateTimeout;
+  private Duration retentionCheckInterval;
+  private Duration completedFlightRetention;
 
   public String getName() {
     return name;
@@ -76,5 +78,21 @@ public class StairwayConfiguration {
 
   public void setTerminateTimeout(Duration terminateTimeout) {
     this.terminateTimeout = terminateTimeout;
+  }
+
+  public Duration getRetentionCheckInterval() {
+    return retentionCheckInterval;
+  }
+
+  public void setRetentionCheckInterval(Duration retentionCheckInterval) {
+    this.retentionCheckInterval = retentionCheckInterval;
+  }
+
+  public Duration getCompletedFlightRetention() {
+    return completedFlightRetention;
+  }
+
+  public void setCompletedFlightRetention(Duration completedFlightRetention) {
+    this.completedFlightRetention = completedFlightRetention;
   }
 }

@@ -1,16 +1,30 @@
 package bio.terra.janitor.service.cleanup;
 
 import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.janitor.common.BaseUnitTest;
-import bio.terra.janitor.db.*;
+import bio.terra.janitor.db.CleanupFlight;
+import bio.terra.janitor.db.CleanupFlightState;
+import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.ResourceMetadata;
+import bio.terra.janitor.db.TrackedResource;
+import bio.terra.janitor.db.TrackedResourceId;
+import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.GoogleBucketUid;
-import bio.terra.janitor.service.cleanup.flight.*;
+import bio.terra.janitor.service.cleanup.flight.FatalStep;
+import bio.terra.janitor.service.cleanup.flight.FinalCleanupStep;
+import bio.terra.janitor.service.cleanup.flight.InitialCleanupStep;
+import bio.terra.janitor.service.cleanup.flight.LatchStep;
+import bio.terra.janitor.service.cleanup.flight.UnsupportedCleanupStep;
 import bio.terra.janitor.service.stairway.StairwayComponent;
-import bio.terra.stairway.*;
+import bio.terra.stairway.Flight;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.exception.DatabaseOperationException;
+import bio.terra.stairway.exception.FlightNotFoundException;
 import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.Instant;
@@ -18,6 +32,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.ApplicationContext;
@@ -25,6 +42,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class FlightManagerTest extends BaseUnitTest {
   private static final Instant CREATION = Instant.EPOCH;
@@ -208,10 +226,16 @@ public class FlightManagerTest extends BaseUnitTest {
             trackedResource ->
                 FlightSubmissionFactory.FlightSubmission.create(
                     LatchAfterCleanupFlight.class, inputMap));
+
+    FlightManager managerSpy = Mockito.spy(manager);
+    Mockito.doThrow(FlightNotFoundException.class)
+        .when(managerSpy)
+        .getCompleteFlightStatus(Mockito.anyString());
+
     TrackedResource resource = newResourceForCleaning();
     janitorDao.createResource(resource, ImmutableMap.of());
 
-    String flightId = manager.submitFlight(EXPIRATION).get();
+    String flightId = managerSpy.submitFlight(EXPIRATION).get();
     // Wait until the flight is in the finishing state so that the manager will try to pick it up.
     pollUntil(
         () ->
@@ -220,10 +244,8 @@ public class FlightManagerTest extends BaseUnitTest {
                 .equals(Optional.of(CleanupFlightState.FINISHING)),
         Duration.ofMillis(100),
         10);
-    // Force the deletion of the not finished flight to simulate losing a flight.
-    stairwayComponent.get().deleteFlight(flightId, /* forceDelete= */ true);
 
-    assertEquals(1, manager.updateCompletedFlights(10));
+    assertEquals(1, managerSpy.updateCompletedFlights(10));
 
     assertEquals(
         Optional.of(resource.toBuilder().trackedResourceState(TrackedResourceState.ERROR).build()),

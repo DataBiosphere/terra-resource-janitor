@@ -30,6 +30,8 @@ janitor:
     migrate-upgrade: true
     quiet-down-timeout: 20s
     terminate-timeout: 5s
+    retention-check-interval: 1d
+    completed-flight-retention: 7d
 
 server:
   compression:

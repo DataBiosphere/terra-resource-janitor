@@ -5,6 +5,7 @@ import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
 import java.time.Duration;
@@ -199,7 +200,7 @@ class FlightManager {
     String flightId = resourceAndFlight.cleanupFlight().flightId();
     Optional<FlightStatus> flightStatus;
     try {
-      flightStatus = Optional.of(stairway.getFlightState(flightId).getFlightStatus());
+      flightStatus = getCompleteFlightStatus(flightId);
     } catch (FlightNotFoundException e) {
       logger.error(
           "Completed tracked resource flight not found. Tracked resource id [{}]. Flight id [{}].",
@@ -218,15 +219,24 @@ class FlightManager {
     CompletedFlightState completedFlightState;
     if (flightStatus.isEmpty()) {
       completedFlightState = CompletedFlightState.LOST;
-    } else if (flightStatus.get().equals(FlightStatus.SUCCESS)) {
-      completedFlightState = CompletedFlightState.SUCCESS;
-    } else if (flightStatus.get().equals(FlightStatus.ERROR)) {
-      completedFlightState = CompletedFlightState.ERROR;
     } else {
-      // The flight hasn't finished or has finished fatally. Let Stairway keep working or the
-      // fatal monitor handle this respectively.
-      return false;
+      switch (flightStatus.get()) {
+        case SUCCESS:
+          completedFlightState = CompletedFlightState.SUCCESS;
+          break;
+
+        case ERROR:
+        case FATAL:
+          completedFlightState = CompletedFlightState.ERROR;
+          break;
+
+        default:
+          // The flight hasn't finished or has finished fatally. Let Stairway keep working or the
+          // fatal monitor handle this respectively.
+          return false;
+      }
     }
+
     return transactionTemplate.execute(
         status ->
             updateFinishedCleanupState(
@@ -234,6 +244,12 @@ class FlightManager {
                 flightId,
                 completedFlightState,
                 status));
+  }
+
+  // Small indirection so we have something to mock for testing that is not a Spring-injected class.
+  @VisibleForTesting
+  Optional<FlightStatus> getCompleteFlightStatus(String flightId) throws InterruptedException {
+    return Optional.of(stairway.getFlightState(flightId).getFlightStatus());
   }
 
   /* An enum for the possible states of a completed flight. */
@@ -336,20 +352,7 @@ class FlightManager {
   }
 
   private boolean updateFatalFlight(String flightId) {
-    if (!transactionTemplate.execute(status -> updateFatalCleanupState(flightId, status))) {
-      return false;
-    }
-    try {
-      // We delete the FATAL flights from Stairway once they've been processed so that we can
-      // continue to query Stairway for FATAL flights efficiently.
-      stairway.deleteFlight(flightId, /* forceDelete =*/ false);
-    } catch (DatabaseOperationException | InterruptedException e) {
-      // Even though Stairway failed to delete the flight, the Janitor considers it cleaned up. We
-      // will try to delete the flight from Stairway on another go around.
-      logger.error(String.format("Error deleting flight [%s]", flightId), e);
-      return false;
-    }
-    return true;
+    return transactionTemplate.execute(status -> updateFatalCleanupState(flightId, status));
   }
 
   /**
@@ -370,8 +373,7 @@ class FlightManager {
     TrackedResource trackedResource = resourceAndFlight.get().trackedResource();
     TrackedResourceState resourceState = trackedResource.trackedResourceState();
     if (resourceAndFlight.get().cleanupFlight().state().equals(CleanupFlightState.FATAL)) {
-      // We already marked the flight as completed, we must have previously failed to delete the
-      // flight from Stairway. We should try the Stairway deletion again.
+      // We already marked the flight as completed - this is not an error.
       MetricsHelper.incrementFatalFlightUndeleted();
       return true;
     }
