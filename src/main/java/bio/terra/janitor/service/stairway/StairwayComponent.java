@@ -5,6 +5,7 @@ import bio.terra.janitor.app.configuration.StairwayConfiguration;
 import bio.terra.janitor.app.configuration.StairwayJdbcConfiguration;
 import bio.terra.janitor.service.cleanup.CleanupLoggingHook;
 import bio.terra.stairway.Stairway;
+import bio.terra.stairway.StairwayBuilder;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import com.google.common.collect.ImmutableList;
@@ -47,13 +48,13 @@ public class StairwayComponent {
         stairwayConfiguration.getClusterName());
     // TODO(CA-941): Configure the workqueue pubsub subscription and topic for multi-instance.
     // TODO(PF-314): Cleanup old flightlogs.
-    Stairway.Builder builder =
-        Stairway.newBuilder()
+    StairwayBuilder builder =
+        new StairwayBuilder()
             .maxParallelFlights(stairwayConfiguration.getMaxParallelFlights())
+            .retentionCheckInterval(stairwayConfiguration.getRetentionCheckInterval())
+            .completedFlightRetention(stairwayConfiguration.getCompletedFlightRetention())
             .applicationContext(applicationContext)
-            .keepFlightLog(true)
             .stairwayName(stairwayConfiguration.getName())
-            .stairwayClusterName(stairwayConfiguration.getClusterName())
             .stairwayHook(new CleanupLoggingHook())
             .stairwayHook(new TracingHook());
     try {
