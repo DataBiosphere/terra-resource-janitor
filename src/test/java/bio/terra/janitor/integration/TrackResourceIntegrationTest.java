@@ -1,7 +1,10 @@
 package bio.terra.janitor.integration;
 
 import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -13,10 +16,27 @@ import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
+import bio.terra.janitor.app.configuration.CrlConfiguration;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
-import bio.terra.janitor.generated.model.*;
+import bio.terra.janitor.generated.model.AzurePublicIp;
+import bio.terra.janitor.generated.model.CloudResourceUid;
+import bio.terra.janitor.generated.model.CreateResourceRequestBody;
+import bio.terra.janitor.generated.model.GoogleAiNotebookInstanceUid;
+import bio.terra.janitor.generated.model.GoogleBigQueryDatasetUid;
+import bio.terra.janitor.generated.model.GoogleBigQueryTableUid;
+import bio.terra.janitor.generated.model.GoogleBlobUid;
+import bio.terra.janitor.generated.model.GoogleBucketUid;
+import bio.terra.janitor.generated.model.GoogleProjectUid;
+import bio.terra.janitor.generated.model.ResourceMetadata;
+import bio.terra.janitor.generated.model.ResourceState;
+import bio.terra.janitor.generated.model.TrackedResourceInfo;
+import bio.terra.janitor.generated.model.TrackedResourceInfoList;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
+import com.azure.core.management.Region;
+import com.azure.core.management.exception.ManagementException;
+import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.network.models.PublicIpAddress;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -45,7 +65,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -62,6 +84,8 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   @Qualifier(OBJECT_MAPPER)
   private ObjectMapper objectMapper;
 
+  @Autowired private CrlConfiguration crlConfiguration;
+
   private Publisher publisher;
 
   private AIPlatformNotebooksCow notebooksCow;
@@ -69,6 +93,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private BigQueryCow bigQueryCow;
   private CloudResourceManagerCow resourceManagerCow;
   private String projectId;
+  private ComputeManager computeManager;
 
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
@@ -114,6 +139,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         CloudResourceManagerCow.create(
             testConfiguration.createClientConfig(),
             testConfiguration.getResourceAccessGoogleCredentialsOrDie());
+
+    computeManager =
+        crlConfiguration.buildComputeManager(testConfiguration.getAzureResourceGroup());
   }
 
   @AfterEach
@@ -464,6 +492,47 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
     // We can't tell if the project never existed or we don't have permissions to delete it.
     publishAndVerify(resource, ResourceState.ERROR);
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_azurePublicIp() throws Exception {
+    // Creates IP
+    String ipName = randomNameWithUnderscore();
+    PublicIpAddress createdIp =
+        computeManager
+            .networkManager()
+            .publicIpAddresses()
+            .define(ipName)
+            .withRegion(Region.US_EAST)
+            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
+            .withDynamicIP()
+            .withTag("janitor.integration.test", "true")
+            .create();
+
+    // Verify resources are created in Azure
+    assertEquals(
+        ipName, computeManager.networkManager().publicIpAddresses().getById(createdIp.id()).name());
+
+    CloudResourceUid ipUid =
+        new CloudResourceUid()
+            .azurePublicIp(
+                new AzurePublicIp()
+                    .ipName(ipName)
+                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
+
+    // Publish a message to cleanup the IP.
+    publishAndVerify(ipUid, ResourceState.DONE);
+
+    // Resource is removed
+    ManagementException ipDeleted =
+        assertThrows(
+            ManagementException.class,
+            () -> computeManager.networkManager().publicIpAddresses().getById(createdIp.id()));
+    assertEquals("ResourceNotFound", ipDeleted.getValue().getCode());
+
+    // Try to publish another message to cleanup the same IP and verify Janitor works fine for
+    // IPs already deleted by other flight.
+    publishAndVerify(ipUid, ResourceState.DONE);
   }
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)

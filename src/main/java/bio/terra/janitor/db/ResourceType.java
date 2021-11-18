@@ -15,5 +15,5 @@ public enum ResourceType {
   GOOGLE_BUCKET,
   GOOGLE_NOTEBOOK_INSTANCE,
   GOOGLE_PROJECT,
-  ;
+  AZURE_PUBLIC_IP;
 }
