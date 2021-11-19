@@ -16,6 +16,8 @@ public interface CloudResourceUidVisitor<R> {
 
   R visit(GoogleAiNotebookInstanceUid resource);
 
+  R visit(AzurePublicIp resource);
+
   R noResourceVisited(CloudResourceUid resource);
 
   static <R> R visit(CloudResourceUid resource, CloudResourceUidVisitor<R> visitor) {
@@ -31,6 +33,8 @@ public interface CloudResourceUidVisitor<R> {
       return visitor.visit(resource.getGoogleBigQueryTableUid());
     } else if (resource.getGoogleAiNotebookInstanceUid() != null) {
       return visitor.visit(resource.getGoogleAiNotebookInstanceUid());
+    } else if (resource.getAzurePublicIp() != null) {
+      return visitor.visit(resource.getAzurePublicIp());
     } else {
       return visitor.noResourceVisited(resource);
     }

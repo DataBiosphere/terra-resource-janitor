@@ -43,6 +43,9 @@ public class TestConfiguration {
   /** ID of the parent folder to create projects within. */
   private String parentResourceId;
 
+  /** ID of the Azure tenant to create resources within. */
+  private String azureTenantId;
+
   /** ID of the Azure subscription to create resources within. */
   private String azureSubscriptionId;
 
@@ -101,6 +104,14 @@ public class TestConfiguration {
     this.parentResourceId = parentResourceId;
   }
 
+  public String getAzureTenantId() {
+    return azureTenantId;
+  }
+
+  public void setAzureTenantId(String azureTenantId) {
+    this.azureTenantId = azureTenantId;
+  }
+
   public String getAzureSubscriptionId() {
     return azureSubscriptionId;
   }
@@ -154,6 +165,7 @@ public class TestConfiguration {
 
   public AzureResourceGroup getAzureResourceGroup() {
     return new AzureResourceGroup()
+        .tenantId(azureTenantId)
         .subscriptionId(azureSubscriptionId)
         .resourceGroupName(azureManagedResourceGroupName);
   }

@@ -529,10 +529,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
             ManagementException.class,
             () -> computeManager.networkManager().publicIpAddresses().getById(createdIp.id()));
     assertEquals("ResourceNotFound", ipDeleted.getValue().getCode());
-
-    // Try to publish another message to cleanup the same IP and verify Janitor works fine for
-    // IPs already deleted by other flight.
-    publishAndVerify(ipUid, ResourceState.DONE);
   }
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
