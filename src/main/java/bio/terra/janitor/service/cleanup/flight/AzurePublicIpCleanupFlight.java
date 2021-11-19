@@ -7,6 +7,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRuleFixedInterval;
 import org.springframework.context.ApplicationContext;
 
+/** Flight to clean up an Azure public IP. */
 public class AzurePublicIpCleanupFlight extends Flight {
   public AzurePublicIpCleanupFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);

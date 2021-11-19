@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** Step to clean up an Azure public IP. */
 public class AzurePublicIpCleanupStep extends ResourceCleanupStep {
   private static final Logger logger = LoggerFactory.getLogger(AzurePublicIpCleanupStep.class);
   private final CrlConfiguration crlConfiguration;

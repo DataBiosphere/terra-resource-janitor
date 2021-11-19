@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "janitor.azure")
 public class AzureConfiguration {
-  // Managed app authentication
+  // Information needed to authenticate to a managed app instance
   private String managedAppClientId;
   private String managedAppClientSecret;
   private String managedAppTenantId;

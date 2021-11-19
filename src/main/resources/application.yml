@@ -33,10 +33,9 @@ janitor:
     retention-check-interval: 1d
     completed-flight-retention: 7d
   azure:
-    # TODO: read from vault
-    managed-app-client-id: 51ef1ef2-b571-43b3-bcb3-ecaa3b49f0ed
-    managed-app-client-secret:
-    managed-app-tenant-id: fad90753-2022-4456-9b0a-c7e5b934e408
+    managed-app-client-id: ${AZURE_MANAGED_APP_CLIENT_ID}
+    managed-app-client-secret: ${AZURE_MANAGED_APP_CLIENT_SECRET}
+    managed-app-tenant-id: ${AZURE_MANAGED_APP_TENANT_ID}
 
 server:
   compression:
