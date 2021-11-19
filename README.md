@@ -139,6 +139,19 @@ local-dev/run_postgres.sh stop
 Janitor uses a list of user email address as administrator user to access its admin endpoint.
 The value can be set in `iam.adminUserList` configuration.
 ### For Broad Engineers:
+#### To connect to `tools` Janitor database
+```
+./cloud_sql_proxy -instances=terra-kernel-k8s:us-central1:crljanitor-db-tools-aa84446ffb6a5fd1=tcp:5432
+```
+Pull secret from Vault
+```
+export PGPASSWORD=$(docker run -e VAULT_TOKEN=$(cat ~/.vault-token) -it broadinstitute/dsde-toolbox:dev vault read -field='password' secret/dsde/terra/kernel/integration/tools/crl_janitor/postgres/db-creds)
+```
+Connect to postgres DB
+```
+psql "host=127.0.0.1 sslmode=disable dbname=crljanitor user=crljanitor"
+```
+
 #### To use `tools` Janitor
 `tools` Janitor is used by Broad deployed Terra APPs. `tools` Janitor's client service account(created by [Terraform](https://github.com/broadinstitute/terraform-ap-modules/blob/54bf1f9669ade3d4f5e8fb0197f1dd4239448dea/crl-janitor/sa.tf#L76)) has permission to access
 admin endpoint. To use this:
