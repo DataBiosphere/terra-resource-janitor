@@ -51,3 +51,5 @@ spring:
       max-age: 0
       must-revalidate: true
     static-locations: classpath:/api/
+  config:
+    import: optional:file:config/local-properties.yml

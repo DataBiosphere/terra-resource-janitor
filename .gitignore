@@ -50,3 +50,6 @@ pom.xml
 *.zip
 *.tar.gz
 *.rar
+
+### render-config script output
+config/
