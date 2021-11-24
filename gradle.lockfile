@@ -1,7 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-bio.terra.cloud-resource-lib:cloud-resource-schema:0.9.0=cloudResourceSchema,compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:cloud-resource-schema:0.10.0=cloudResourceSchema,compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:common:0.9.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:google-api-services-common:0.9.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:google-bigquery:0.11.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
