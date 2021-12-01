@@ -528,7 +528,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         assertThrows(
             ManagementException.class,
             () -> computeManager.networkManager().publicIpAddresses().getById(createdIp.id()));
-    assertEquals("ResourceNotFound", ipDeleted.getValue().getCode());
+    assertEquals("NotFound", ipDeleted.getValue().getCode());
   }
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
