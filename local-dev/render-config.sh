@@ -9,12 +9,12 @@ VAULT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/toolsalpha/crl_j
 VAULT_CLIENT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/client-sa
 VAULT_TOOLS_CLIENT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa
 VAULT_CLOUD_ACCESS_SERVICE_ACCOUNT_PATH=secret/dsde/terra/janitor-test/default/cloud-access-sa
-VAULT_AZURE_MANAGED_APP_CLIENT_PATH=secret/dsde/terra/kernel/integration/tools/crl_janitor/azure-managed-app-client
+VAULT_AZURE_MANAGED_APP_PUBLISHER_PATH=secret/dsde/terra/azure/common/managed-app-publisher
 SERVICE_ACCOUNT_OUTPUT_FILE_PATH="$(dirname $0)"/../src/test/resources/rendered/sa-account.json
 CLIENT_SERVICE_ACCOUNT_OUTPUT_FILE_PATH="$(dirname $0)"/../src/test/resources/rendered/client-sa-account.json
 TOOLS_CLIENT_SERVICE_ACCOUNT_OUTPUT_FILE_PATH="$(dirname $0)"/../src/test/resources/rendered/tools-client-sa-account.json
 CLOUD_ACCESS_SERVICE_ACCOUNT_OUTPUT_FILE_PATH="$(dirname $0)"/../src/test/resources/rendered/cloud-access-sa-account.json
-AZURE_MANAGED_APP_CLIENT_OUTPUT_FILE_PATH="$(dirname $0)"/../src/test/resources/rendered/azure-mananged-app-client.json
+AZURE_MANAGED_APP_PUBLISHER_OUTPUT_FILE_PATH="$(dirname $0)"/../src/test/resources/rendered/azure-mananged-app-publisher.json
 LOCAL_PROPERTIES_DIR="$(dirname $0)"/../config
 
 docker run --rm -e VAULT_TOKEN=$VAULT_TOKEN ${DSDE_TOOLBOX_DOCKER_IMAGE} \
@@ -34,14 +34,14 @@ docker run --rm --cap-add IPC_LOCK \
             | jq -r .data.key | base64 -d > ${CLOUD_ACCESS_SERVICE_ACCOUNT_OUTPUT_FILE_PATH}
 docker run --rm --cap-add IPC_LOCK \
             -e VAULT_TOKEN=$VAULT_TOKEN ${DSDE_TOOLBOX_DOCKER_IMAGE} \
-            vault read -format json ${VAULT_AZURE_MANAGED_APP_CLIENT_PATH} \
-            | jq -r .data > ${AZURE_MANAGED_APP_CLIENT_OUTPUT_FILE_PATH}
+            vault read -format json ${VAULT_AZURE_MANAGED_APP_PUBLISHER_PATH} \
+            | jq -r .data > ${AZURE_MANAGED_APP_PUBLISHER_OUTPUT_FILE_PATH}
 
 # Write the Azure configuration into the local-properties.yml file
 mkdir -p "${LOCAL_PROPERTIES_DIR}"
-AZURE_MANAGED_APP_CLIENT_ID=$(jq -r .client_id ${AZURE_MANAGED_APP_CLIENT_OUTPUT_FILE_PATH})
-AZURE_MANAGED_APP_CLIENT_SECRET=$(jq -r .client_secret ${AZURE_MANAGED_APP_CLIENT_OUTPUT_FILE_PATH})
-AZURE_MANAGED_APP_TENANT_ID=$(jq -r .tenant_id ${AZURE_MANAGED_APP_CLIENT_OUTPUT_FILE_PATH})
+AZURE_MANAGED_APP_CLIENT_ID=$(jq -r .client_id ${AZURE_MANAGED_APP_PUBLISHER_OUTPUT_FILE_PATH})
+AZURE_MANAGED_APP_CLIENT_SECRET=$(jq -r .client_secret ${AZURE_MANAGED_APP_PUBLISHER_OUTPUT_FILE_PATH})
+AZURE_MANAGED_APP_TENANT_ID=$(jq -r .tenant_id ${AZURE_MANAGED_APP_PUBLISHER_OUTPUT_FILE_PATH})
 cat << EOF > ${LOCAL_PROPERTIES_DIR}/local-properties.yml
 janitor:
   azure:
