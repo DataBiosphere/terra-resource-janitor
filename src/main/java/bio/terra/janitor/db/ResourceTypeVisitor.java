@@ -39,6 +39,11 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   }
 
   @Override
+  public ResourceType visit(AzurePublicIp resource) {
+    return AZURE_PUBLIC_IP;
+  }
+
+  @Override
   public ResourceType noResourceVisited(CloudResourceUid resource) {
     throw new InvalidResourceUidException("invalid CloudResourceUid for" + resource);
   }

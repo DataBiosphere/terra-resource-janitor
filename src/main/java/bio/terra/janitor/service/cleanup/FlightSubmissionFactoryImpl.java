@@ -30,6 +30,8 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
         return FlightSubmission.create(GoogleAiNotebookInstanceCleanupFlight.class, flightMap);
       case GOOGLE_PROJECT:
         return FlightSubmission.create(GoogleProjectCleanupFlight.class, flightMap);
+      case AZURE_PUBLIC_IP:
+        return FlightSubmission.create(AzurePublicIpCleanupFlight.class, flightMap);
       default:
         return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
     }

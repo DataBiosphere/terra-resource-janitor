@@ -8,13 +8,13 @@ plugins {
     id 'de.undercouch.download' version '4.0.0'
     id 'io.spring.dependency-management' version '1.0.10.RELEASE'
     id 'org.hidetake.swagger.generator' version '2.18.2'
-    id 'org.springframework.boot' version '2.3.1.RELEASE'
+    id 'org.springframework.boot' version '2.4.0'
 }
 
 
 allprojects {
     group = 'bio.terra'
-    version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.4.0-SNAPSHOT'
+    version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.5.0-SNAPSHOT'
     sourceCompatibility = JavaVersion.VERSION_11
     ext {
         artifactGroup = "${group}.janitor"
@@ -67,12 +67,14 @@ dependencies {
 
     // When updating platform version, be sure to keep Spring dependency-management plugin stanza's
     // version of cloud-resource-schema in sync with the platform (PF-866).
-    implementation platform('bio.terra.cloud-resource-lib:platform:0.1.0')
+    implementation platform('bio.terra.cloud-resource-lib:platform:0.4.0')
     implementation group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-notebooks'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage'
+    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-compute'
+    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-common'
 
     // Versioned direct deps
     implementation group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.7.3'

@@ -32,6 +32,10 @@ janitor:
     terminate-timeout: 5s
     retention-check-interval: 1d
     completed-flight-retention: 7d
+  azure:
+    managed-app-client-id: ${AZURE_MANAGED_APP_CLIENT_ID}
+    managed-app-client-secret: ${AZURE_MANAGED_APP_CLIENT_SECRET}
+    managed-app-tenant-id: ${AZURE_MANAGED_APP_TENANT_ID}
 
 server:
   compression:
@@ -47,3 +51,5 @@ spring:
       max-age: 0
       must-revalidate: true
     static-locations: classpath:/api/
+  config:
+    import: optional:file:config/local-properties.yml

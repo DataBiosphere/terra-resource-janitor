@@ -4,6 +4,7 @@ import static bio.terra.janitor.common.CredentialUtils.getGoogleCredentialsOrDie
 
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
+import bio.terra.janitor.generated.model.AzureResourceGroup;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -41,6 +42,15 @@ public class TestConfiguration {
 
   /** ID of the parent folder to create projects within. */
   private String parentResourceId;
+
+  /** ID of the Azure tenant to create resources within. */
+  private String azureTenantId;
+
+  /** ID of the Azure subscription to create resources within. */
+  private String azureSubscriptionId;
+
+  /** Name of the Azure managed resource group to create resources within. */
+  private String azureManagedResourceGroupName;
 
   public String getTrackResourceTopicId() {
     return trackResourceTopicId;
@@ -94,6 +104,30 @@ public class TestConfiguration {
     this.parentResourceId = parentResourceId;
   }
 
+  public String getAzureTenantId() {
+    return azureTenantId;
+  }
+
+  public void setAzureTenantId(String azureTenantId) {
+    this.azureTenantId = azureTenantId;
+  }
+
+  public String getAzureSubscriptionId() {
+    return azureSubscriptionId;
+  }
+
+  public void setAzureSubscriptionId(String azureSubscriptionId) {
+    this.azureSubscriptionId = azureSubscriptionId;
+  }
+
+  public String getAzureManagedResourceGroupName() {
+    return azureManagedResourceGroupName;
+  }
+
+  public void setAzureManagedResourceGroupName(String azureManagedResourceGroupName) {
+    this.azureManagedResourceGroupName = azureManagedResourceGroupName;
+  }
+
   /**
    * Janitor Client {@link ServiceAccountCredentials} which has permission to publish message to
    * Janitor.
@@ -127,5 +161,12 @@ public class TestConfiguration {
    */
   public ServiceAccountCredentials getResourceAccessGoogleCredentialsOrDie() {
     return getGoogleCredentialsOrDie(resourceCredentialFilePath);
+  }
+
+  public AzureResourceGroup getAzureResourceGroup() {
+    return new AzureResourceGroup()
+        .tenantId(azureTenantId)
+        .subscriptionId(azureSubscriptionId)
+        .resourceGroupName(azureManagedResourceGroupName);
   }
 }
