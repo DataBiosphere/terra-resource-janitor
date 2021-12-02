@@ -19,6 +19,9 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.janitor.app.configuration.CrlConfiguration;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
+import bio.terra.janitor.generated.model.AzureDisk;
+import bio.terra.janitor.generated.model.AzureNetwork;
+import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
 import bio.terra.janitor.generated.model.AzurePublicIp;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.CreateResourceRequestBody;
@@ -36,6 +39,9 @@ import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.compute.models.Disk;
+import com.azure.resourcemanager.network.models.Network;
+import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -530,6 +536,167 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
             () -> computeManager.networkManager().publicIpAddresses().getById(createdIp.id()));
     assertEquals("ResourceNotFound", ipDeleted.getValue().getCode());
   }
+
+  @Test
+  public void subscribeAndCleanupResource_azureNetworkSecurityGroup() throws Exception {
+    // Creates network security group
+    String networkSgName = randomNameWithUnderscore();
+    NetworkSecurityGroup createdNetworkSg =
+        computeManager
+            .networkManager()
+            .networkSecurityGroups()
+            .define(networkSgName)
+            .withRegion(Region.US_EAST)
+            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
+            .withTag("janitor.integration.test", "true")
+            .create();
+
+    // Verify resources are created in Azure
+    assertEquals(
+        networkSgName,
+        computeManager
+            .networkManager()
+            .networkSecurityGroups()
+            .getById(createdNetworkSg.id())
+            .name());
+
+    CloudResourceUid networkSgUid =
+        new CloudResourceUid()
+            .azureNetworkSecurityGroup(
+                new AzureNetworkSecurityGroup()
+                    .networkSecurityGroupName(networkSgName)
+                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
+
+    // Publish a message to cleanup the network security group.
+    publishAndVerify(networkSgUid, ResourceState.DONE);
+
+    // Resource is removed
+    ManagementException networkSgDeleted =
+        assertThrows(
+            ManagementException.class,
+            () ->
+                computeManager
+                    .networkManager()
+                    .networkSecurityGroups()
+                    .getById(createdNetworkSg.id()));
+    assertEquals("ResourceNotFound", networkSgDeleted.getValue().getCode());
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_azureNetwork() throws Exception {
+    // Creates network
+    String networkName = randomNameWithUnderscore();
+    Network createdNetwork =
+        computeManager
+            .networkManager()
+            .networks()
+            .define(networkName)
+            .withRegion(Region.US_EAST)
+            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
+            .withTag("janitor.integration.test", "true")
+            .create();
+
+    // Verify resources are created in Azure
+    assertEquals(
+        networkName,
+        computeManager.networkManager().networks().getById(createdNetwork.id()).name());
+
+    CloudResourceUid networkSgUid =
+        new CloudResourceUid()
+            .azureNetwork(
+                new AzureNetwork()
+                    .networkName(networkName)
+                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
+
+    // Publish a message to cleanup the network.
+    publishAndVerify(networkSgUid, ResourceState.DONE);
+
+    // Resource is removed
+    ManagementException networkDeleted =
+        assertThrows(
+            ManagementException.class,
+            () -> computeManager.networkManager().networks().getById(createdNetwork.id()));
+    assertEquals("ResourceNotFound", networkDeleted.getValue().getCode());
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_azureDisk() throws Exception {
+    // Creates disk
+    String diskName = randomNameWithUnderscore();
+    Disk createdDisk =
+        computeManager
+            .disks()
+            .define(diskName)
+            .withRegion(Region.US_EAST)
+            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
+            .withData()
+            .withSizeInGB(500)
+            .withTag("janitor.integration.test", "true")
+            .create();
+
+    // Verify resources are created in Azure
+    assertEquals(diskName, computeManager.disks().getById(createdDisk.id()).name());
+
+    CloudResourceUid diskUid =
+        new CloudResourceUid()
+            .azureDisk(
+                new AzureDisk()
+                    .diskName(diskName)
+                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
+
+    // Publish a message to cleanup the network.
+    publishAndVerify(diskUid, ResourceState.DONE);
+
+    // Resource is removed
+    ManagementException diskDeleted =
+        assertThrows(
+            ManagementException.class, () -> computeManager.disks().getById(createdDisk.id()));
+    assertEquals("ResourceNotFound", diskDeleted.getValue().getCode());
+  }
+
+  //  @Test
+  //  public void subscribeAndCleanupResource_azureVirtualMachine() throws Exception {
+  //    // Creates vm
+  //    String vmName = randomNameWithUnderscore();
+  //    VirtualMachine createdVm =
+  //            computeManager
+  //                    .virtualMachines()
+  //                    .define(vmName)
+  //                    .withRegion(Region.US_EAST)
+  //
+  // .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
+  //                    .
+  //                    .withTag("janitor.integration.test", "true")
+  //                    .create();
+  //
+  //    // Verify resources are created in Azure
+  //    assertEquals(
+  //            diskName,
+  //            computeManager
+  //                    .disks()
+  //                    .getById(createdDisk.id())
+  //                    .name());
+  //
+  //    CloudResourceUid diskUid =
+  //            new CloudResourceUid()
+  //                    .azureDisk(
+  //                            new AzureDisk()
+  //                                    .diskName(diskName)
+  //                                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
+  //
+  //    // Publish a message to cleanup the network.
+  //    publishAndVerify(diskUid, ResourceState.DONE);
+  //
+  //    // Resource is removed
+  //    ManagementException diskDeleted =
+  //            assertThrows(
+  //                    ManagementException.class,
+  //                    () ->
+  //                            computeManager
+  //                                    .disks()
+  //                                    .getById(createdDisk.id()));
+  //    assertEquals("ResourceNotFound", diskDeleted.getValue().getCode());
+  //  }
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
       throws Exception {
