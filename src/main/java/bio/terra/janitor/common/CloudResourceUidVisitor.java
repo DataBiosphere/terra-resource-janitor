@@ -1,6 +1,17 @@
 package bio.terra.janitor.common;
 
-import bio.terra.janitor.generated.model.*;
+import bio.terra.janitor.generated.model.AzureDisk;
+import bio.terra.janitor.generated.model.AzureNetwork;
+import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
+import bio.terra.janitor.generated.model.AzurePublicIp;
+import bio.terra.janitor.generated.model.AzureVirtualMachine;
+import bio.terra.janitor.generated.model.CloudResourceUid;
+import bio.terra.janitor.generated.model.GoogleAiNotebookInstanceUid;
+import bio.terra.janitor.generated.model.GoogleBigQueryDatasetUid;
+import bio.terra.janitor.generated.model.GoogleBigQueryTableUid;
+import bio.terra.janitor.generated.model.GoogleBlobUid;
+import bio.terra.janitor.generated.model.GoogleBucketUid;
+import bio.terra.janitor.generated.model.GoogleProjectUid;
 
 /** An interface for switching on the different resource types within a {@link CloudResourceUid}. */
 public interface CloudResourceUidVisitor<R> {
@@ -17,6 +28,14 @@ public interface CloudResourceUidVisitor<R> {
   R visit(GoogleAiNotebookInstanceUid resource);
 
   R visit(AzurePublicIp resource);
+
+  R visit(AzureNetworkSecurityGroup resource);
+
+  R visit(AzureNetwork resource);
+
+  R visit(AzureDisk resource);
+
+  R visit(AzureVirtualMachine resource);
 
   R noResourceVisited(CloudResourceUid resource);
 
@@ -35,6 +54,14 @@ public interface CloudResourceUidVisitor<R> {
       return visitor.visit(resource.getGoogleAiNotebookInstanceUid());
     } else if (resource.getAzurePublicIp() != null) {
       return visitor.visit(resource.getAzurePublicIp());
+    } else if (resource.getAzureNetworkSecurityGroup() != null) {
+      return visitor.visit(resource.getAzureNetworkSecurityGroup());
+    } else if (resource.getAzureNetwork() != null) {
+      return visitor.visit(resource.getAzureNetwork());
+    } else if (resource.getAzureDisk() != null) {
+      return visitor.visit(resource.getAzureDisk());
+    } else if (resource.getAzureVirtualMachine() != null) {
+      return visitor.visit(resource.getAzureVirtualMachine());
     } else {
       return visitor.noResourceVisited(resource);
     }
