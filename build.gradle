@@ -106,6 +106,18 @@ dependencies {
 
     annotationProcessor group: 'com.google.auto.value', name: 'auto-value', version: '1.7.3'
     annotationProcessor group: 'org.springframework.boot', name: 'spring-boot-configuration-processor'
+
+    // Force log4j version to at least 2.15.0 for security concerns.
+    implementation('org.apache.logging.log4j:log4j-api') {
+        version {
+            require "2.15.0"
+        }
+    }
+    implementation('org.apache.logging.log4j:log4j-to-slf4j') {
+        version {
+            require "2.15.0"
+        }
+    }
 }
 
 dependencyLocking {
