@@ -5,7 +5,6 @@ info:
     Janitor service to cleanup cloud resources created by Terra CRL.
   version: 0.0.0
 
-# This file has extra dependencies from: https://github.com/DataBiosphere/terra-cloud-resource-lib/blob/master/cloud-resource-schema/src/main/resources/cloud_resources_uid.yaml
 servers:
   - url: /
 
@@ -71,7 +70,7 @@ paths:
           in: query
           description: The cloud resource uid of the tracked resources.
           schema:
-            $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+            $ref: '#/components/schemas/CloudResourceUid'
         - name: state
           in: query
           description: The state of the tracked resource's cleanup to limit results to.
@@ -110,7 +109,7 @@ paths:
           description: The cloud resource uid of the tracked resources.
           required: true
           schema:
-            $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+            $ref: '#/components/schemas/CloudResourceUid'
         - name: state
           in: query
           description: What state to set the resources. Only ABANDON and READY are supported.
@@ -216,8 +215,7 @@ components:
         - expiration
       properties:
         resourceUid:
-          # CloudResourceUid is referred from CRL's cloud-resource-schema.
-          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/CloudResourceUid'
+          $ref: '#/components/schemas/CloudResourceUid'
         resourceMetadata:
           $ref: '#/components/schemas/ResourceMetadata'
         labels:
