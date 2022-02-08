@@ -107,4 +107,28 @@ public class CrlConfiguration {
 
     return manager;
   }
+
+  /** Creates an Azure {@link ComputeManager} client for a given managed resource group. */
+  public ComputeManager buildComputeManager(AzureResourceGroup azureResourceGroup) {
+    TokenCredential azureCreds =
+        new ClientSecretCredentialBuilder()
+            .clientId(azureConfiguration.getManagedAppClientId())
+            .clientSecret(azureConfiguration.getManagedAppClientSecret())
+            .tenantId(azureConfiguration.getManagedAppTenantId())
+            .build();
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureResourceGroup.getTenantId(),
+            azureResourceGroup.getSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    ComputeManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ComputeManager.configure())
+            .authenticate(azureCreds, azureProfile);
+
+    return manager;
+  }
 }
