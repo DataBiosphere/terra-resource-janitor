@@ -12,6 +12,7 @@ import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.relay.RelayManager;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.cloudresourcemanager.v3.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.v3.CloudResourceManagerScopes;
@@ -109,7 +110,7 @@ public class CrlConfiguration {
   }
 
   /** Creates an Azure {@link ComputeManager} client for a given managed resource group. */
-  public ComputeManager buildRelayManager(AzureResourceGroup azureResourceGroup) {
+  public RelayManager buildRelayManager(AzureResourceGroup azureResourceGroup) {
     TokenCredential azureCreds =
         new ClientSecretCredentialBuilder()
             .clientId(azureConfiguration.getManagedAppClientId())
@@ -124,9 +125,9 @@ public class CrlConfiguration {
             AzureEnvironment.AZURE);
 
     // We must use FQDN because there are two `Defaults` symbols imported otherwise.
-    ComputeManager manager =
-        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-                clientConfig, ComputeManager.configure())
+    RelayManager manager =
+        bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
+                clientConfig, RelayManager.configure())
             .authenticate(azureCreds, azureProfile);
 
     return manager;

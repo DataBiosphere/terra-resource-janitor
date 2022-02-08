@@ -23,6 +23,8 @@ import bio.terra.janitor.generated.model.AzureDisk;
 import bio.terra.janitor.generated.model.AzureNetwork;
 import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
 import bio.terra.janitor.generated.model.AzurePublicIp;
+import bio.terra.janitor.generated.model.AzureRelay;
+import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
 import bio.terra.janitor.generated.model.AzureVirtualMachine;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.CreateResourceRequestBody;
@@ -48,6 +50,9 @@ import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
+import com.azure.resourcemanager.relay.RelayManager;
+import com.azure.resourcemanager.relay.models.HybridConnection;
+import com.azure.resourcemanager.relay.models.RelayNamespace;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -105,6 +110,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private CloudResourceManagerCow resourceManagerCow;
   private String projectId;
   private ComputeManager computeManager;
+  private RelayManager relayManager;
 
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
@@ -153,6 +159,8 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
     computeManager =
         crlConfiguration.buildComputeManager(testConfiguration.getAzureResourceGroup());
+
+    relayManager = crlConfiguration.buildRelayManager(testConfiguration.getAzureResourceGroup());
   }
 
   @AfterEach
@@ -540,6 +548,64 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
             ManagementException.class,
             () -> computeManager.networkManager().publicIpAddresses().getById(createdIp.id()));
     assertEquals("ResourceNotFound", ipDeleted.getValue().getCode());
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_azureRelayAndHybridConnections() throws Exception {
+    // Creates IP
+    String relayName = randomNameWithUnderscore();
+    RelayNamespace createdNameSpace =
+        relayManager
+            .namespaces()
+            .define(relayName)
+            .withRegion(Region.US_EAST)
+            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
+            .create();
+
+    // Verify resources are created in Azure
+    assertEquals(relayName, relayManager.namespaces().getById(createdNameSpace.id()).name());
+
+    String hybridConnectionName = randomNameWithUnderscore();
+    HybridConnection createdHc =
+        relayManager
+            .hybridConnections()
+            .define(hybridConnectionName)
+            .withExistingNamespace(testConfiguration.getAzureManagedResourceGroupName(), relayName)
+            .create();
+
+    CloudResourceUid relayUid =
+        new CloudResourceUid()
+            .azureRelay(
+                new AzureRelay()
+                    .relayName(relayName)
+                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
+
+    CloudResourceUid hcUid =
+        new CloudResourceUid()
+            .azureRelayHybridConnection(
+                new AzureRelayHybridConnection()
+                    .hybridConnectionName(hybridConnectionName)
+                    .namespace(relayName)
+                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
+
+    // Publish a message to cleanup the IP.
+    publishAndVerify(hcUid, ResourceState.DONE);
+
+    // Resource is removed
+    ManagementException removeHc =
+        assertThrows(
+            ManagementException.class, () -> relayManager.namespaces().getById(createdHc.id()));
+    assertEquals("ResourceNotFound", removeHc.getValue().getCode());
+
+    // Publish a message to cleanup the IP.
+    publishAndVerify(relayUid, ResourceState.DONE);
+
+    // Resource is removed
+    ManagementException removeRelay =
+        assertThrows(
+            ManagementException.class,
+            () -> relayManager.namespaces().getById(createdNameSpace.id()));
+    assertEquals("ResourceNotFound", removeRelay.getValue().getCode());
   }
 
   @Test

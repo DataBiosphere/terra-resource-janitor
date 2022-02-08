@@ -41,9 +41,9 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
       case AZURE_VIRTUAL_MACHINE:
         return FlightSubmission.create(AzureVirtualMachineCleanupFlight.class, flightMap);
       case AZURE_RELAY:
-        return FlightSubmission.create(AzureVirtualMachineCleanupFlight.class, flightMap);
+        return FlightSubmission.create(AzureRelayCleanupFlight.class, flightMap);
       case AZURE_RELAY_CONNECTION:
-        return FlightSubmission.create(AzureVirtualMachineCleanupFlight.class, flightMap);
+        return FlightSubmission.create(AzureRelayHybridConnectionCleanupFlight.class, flightMap);
       default:
         return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
     }
