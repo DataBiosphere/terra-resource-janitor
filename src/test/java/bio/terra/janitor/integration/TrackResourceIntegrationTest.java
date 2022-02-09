@@ -553,7 +553,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   @Test
   public void subscribeAndCleanupResource_azureRelayAndHybridConnections() throws Exception {
     // Creates IP
-    String relayName = randomNameWithUnderscore();
+    String relayName = randomRelayNameSpace();
     RelayNamespace createdNameSpace =
         relayManager
             .namespaces()
@@ -573,6 +573,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
             .withExistingNamespace(testConfiguration.getAzureManagedResourceGroupName(), relayName)
             .create();
 
+    assertEquals(
+        hybridConnectionName, relayManager.hybridConnections().getById(createdHc.id()).name());
+
     CloudResourceUid relayUid =
         new CloudResourceUid()
             .azureRelay(
@@ -590,7 +593,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
     // Publish a message to cleanup the IP.
     publishAndVerify(hcUid, ResourceState.DONE);
-
     // Resource is removed
     ManagementException removeHc =
         assertThrows(
@@ -861,7 +863,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publisher.publish(PubsubMessage.newBuilder().setData(data).build());
 
     TrackedResourceInfoList resourceInfoList =
-        pollUntilResourceState(request.getResourceUid(), expectedState, Duration.ofSeconds(5), 60);
+        pollUntilResourceState(request.getResourceUid(), expectedState, Duration.ofSeconds(5), 120);
 
     assertEquals(1, resourceInfoList.getResources().size());
     TrackedResourceInfo trackedResourceInfo = resourceInfoList.getResources().get(0);
@@ -929,6 +931,10 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   /** Generates a random name to use for a cloud resource. */
   private static String randomName() {
     return UUID.randomUUID().toString();
+  }
+  /** Generates a random name to use for a cloud resource. */
+  private static String randomRelayNameSpace() {
+    return "a" + randomName().substring(0, 8) + "b";
   }
 
   /** Generates a random name to and replace '-' with '_'. */
