@@ -69,9 +69,9 @@ public interface CloudResourceUidVisitor<R> {
     } else if (resource.getAzureVirtualMachine() != null) {
       return visitor.visit(resource.getAzureVirtualMachine());
     } else if (resource.getAzureRelay() != null) {
-      return visitor.visit(resource.getAzureVirtualMachine());
+      return visitor.visit(resource.getAzureRelay());
     } else if (resource.getAzureRelayHybridConnection() != null) {
-      return visitor.visit(resource.getAzureVirtualMachine());
+      return visitor.visit(resource.getAzureRelayHybridConnection());
     } else {
       return visitor.noResourceVisited(resource);
     }
