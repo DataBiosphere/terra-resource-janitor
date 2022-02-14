@@ -596,8 +596,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     // Resource is removed
     ManagementException removeHc =
         assertThrows(
-            ManagementException.class, () -> relayManager.namespaces().getById(createdHc.id()));
-    assertEquals("ResourceNotFound", removeHc.getValue().getCode());
+            ManagementException.class,
+            () -> relayManager.hybridConnections().getById(createdHc.id()));
+    assertEquals("NotFound", removeHc.getValue().getCode());
 
     // Publish a message to cleanup the IP.
     publishAndVerify(relayUid, ResourceState.DONE);
@@ -607,7 +608,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         assertThrows(
             ManagementException.class,
             () -> relayManager.namespaces().getById(createdNameSpace.id()));
-    assertEquals("ResourceNotFound", removeRelay.getValue().getCode());
+    assertEquals("NotFound", removeRelay.getValue().getCode());
   }
 
   @Test
