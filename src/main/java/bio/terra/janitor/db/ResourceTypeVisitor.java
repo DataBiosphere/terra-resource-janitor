@@ -4,6 +4,8 @@ import static bio.terra.janitor.db.ResourceType.AZURE_DISK;
 import static bio.terra.janitor.db.ResourceType.AZURE_NETWORK;
 import static bio.terra.janitor.db.ResourceType.AZURE_NETWORK_SECURITY_GROUP;
 import static bio.terra.janitor.db.ResourceType.AZURE_PUBLIC_IP;
+import static bio.terra.janitor.db.ResourceType.AZURE_RELAY;
+import static bio.terra.janitor.db.ResourceType.AZURE_RELAY_CONNECTION;
 import static bio.terra.janitor.db.ResourceType.AZURE_VIRTUAL_MACHINE;
 import static bio.terra.janitor.db.ResourceType.GOOGLE_BIGQUERY_DATASET;
 import static bio.terra.janitor.db.ResourceType.GOOGLE_BIGQUERY_TABLE;
@@ -18,6 +20,8 @@ import bio.terra.janitor.generated.model.AzureDisk;
 import bio.terra.janitor.generated.model.AzureNetwork;
 import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
 import bio.terra.janitor.generated.model.AzurePublicIp;
+import bio.terra.janitor.generated.model.AzureRelay;
+import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
 import bio.terra.janitor.generated.model.AzureVirtualMachine;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.GoogleAiNotebookInstanceUid;
@@ -82,6 +86,16 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   @Override
   public ResourceType visit(AzureVirtualMachine resource) {
     return AZURE_VIRTUAL_MACHINE;
+  }
+
+  @Override
+  public ResourceType visit(AzureRelay resource) {
+    return AZURE_RELAY;
+  }
+
+  @Override
+  public ResourceType visit(AzureRelayHybridConnection resource) {
+    return AZURE_RELAY_CONNECTION;
   }
 
   @Override

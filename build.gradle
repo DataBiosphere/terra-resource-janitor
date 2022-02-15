@@ -11,10 +11,9 @@ plugins {
     id 'org.springframework.boot' version '2.4.0'
 }
 
-
 allprojects {
     group = 'bio.terra'
-    version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.6.0-SNAPSHOT'
+    version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.7.0-SNAPSHOT'
     sourceCompatibility = JavaVersion.VERSION_11
     ext['log4j2.version'] = '2.17.0' // until Spring Boot 2.6.2
     ext {
@@ -45,6 +44,7 @@ allprojects {
 }
 
 repositories {
+//    mavenLocal()
     mavenCentral()
     maven {
         url 'https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/'
@@ -60,7 +60,7 @@ dependencies {
 
     // When updating platform version, be sure to keep Spring dependency-management plugin stanza's
     // version of cloud-resource-schema in sync with the platform (PF-866).
-    implementation platform('bio.terra.cloud-resource-lib:platform:0.4.0')
+    implementation platform('bio.terra.cloud-resource-lib:platform:0.7.0')
     implementation group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager'
@@ -68,6 +68,7 @@ dependencies {
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-compute'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-common'
+    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-relay'
 
     // Versioned direct deps
     implementation group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.7.3'

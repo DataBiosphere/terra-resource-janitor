@@ -433,6 +433,33 @@ components:
         vmName:
           type: string
           description: The user-provided name to identify the VM.
+    AzureRelay:
+      type: object
+      required:
+        - resourceGroup
+        - relayName
+      properties:
+        resourceGroup:
+          $ref: '#/components/schemas/AzureResourceGroup'
+        relayName:
+          type: string
+          description: The user-provided name to identify the relay.
+    AzureRelayHybridConnection:
+      type: object
+      required:
+        - resourceGroup
+        - namespace
+        - hybridConnectionName
+      properties:
+        resourceGroup:
+          $ref: '#/components/schemas/AzureResourceGroup'
+        namespace:
+          type: string
+          description: The user-provided name to identify the Relay.
+        hybridConnectionName:
+          type: string
+          description: The user-provided name to identify the Relay HybridConnection.
+
     # A cloud resource unique identifier. Each CloudResourceUid represents exactly one cloud resource.
     # We are not doing polymorphism at this moment because of lack of support in swagger-codegen or openApiGenerator
     # Now CloudResourceUid contains all possible cloud resource types, and we will assume there is only one being set
@@ -462,6 +489,10 @@ components:
           $ref: '#/components/schemas/AzureNetworkSecurityGroup'
         azureVirtualMachine:
           $ref: '#/components/schemas/AzureVirtualMachine'
+        azureRelay:
+          $ref: '#/components/schemas/AzureRelay'
+        azureRelayHybridConnection:
+          $ref: '#/components/schemas/AzureRelayHybridConnection'
 
   responses:
     ErrorResponse:

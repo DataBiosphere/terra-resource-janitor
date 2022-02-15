@@ -4,6 +4,8 @@ import bio.terra.janitor.generated.model.AzureDisk;
 import bio.terra.janitor.generated.model.AzureNetwork;
 import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
 import bio.terra.janitor.generated.model.AzurePublicIp;
+import bio.terra.janitor.generated.model.AzureRelay;
+import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
 import bio.terra.janitor.generated.model.AzureVirtualMachine;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.GoogleAiNotebookInstanceUid;
@@ -37,6 +39,10 @@ public interface CloudResourceUidVisitor<R> {
 
   R visit(AzureVirtualMachine resource);
 
+  R visit(AzureRelay resource);
+
+  R visit(AzureRelayHybridConnection resource);
+
   R noResourceVisited(CloudResourceUid resource);
 
   static <R> R visit(CloudResourceUid resource, CloudResourceUidVisitor<R> visitor) {
@@ -62,6 +68,10 @@ public interface CloudResourceUidVisitor<R> {
       return visitor.visit(resource.getAzureDisk());
     } else if (resource.getAzureVirtualMachine() != null) {
       return visitor.visit(resource.getAzureVirtualMachine());
+    } else if (resource.getAzureRelay() != null) {
+      return visitor.visit(resource.getAzureRelay());
+    } else if (resource.getAzureRelayHybridConnection() != null) {
+      return visitor.visit(resource.getAzureRelayHybridConnection());
     } else {
       return visitor.noResourceVisited(resource);
     }
