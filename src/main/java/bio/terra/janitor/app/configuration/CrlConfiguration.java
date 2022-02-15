@@ -109,7 +109,7 @@ public class CrlConfiguration {
     return manager;
   }
 
-  /** Creates an Azure {@link ComputeManager} client for a given managed resource group. */
+  /** Creates an Azure {@link RelayManager} client for a given managed resource group. */
   public RelayManager buildRelayManager(AzureResourceGroup azureResourceGroup) {
     TokenCredential azureCreds =
         new ClientSecretCredentialBuilder()

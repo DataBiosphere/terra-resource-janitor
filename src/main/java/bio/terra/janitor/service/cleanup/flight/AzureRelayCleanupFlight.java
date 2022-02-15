@@ -7,7 +7,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRuleFixedInterval;
 import org.springframework.context.ApplicationContext;
 
-/** Flight to clean up an Azure public IP. */
+/** Flight to clean up an Azure Relay Namespace. */
 public class AzureRelayCleanupFlight extends Flight {
   public AzureRelayCleanupFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
