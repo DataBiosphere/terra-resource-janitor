@@ -44,6 +44,8 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
         return FlightSubmission.create(AzureRelayCleanupFlight.class, flightMap);
       case AZURE_RELAY_CONNECTION:
         return FlightSubmission.create(AzureRelayHybridConnectionCleanupFlight.class, flightMap);
+      case AZURE_CONTAINER_INSTANCE:
+        return FlightSubmission.create(AzureContainerInstanceCleanupFlight.class, flightMap);
       default:
         return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
     }

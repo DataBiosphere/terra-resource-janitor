@@ -19,25 +19,7 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.janitor.app.configuration.CrlConfiguration;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
-import bio.terra.janitor.generated.model.AzureDisk;
-import bio.terra.janitor.generated.model.AzureNetwork;
-import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
-import bio.terra.janitor.generated.model.AzurePublicIp;
-import bio.terra.janitor.generated.model.AzureRelay;
-import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
-import bio.terra.janitor.generated.model.AzureVirtualMachine;
-import bio.terra.janitor.generated.model.CloudResourceUid;
-import bio.terra.janitor.generated.model.CreateResourceRequestBody;
-import bio.terra.janitor.generated.model.GoogleAiNotebookInstanceUid;
-import bio.terra.janitor.generated.model.GoogleBigQueryDatasetUid;
-import bio.terra.janitor.generated.model.GoogleBigQueryTableUid;
-import bio.terra.janitor.generated.model.GoogleBlobUid;
-import bio.terra.janitor.generated.model.GoogleBucketUid;
-import bio.terra.janitor.generated.model.GoogleProjectUid;
-import bio.terra.janitor.generated.model.ResourceMetadata;
-import bio.terra.janitor.generated.model.ResourceState;
-import bio.terra.janitor.generated.model.TrackedResourceInfo;
-import bio.terra.janitor.generated.model.TrackedResourceInfoList;
+import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
@@ -46,6 +28,8 @@ import com.azure.resourcemanager.compute.models.Disk;
 import com.azure.resourcemanager.compute.models.KnownLinuxVirtualMachineImage;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
+import com.azure.resourcemanager.containerinstance.ContainerInstanceManager;
+import com.azure.resourcemanager.containerinstance.models.ContainerGroup;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
@@ -111,6 +95,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private String projectId;
   private ComputeManager computeManager;
   private RelayManager relayManager;
+  private ContainerInstanceManager containerInstanceManager;
 
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
@@ -161,6 +146,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         crlConfiguration.buildComputeManager(testConfiguration.getAzureResourceGroup());
 
     relayManager = crlConfiguration.buildRelayManager(testConfiguration.getAzureResourceGroup());
+
+    containerInstanceManager =
+        crlConfiguration.buildContainerInstance(testConfiguration.getAzureResourceGroup());
   }
 
   @AfterEach
@@ -609,6 +597,49 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
             ManagementException.class,
             () -> relayManager.namespaces().getById(createdNameSpace.id()));
     assertEquals("NotFound", removeRelay.getValue().getCode());
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_azureContainerInstance() throws Exception {
+    String containerGroupName = randomName();
+    // create container group
+    ContainerGroup createdContainerInstance =
+        containerInstanceManager
+            .containerGroups()
+            .define(containerGroupName)
+            .withRegion(Region.US_EAST)
+            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
+            .withLinux()
+            .withPublicImageRegistryOnly()
+            .withoutVolume()
+            .defineContainerInstance("test-container-instance")
+            .withImage("busybox")
+            .withoutPorts()
+            .attach()
+            .create();
+
+    // Verify resources are created in Azure
+    assertEquals(
+        containerGroupName,
+        containerInstanceManager.containerGroups().getById(createdContainerInstance.id()).name());
+
+    CloudResourceUid containerGroupUid =
+        new CloudResourceUid()
+            .azureContainerInstance(
+                new AzureContainerInstance()
+                    .containerGroupName(containerGroupName)
+                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
+
+    // publish and verify to clean up the container group
+    publishAndVerify(containerGroupUid, ResourceState.DONE);
+
+    // Resource is removed
+    ManagementException removeContainerGroup =
+        assertThrows(
+            ManagementException.class,
+            () ->
+                containerInstanceManager.containerGroups().getById(createdContainerInstance.id()));
+    assertEquals("ResourceNotFound", removeContainerGroup.getValue().getCode());
   }
 
   @Test

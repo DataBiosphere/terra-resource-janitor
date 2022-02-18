@@ -459,6 +459,76 @@ components:
         hybridConnectionName:
           type: string
           description: The user-provided name to identify the Relay HybridConnection.
+    AzureContainerInstance:
+      type: object
+      required:
+        - resourceGroup
+        - containerGroupName
+        - containers
+        - operatingSystemTypes
+      properties:
+        resourceGroup:
+          $ref: '#/components/schemas/AzureResourceGroup'
+        containerGroupName:
+          type: string
+          description: The name of the container group.
+        containers:
+          type: array
+          description: The containers within the container group.
+          items:
+            type: object
+            required:
+              - name
+              - image
+            properties:
+              name:
+                type: string
+                description: The user-provided name of the container instance.
+              image:
+                type: string
+                description: The name of the image used to create the container instance.
+              command:
+                type: array
+                description: The commands to execute within the container instance in exec form.
+                items:
+                  type: string
+              ports:
+                type: array
+                description: The exposed ports on the container instance.
+                items:
+                  type: object
+                  required:
+                    - protocol
+                    - port
+                  properties:
+                    protocol:
+                      type: string
+                      description: The protocol associated with the port.
+                      enum: [TCP, UDP]
+                    port:
+                      type: integer
+                      description: The port number exposed within the container group.
+              environmentVariables:
+                type: array
+                description: The environment variables to set in the container instance.
+                items:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                      description: The name of the environment variable.
+                    value:
+                      type: string
+                      description: The value of the environment variable.
+                    secureValue:
+                      type: string
+                      description: The value of the secure environment variable.
+        operatingSystemTypes:
+          type: string
+          description: The operating system type required by the containers in the container group.
+          enum: [Windows, Linux]
 
     # A cloud resource unique identifier. Each CloudResourceUid represents exactly one cloud resource.
     # We are not doing polymorphism at this moment because of lack of support in swagger-codegen or openApiGenerator
@@ -493,6 +563,8 @@ components:
           $ref: '#/components/schemas/AzureRelay'
         azureRelayHybridConnection:
           $ref: '#/components/schemas/AzureRelayHybridConnection'
+        azureContainerInstance:
+          $ref: '#/components/schemas/AzureContainerInstance'
 
   responses:
     ErrorResponse:

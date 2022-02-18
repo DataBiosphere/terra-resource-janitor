@@ -1,5 +1,6 @@
 package bio.terra.janitor.common;
 
+import bio.terra.janitor.generated.model.AzureContainerInstance;
 import bio.terra.janitor.generated.model.AzureDisk;
 import bio.terra.janitor.generated.model.AzureNetwork;
 import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
@@ -43,6 +44,8 @@ public interface CloudResourceUidVisitor<R> {
 
   R visit(AzureRelayHybridConnection resource);
 
+  R visit(AzureContainerInstance resource);
+
   R noResourceVisited(CloudResourceUid resource);
 
   static <R> R visit(CloudResourceUid resource, CloudResourceUidVisitor<R> visitor) {
@@ -72,6 +75,8 @@ public interface CloudResourceUidVisitor<R> {
       return visitor.visit(resource.getAzureRelay());
     } else if (resource.getAzureRelayHybridConnection() != null) {
       return visitor.visit(resource.getAzureRelayHybridConnection());
+    } else if (resource.getAzureContainerInstance() != null) {
+      return visitor.visit(resource.getAzureContainerInstance());
     } else {
       return visitor.noResourceVisited(resource);
     }

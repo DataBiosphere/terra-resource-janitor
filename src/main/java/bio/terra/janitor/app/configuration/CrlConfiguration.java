@@ -12,6 +12,7 @@ import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.containerinstance.ContainerInstanceManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.cloudresourcemanager.v3.CloudResourceManager;
@@ -130,6 +131,27 @@ public class CrlConfiguration {
                 clientConfig, RelayManager.configure())
             .authenticate(azureCreds, azureProfile);
 
+    return manager;
+  }
+
+  public ContainerInstanceManager buildContainerInstance(AzureResourceGroup azureResourceGroup) {
+    TokenCredential azureCreds =
+        new ClientSecretCredentialBuilder()
+            .clientId(azureConfiguration.getManagedAppClientId())
+            .clientSecret(azureConfiguration.getManagedAppClientSecret())
+            .tenantId(azureConfiguration.getManagedAppTenantId())
+            .build();
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureResourceGroup.getTenantId(),
+            azureResourceGroup.getSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    ContainerInstanceManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ContainerInstanceManager.configure())
+            .authenticate(azureCreds, azureProfile);
     return manager;
   }
 }
