@@ -31,6 +31,7 @@ allprojects {
         dependencies {
             dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.5"
             dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.22"
+            dependency group: 'io.swagger', name: 'swagger-annotations', version: '1.6.2'
         }
     }
 
@@ -58,10 +59,7 @@ dependencies {
     // Terra deps - we get Stairway via TCL
     implementation group: 'bio.terra', name: 'terra-common-lib', version: '0.0.51-SNAPSHOT'
 
-    // When updating platform version, be sure to keep Spring dependency-management plugin stanza's
-    // version of cloud-resource-schema in sync with the platform (PF-866).
-    implementation platform('bio.terra.cloud-resource-lib:platform:0.7.0')
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema'
+    implementation platform('bio.terra.cloud-resource-lib:platform:0.10.0')
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-notebooks'
@@ -91,6 +89,7 @@ dependencies {
     swaggerCodegen group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli'
     runtimeOnly group: 'org.webjars.npm', name: 'swagger-ui-dist', version: '3.35.2'
     implementation group: 'io.swagger.core.v3', name: 'swagger-annotations'
+    implementation group: 'io.swagger', name: 'swagger-annotations'
 
     // Test deps
     testImplementation group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.20.0'
