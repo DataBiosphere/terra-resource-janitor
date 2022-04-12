@@ -83,7 +83,6 @@ dependencies {
     implementation group: 'io.swagger', name: 'swagger-annotations'
 
     // Test deps
-    testImplementation group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.20.0'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
