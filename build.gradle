@@ -8,14 +8,13 @@ plugins {
     id 'de.undercouch.download' version '4.0.0'
     id 'io.spring.dependency-management' version '1.0.10.RELEASE'
     id 'org.hidetake.swagger.generator' version '2.18.2'
-    id 'org.springframework.boot' version '2.4.0'
+    id 'org.springframework.boot' version '2.6.6'
 }
 
 allprojects {
     group = 'bio.terra'
     version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.8.0-SNAPSHOT'
     sourceCompatibility = JavaVersion.VERSION_11
-    ext['log4j2.version'] = '2.17.0' // until Spring Boot 2.6.2
     ext {
         artifactGroup = "${group}.janitor"
         swaggerOutputDir = "${buildDir}/generated"
@@ -57,27 +56,18 @@ repositories {
 
 dependencies {
     // Terra deps - we get Stairway via TCL
-    implementation group: 'bio.terra', name: 'terra-common-lib', version: '0.0.51-SNAPSHOT'
-
-    implementation platform('bio.terra.cloud-resource-lib:platform:0.10.0')
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery'
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager'
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'google-notebooks'
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage'
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-compute'
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-common'
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-containerinstance'
-    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-relay'
+    implementation group: 'bio.terra', name: 'terra-common-lib', version: '0.0.56-SNAPSHOT'
+    implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: '1.1.1-SNAPSHOT'
 
     // Versioned direct deps
     implementation group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.7.3'
-    implementation group: 'com.google.guava', name: 'guava', version: '29.0-jre'
+    implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
     implementation group: 'org.webjars', name: 'webjars-locator-core', version: '0.46'
-    implementation group: 'com.google.cloud', name: 'google-cloud-pubsub', version: '1.104.1'
+    implementation group: 'com.google.cloud', name: 'google-cloud-pubsub', version: '1.116.3'
     implementation group: 'io.opencensus', name: 'opencensus-exporter-stats-stackdriver', version: '0.26.0'
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
     implementation group: 'org.liquibase' , name: 'liquibase-core', version: '3.10.0'
-    runtimeOnly group: 'org.postgresql', name: 'postgresql', version: '42.2.12'
+    runtimeOnly group: 'org.postgresql', name: 'postgresql', version: '42.3.3'
 
     // Deps whose versions are controlled by Spring
     implementation group: 'org.apache.commons', name: 'commons-dbcp2'
@@ -93,7 +83,6 @@ dependencies {
     implementation group: 'io.swagger', name: 'swagger-annotations'
 
     // Test deps
-    testImplementation group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.20.0'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
