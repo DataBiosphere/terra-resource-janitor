@@ -121,8 +121,6 @@ jobs:
       - name: Build and push GCR image using Jib
         if: steps.skiptest.outputs.is-bump == 'no'
         run: "./gradlew jib --image=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"
-        env:
-          SERVICE_VERSION: ${{ steps.tag.outputs.tag }}
       - name: Update Version Mapping
         uses: broadinstitute/repository-dispatch@master
         with:
