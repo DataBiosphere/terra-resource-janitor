@@ -62,7 +62,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOTFIX_BRANCHES: hotfix.*
           OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
-          RELEASE_BRANCHES: msdtrt
+          RELEASE_BRANCHES: master
           VERSION_FILE_PATH: settings.gradle
           VERSION_LINE_MATCH: "^gradle.ext.janitorVersion\\s*=\\s*\".*\""
           VERSION_SUFFIX: SNAPSHOT
