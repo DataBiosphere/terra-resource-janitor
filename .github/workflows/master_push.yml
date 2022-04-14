@@ -122,6 +122,7 @@ jobs:
         if: steps.skiptest.outputs.is-bump == 'no'
         run: "./gradlew jib --image=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"
       - name: Update Version Mapping
+        if: steps.skiptest.outputs.is-bump == 'no'
         uses: broadinstitute/repository-dispatch@master
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
