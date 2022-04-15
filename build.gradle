@@ -13,7 +13,7 @@ plugins {
 
 allprojects {
     group = 'bio.terra'
-    version = System.getenv('SERVICE_VERSION') != null ? System.getenv('SERVICE_VERSION') : '0.8.0-SNAPSHOT'
+    version = gradle.janitorVersion
     sourceCompatibility = JavaVersion.VERSION_11
     ext {
         artifactGroup = "${group}.janitor"
