@@ -3,4 +3,4 @@ include 'terra-resource-janitor-client'
 
 enableFeaturePreview('ONE_LOCKFILE_PER_PROJECT')
 // The next line should only be changed by the BroadBot d.b.a. bumptagbot.
-gradle.ext.janitorVersion = "0.113.0-SNAPSHOT"
+gradle.ext.janitorVersion = "0.113.2-SNAPSHOT"
