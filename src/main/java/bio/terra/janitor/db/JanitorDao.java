@@ -426,7 +426,7 @@ public class JanitorDao {
   @VisibleForTesting
   static @Nullable String serialize(ResourceMetadata metadata) {
     try {
-      return SERDES_MAPPER.writeValueAsString(MetadataModelV1.from(metadata));
+      return SERDES_MAPPER.writeValueAsString(MetadataModelV2.from(metadata));
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to serialize ResourceMetadata");
     }
@@ -439,29 +439,36 @@ public class JanitorDao {
       return ResourceMetadata.none();
     }
     try {
-      return SERDES_MAPPER.readValue(resource, MetadataModelV1.class).toMetadata();
+      return SERDES_MAPPER.readValue(resource, MetadataModelV2.class).toMetadata();
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to deserialize ResourceMetadata: " + resource);
     }
   }
 
-  /** POJO class to use for JSON serializing a {@link ResourceMetadata}. */
+  /**
+   * POJO class to use for JSON serializing a {@link ResourceMetadata}. This adds the workspaceOwner
+   * field to the MetadataModelV1 class, making it backwards (but not forwards) compatible with
+   * version 1.
+   */
   @VisibleForTesting
-  static class MetadataModelV1 {
+  static class MetadataModelV2 {
     /** Version marker to store in the db so that we can update the format later if we need to. */
-    @JsonProperty final long version = 1;
+    @JsonProperty final long version = 2;
 
     @JsonProperty @Nullable String googleProjectParent;
+    @JsonProperty @Nullable String workspaceOwner;
 
-    public static MetadataModelV1 from(ResourceMetadata metadata) {
-      MetadataModelV1 model = new MetadataModelV1();
+    public static MetadataModelV2 from(ResourceMetadata metadata) {
+      MetadataModelV2 model = new MetadataModelV2();
       model.googleProjectParent = metadata.googleProjectParent().orElse(null);
+      model.workspaceOwner = metadata.workspaceOwner().orElse(null);
       return model;
     }
 
     public ResourceMetadata toMetadata() {
       return ResourceMetadata.builder()
           .googleProjectParent(Optional.ofNullable(googleProjectParent))
+          .workspaceOwner(Optional.ofNullable(workspaceOwner))
           .build();
     }
   }

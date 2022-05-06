@@ -26,6 +26,8 @@ public class IamConfiguration {
   // If the config based authorization are enabled. If disabled, Janitor will not perform the config
   // authZ check.
   private boolean configBasedAuthzEnabled;
+  // Domain for test user emails. Janitor will only delegate credentials for users in this domain.
+  private String testUserDomain;
 
   public Set<String> getAdminUsers() {
     return adminUsers;
@@ -56,5 +58,13 @@ public class IamConfiguration {
 
   public void setConfigBasedAuthzEnabled(boolean configBasedAuthzEnabled) {
     this.configBasedAuthzEnabled = configBasedAuthzEnabled;
+  }
+
+  public String getTestUserDomain() {
+    return testUserDomain;
+  }
+
+  public void setTestUserDomain(String testUserDomain) {
+    this.testUserDomain = testUserDomain;
   }
 }

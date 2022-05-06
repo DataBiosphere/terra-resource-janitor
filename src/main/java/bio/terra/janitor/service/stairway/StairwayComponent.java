@@ -102,7 +102,7 @@ public class StairwayComponent {
     return stairway;
   }
 
-  public StairwayComponent.Status getStatus() {
+  public Status getStatus() {
     return status;
   }
 }

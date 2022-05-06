@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,6 +22,8 @@ import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
 import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
+import bio.terra.janitor.service.workspace.WorkspaceManagerService;
+import bio.terra.workspace.client.ApiException;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
@@ -68,9 +71,11 @@ import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
@@ -96,6 +101,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private ComputeManager computeManager;
   private RelayManager relayManager;
   private ContainerInstanceManager containerInstanceManager;
+  @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
 
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
@@ -481,7 +487,8 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     // If we know that the project should have been created where we have permissions to retrieve it
     // by metadata, we can successfully recognize that the project never existed.
     CreateResourceRequestBody request =
-        newExpiredCreateResourceMessage(resource, OffsetDateTime.now(ZoneOffset.UTC))
+        newExpiredCreateResourceMessage(
+                resource, OffsetDateTime.now(ZoneOffset.UTC), /*resourceMetadata=*/ null)
             .resourceMetadata(
                 new ResourceMetadata()
                     .googleProjectParent(testConfiguration.getParentResourceId()));
@@ -878,10 +885,61 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("ResourceNotFound", vmDeleted.getValue().getCode());
   }
 
+  /** Clean up a fake WSM workspace. */
+  @Test
+  public void subscribeAndCleanupResource_terraWorkspace() throws Exception {
+    // Cleaning up workspaces relies on domain-wide delegation to impersonate test users. The tools
+    // Janitor SA has this permission, but the test SAs do not, so we mock calls to WSM.
+    // This test validates that Janitor handles requests to delete a workspace properly, but does
+    // not validate that Janitor can impersonate users or actually delete workspaces.
+    UUID fakeWorkspaceId = UUID.randomUUID();
+    String fakeWorkspaceOwner = "fakeuseremail@test.firecloud.org";
+    String fakeWsmInstanceId = "fakeinstance";
+
+    CloudResourceUid resource =
+        new CloudResourceUid()
+            .terraWorkspace(
+                new TerraWorkspaceUid()
+                    .workspaceId(fakeWorkspaceId)
+                    .workspaceManagerInstance(fakeWsmInstanceId));
+    ResourceMetadata metadata = new ResourceMetadata().workspaceOwner(fakeWorkspaceOwner);
+    publishAndVerify(resource, ResourceState.DONE, metadata);
+  }
+
+  /** Try to clean up an already deleted workspace, should succeed. */
+  @Test
+  public void subscribeAndCleanupResource_alreadyDeletedTerraWorkspace() throws Exception {
+    UUID fakeWorkspaceId = UUID.randomUUID();
+    String fakeWorkspaceOwner = "fakeuseremail@test.firecloud.org";
+    String fakeWsmInstanceId = "fakeinstance";
+    ApiException workspaceAlreadyDeletedException =
+        new ApiException(HttpStatus.SC_NOT_FOUND, "sorry, your workspace is in another castle");
+    Mockito.doThrow(workspaceAlreadyDeletedException)
+        .when(mockWorkspaceManagerService)
+        .cleanupWorkspace(any(), any(), any());
+
+    CloudResourceUid resource =
+        new CloudResourceUid()
+            .terraWorkspace(
+                new TerraWorkspaceUid()
+                    .workspaceId(fakeWorkspaceId)
+                    .workspaceManagerInstance(fakeWsmInstanceId));
+    ResourceMetadata metadata = new ResourceMetadata().workspaceOwner(fakeWorkspaceOwner);
+    // This should succeed despite the 404 response from mock WSM.
+    publishAndVerify(resource, ResourceState.DONE, metadata);
+  }
+
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
       throws Exception {
+    publishAndVerify(resource, expectedState, null);
+  }
+
+  private void publishAndVerify(
+      CloudResourceUid resource, ResourceState expectedState, ResourceMetadata resourceMetadata)
+      throws Exception {
     OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
-    publishAndVerify(newExpiredCreateResourceMessage(resource, publishTime), expectedState);
+    publishAndVerify(
+        newExpiredCreateResourceMessage(resource, publishTime, resourceMetadata), expectedState);
   }
 
   /**
@@ -908,9 +966,10 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
   /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
   private CreateResourceRequestBody newExpiredCreateResourceMessage(
-      CloudResourceUid resource, OffsetDateTime now) {
+      CloudResourceUid resource, OffsetDateTime now, ResourceMetadata metadata) {
     return new CreateResourceRequestBody()
         .resourceUid(resource)
+        .resourceMetadata(metadata)
         .creation(now)
         .expiration(now)
         .labels(DEFAULT_LABELS);

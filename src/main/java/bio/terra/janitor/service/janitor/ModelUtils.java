@@ -30,7 +30,7 @@ public class ModelUtils {
     stateMap.put(TrackedResourceState.ERROR, ResourceState.ERROR);
     stateMap.put(TrackedResourceState.DONE, ResourceState.DONE);
     stateMap.put(TrackedResourceState.ABANDONED, ResourceState.ABANDONED);
-    stateMap.put(TrackedResourceState.DUPLICATED, ResourceState.DUPLIATED);
+    stateMap.put(TrackedResourceState.DUPLICATED, ResourceState.DUPLICATED);
   }
 
   public static TrackRequest createTrackRequest(CreateResourceRequestBody body) {
@@ -50,6 +50,7 @@ public class ModelUtils {
     }
     return ResourceMetadata.builder()
         .googleProjectParent(Optional.ofNullable(model.getGoogleProjectParent()))
+        .workspaceOwner(Optional.ofNullable(model.getWorkspaceOwner()))
         .build();
   }
 
@@ -78,7 +79,8 @@ public class ModelUtils {
       return null;
     }
     return new bio.terra.janitor.generated.model.ResourceMetadata()
-        .googleProjectParent(metadata.googleProjectParent().orElse(null));
+        .googleProjectParent(metadata.googleProjectParent().orElse(null))
+        .workspaceOwner(metadata.workspaceOwner().orElse(null));
   }
 
   public static TrackedResourceState convert(ResourceState state) {

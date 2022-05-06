@@ -288,7 +288,7 @@ components:
         - DONE
         - ERROR
         - ABANDONED
-        - DUPLIATED
+        - DUPLICATED
 
     ResourceMetadata:
       type: object
@@ -299,6 +299,12 @@ components:
           description: |
             The parent resource name of a Google Project resource, e.g. "folders/1234" or
             "organizations/1234". This must only be set for Google Project resources.
+        workspaceOwner:
+          type: string
+          description: |
+            The email identifier of the user who owns a workspace. Janitor will 
+            impersonate this user when deleting the workspace. This must only be
+            set for workspace resources.
 
     GoogleAiNotebookInstanceUid:
       type: object
@@ -529,6 +535,19 @@ components:
           type: string
           description: The operating system type required by the containers in the container group.
           enum: [Windows, Linux]
+    TerraWorkspaceUid:
+      type: object
+      required:
+      - workspaceId
+      - workspaceManagerInstance
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+          description: The UUID of the workspace
+        workspaceManagerInstance:
+          type: string
+          description: The Workspace Manager instance which manages this workspace
 
     # A cloud resource unique identifier. Each CloudResourceUid represents exactly one cloud resource.
     # We are not doing polymorphism at this moment because of lack of support in swagger-codegen or openApiGenerator
@@ -565,6 +584,8 @@ components:
           $ref: '#/components/schemas/AzureRelayHybridConnection'
         azureContainerInstance:
           $ref: '#/components/schemas/AzureContainerInstance'
+        terraWorkspace:
+          $ref: '#/components/schemas/TerraWorkspaceUid'
 
   responses:
     ErrorResponse:
