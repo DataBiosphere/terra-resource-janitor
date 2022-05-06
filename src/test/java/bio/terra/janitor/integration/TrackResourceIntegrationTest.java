@@ -1069,6 +1069,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
       trackedResourceInfoList = objectMapper.readValue(getResponse, TrackedResourceInfoList.class);
       if (trackedResourceInfoList != null
+          && trackedResourceInfoList.getResources() != null
           && trackedResourceInfoList.getResources().size() > 0
           && trackedResourceInfoList.getResources().get(0).getState().equals(expectedState)) {
         return trackedResourceInfoList;
