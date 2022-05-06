@@ -60,7 +60,7 @@ dependencies {
     implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: '1.1.1-SNAPSHOT'
     implementation group: 'bio.terra', name: 'workspace-manager-client', version: '0.254.237-SNAPSHOT'
     // hk2 is required to use WSM client, but not correctly exposed by the client
-    implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
+    implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.35"
 
     // Versioned direct deps
     implementation group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.7.3'
