@@ -34,7 +34,7 @@ public class TerraWorkspaceCleanupStep extends ResourceCleanupStep {
     try {
       if (resourceUid == null || resourceUid.getTerraWorkspace() == null) {
         throw new InvalidMessageException(
-            "Cannot clean up Terra Workspace, request did not specify" + "a Terra Workspace UID");
+            "Cannot clean up Terra Workspace, request did not specify a Terra Workspace UID");
       }
       workspaceManagerService.deleteWorkspace(
           resourceUid.getTerraWorkspace().getWorkspaceId(),
