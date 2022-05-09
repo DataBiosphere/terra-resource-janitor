@@ -446,9 +446,8 @@ public class JanitorDao {
   }
 
   /**
-   * POJO class to use for JSON serializing a {@link ResourceMetadata}. This adds the workspaceOwner
-   * field to the MetadataModelV1 class, making it backwards (but not forwards) compatible with
-   * version 1.
+   * POJO class to use for JSON serializing a {@link ResourceMetadata}. The workspaceOwner field was
+   * added in version 2, making it backwards (but not forwards) compatible with version 1.
    */
   @VisibleForTesting
   static class MetadataModelV1 {
