@@ -1,4 +1,4 @@
-package bio.terra.janitor.common;
+package bio.terra.janitor.common.exception;
 
 import bio.terra.common.exception.ErrorReportException;
 import org.springframework.http.HttpStatus;

@@ -9,5 +9,5 @@ export STAIRWAY_DATABASE_USER_PASSWORD=dbpwd_stairway
 export STAIRWAY_DATABASE_NAME=testdb_stairway
 export TRACK_RESOURCE_PUBSUB_ENABLED=false
 export CONFIG_BASED_AUTHZ_ENABLED=false
-export GOOGLE_APPLICATION_CREDENTIALS=rendered/sa-account.json
+export GOOGLE_APPLICATION_CREDENTIALS=src/test/resources/rendered/sa-account.json
 ./gradlew bootRun

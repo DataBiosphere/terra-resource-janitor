@@ -64,10 +64,34 @@ public class JanitorDaoTest extends BaseUnitTest {
   }
 
   @Test
+  public void deserializeMetadataV1() {
+    String serialized = "{\"version\":1,\"googleProjectParent\":\"folders/1234\"}";
+    ResourceMetadata metadata = JanitorDao.deserializeMetadata(serialized);
+    assertTrue(metadata.googleProjectParent().isPresent());
+    assertEquals("folders/1234", metadata.googleProjectParent().get());
+  }
+
+  @Test
+  public void deserializeEmptyMetadataV1() {
+    ResourceMetadata none = ResourceMetadata.none();
+    String serializedV1 = "{\"version\":1}";
+    assertEquals(none, JanitorDao.deserializeMetadata(serializedV1));
+  }
+
+  @Test
   public void serializeResourceMetadata() {
     ResourceMetadata metadata =
         ResourceMetadata.builder().googleProjectParent("folders/1234").build();
-    String serialized = "{\"version\":1,\"googleProjectParent\":\"folders/1234\"}";
+    String serialized = "{\"version\":2,\"googleProjectParent\":\"folders/1234\"}";
+    assertEquals(serialized, JanitorDao.serialize(metadata));
+    assertEquals(metadata, JanitorDao.deserializeMetadata(serialized));
+  }
+
+  @Test
+  public void serializeResourceMetadataWorkspace() {
+    ResourceMetadata metadata =
+        ResourceMetadata.builder().workspaceOwner("fakeuser@test.firecloud.org").build();
+    String serialized = "{\"version\":2,\"workspaceOwner\":\"fakeuser@test.firecloud.org\"}";
     assertEquals(serialized, JanitorDao.serialize(metadata));
     assertEquals(metadata, JanitorDao.deserializeMetadata(serialized));
   }
@@ -75,7 +99,7 @@ public class JanitorDaoTest extends BaseUnitTest {
   @Test
   public void serializeResourceMetadataNone() {
     ResourceMetadata none = ResourceMetadata.none();
-    String serialized = "{\"version\":1}";
+    String serialized = "{\"version\":2}";
     assertEquals(serialized, JanitorDao.serialize(none));
     assertEquals(none, JanitorDao.deserializeMetadata(serialized));
     assertEquals(none, JanitorDao.deserializeMetadata(null));

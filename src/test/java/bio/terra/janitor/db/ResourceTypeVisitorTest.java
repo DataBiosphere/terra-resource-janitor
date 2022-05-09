@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.exception.InvalidResourceUidException;
 import bio.terra.janitor.generated.model.*;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 public class ResourceTypeVisitorTest extends BaseUnitTest {
@@ -74,6 +75,18 @@ public class ResourceTypeVisitorTest extends BaseUnitTest {
                         .projectId("my-project")
                         .location("my-location")
                         .instanceId("my-instance"))));
+  }
+
+  @Test
+  public void acceptTerraWorkspace() {
+    assertEquals(
+        TERRA_WORKSPACE,
+        visitor.accept(
+            new CloudResourceUid()
+                .terraWorkspace(
+                    new TerraWorkspaceUid()
+                        .workspaceId(UUID.randomUUID())
+                        .workspaceManagerInstance("fakeInstance"))));
   }
 
   @Test

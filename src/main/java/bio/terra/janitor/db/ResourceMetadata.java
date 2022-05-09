@@ -18,6 +18,13 @@ public abstract class ResourceMetadata {
    */
   public abstract Optional<String> googleProjectParent();
 
+  /**
+   * The email identifier of the user who owns a workspace. Janitor will impersonate this user when
+   * deleting the workspace. This must only be set for workspace resources, and must be present for
+   * all workspace resources.
+   */
+  public abstract Optional<String> workspaceOwner();
+
   public static Builder builder() {
     return new AutoValue_ResourceMetadata.Builder();
   }
@@ -32,6 +39,10 @@ public abstract class ResourceMetadata {
     public abstract Builder googleProjectParent(Optional<String> googleProjectParent);
 
     public abstract Builder googleProjectParent(String googleProjectParent);
+
+    public abstract Builder workspaceOwner(Optional<String> workspaceOwner);
+
+    public abstract Builder workspaceOwner(String workspaceOwner);
 
     public abstract ResourceMetadata build();
   }

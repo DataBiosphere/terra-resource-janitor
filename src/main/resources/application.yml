@@ -9,6 +9,7 @@ janitor:
     # TODO(PF-81): Switch to use SAM instead of config file for user authZ.
     config-based-authz-enabled: ${CONFIG_BASED_AUTHZ_ENABLED}
     admin-user-list: ${ADMIN_USER_LIST:[]}
+    test-user-domain: test.firecloud.org
   primary:
     scheduler-enabled: true
   pubsub:
@@ -32,6 +33,10 @@ janitor:
     terminate-timeout: 5s
     retention-check-interval: 1d
     completed-flight-retention: 7d
+  workspace-manager:
+    instances:
+      dev: https://workspace.dsde-dev.broadinstitute.org
+      wsmtest: https://workspace.wsmtest.integ.envs.broadinstitute.org
   azure:
     managed-app-client-id: ${AZURE_MANAGED_APP_CLIENT_ID}
     managed-app-client-secret: ${AZURE_MANAGED_APP_CLIENT_SECRET}

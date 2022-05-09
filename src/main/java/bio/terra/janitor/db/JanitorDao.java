@@ -445,23 +445,29 @@ public class JanitorDao {
     }
   }
 
-  /** POJO class to use for JSON serializing a {@link ResourceMetadata}. */
+  /**
+   * POJO class to use for JSON serializing a {@link ResourceMetadata}. The workspaceOwner field was
+   * added in version 2, making it backwards (but not forwards) compatible with version 1.
+   */
   @VisibleForTesting
   static class MetadataModelV1 {
     /** Version marker to store in the db so that we can update the format later if we need to. */
-    @JsonProperty final long version = 1;
+    @JsonProperty final long version = 2;
 
     @JsonProperty @Nullable String googleProjectParent;
+    @JsonProperty @Nullable String workspaceOwner;
 
     public static MetadataModelV1 from(ResourceMetadata metadata) {
       MetadataModelV1 model = new MetadataModelV1();
       model.googleProjectParent = metadata.googleProjectParent().orElse(null);
+      model.workspaceOwner = metadata.workspaceOwner().orElse(null);
       return model;
     }
 
     public ResourceMetadata toMetadata() {
       return ResourceMetadata.builder()
           .googleProjectParent(Optional.ofNullable(googleProjectParent))
+          .workspaceOwner(Optional.ofNullable(workspaceOwner))
           .build();
     }
   }

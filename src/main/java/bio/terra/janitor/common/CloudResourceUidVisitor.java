@@ -15,6 +15,7 @@ import bio.terra.janitor.generated.model.GoogleBigQueryTableUid;
 import bio.terra.janitor.generated.model.GoogleBlobUid;
 import bio.terra.janitor.generated.model.GoogleBucketUid;
 import bio.terra.janitor.generated.model.GoogleProjectUid;
+import bio.terra.janitor.generated.model.TerraWorkspaceUid;
 
 /** An interface for switching on the different resource types within a {@link CloudResourceUid}. */
 public interface CloudResourceUidVisitor<R> {
@@ -45,6 +46,8 @@ public interface CloudResourceUidVisitor<R> {
   R visit(AzureRelayHybridConnection resource);
 
   R visit(AzureContainerInstance resource);
+
+  R visit(TerraWorkspaceUid resource);
 
   R noResourceVisited(CloudResourceUid resource);
 
@@ -77,6 +80,8 @@ public interface CloudResourceUidVisitor<R> {
       return visitor.visit(resource.getAzureRelayHybridConnection());
     } else if (resource.getAzureContainerInstance() != null) {
       return visitor.visit(resource.getAzureContainerInstance());
+    } else if (resource.getTerraWorkspace() != null) {
+      return visitor.visit(resource.getTerraWorkspace());
     } else {
       return visitor.noResourceVisited(resource);
     }
