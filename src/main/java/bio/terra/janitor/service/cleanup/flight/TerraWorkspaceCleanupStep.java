@@ -1,6 +1,6 @@
 package bio.terra.janitor.service.cleanup.flight;
 
-import bio.terra.janitor.common.exception.InvalidResourceUidException;
+import bio.terra.janitor.common.exception.InvalidMessageException;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.db.ResourceMetadata;
 import bio.terra.janitor.generated.model.CloudResourceUid;
@@ -29,10 +29,14 @@ public class TerraWorkspaceCleanupStep extends ResourceCleanupStep {
             .workspaceOwner()
             .orElseThrow(
                 () ->
-                    new InvalidResourceUidException(
+                    new InvalidMessageException(
                         "Workspace resource must have a test user in metadata"));
     try {
-      workspaceManagerService.cleanupWorkspace(
+      if (resourceUid == null || resourceUid.getTerraWorkspace() == null) {
+        throw new InvalidMessageException(
+            "Cannot clean up Terra Workspace, request did not specify" + "a Terra Workspace UID");
+      }
+      workspaceManagerService.deleteWorkspace(
           resourceUid.getTerraWorkspace().getWorkspaceId(),
           workspaceOwnerEmail,
           resourceUid.getTerraWorkspace().getWorkspaceManagerInstance());

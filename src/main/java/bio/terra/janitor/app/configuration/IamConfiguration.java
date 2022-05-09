@@ -21,14 +21,15 @@ public class IamConfiguration {
   // The Janitor admin user list. This should be a formatted JSON list of strings, e.g.
   // '["testuser1@gmail.com"]'
   private String adminUserList;
-  // Extracted from the adminUserList value. Mutually exclusive with adminUserList.
+  // Extracted from the adminUserList value.
   private Set<String> adminUsers;
-  // If the config based authorization are enabled. If disabled, Janitor will not perform the config
-  // authZ check.
   private boolean configBasedAuthzEnabled;
-  // Domain for test user emails. Janitor will only delegate credentials for users in this domain.
   private String testUserDomain;
 
+  /**
+   * The set of user emails authorized to call Janitor. Only used if {@code configBasedAuthzEnabled}
+   * is true.
+   */
   public Set<String> getAdminUsers() {
     return adminUsers;
   }
@@ -52,6 +53,10 @@ public class IamConfiguration {
     }
   }
 
+  /**
+   * Whether the config based authorization is enabled. If disabled, Janitor will not perform the
+   * config authZ check, and all users will be authorized.
+   */
   public boolean isConfigBasedAuthzEnabled() {
     return configBasedAuthzEnabled;
   }
@@ -60,6 +65,9 @@ public class IamConfiguration {
     this.configBasedAuthzEnabled = configBasedAuthzEnabled;
   }
 
+  /**
+   * Domain for test user emails. Janitor will only delegate credentials for users in this domain.
+   */
   public String getTestUserDomain() {
     return testUserDomain;
   }

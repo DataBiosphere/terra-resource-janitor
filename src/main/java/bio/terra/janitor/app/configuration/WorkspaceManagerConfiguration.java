@@ -10,7 +10,8 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "janitor.workspace-manager")
 public class WorkspaceManagerConfiguration {
 
-  // A map from instance IDs to Workspace Manager instance URLs
+  // A map from instance IDs to Workspace Manager instance URLs, like:
+  // "dev" -> "https://workspace.dsde-dev.broadinstitute.org"
   private HashMap<String, String> instances;
 
   public HashMap<String, String> getInstances() {

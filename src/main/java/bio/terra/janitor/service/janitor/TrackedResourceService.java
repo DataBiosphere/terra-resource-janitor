@@ -1,6 +1,6 @@
 package bio.terra.janitor.service.janitor;
 
-import bio.terra.janitor.common.NotFoundException;
+import bio.terra.janitor.common.exception.NotFoundException;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.generated.model.*;
 import com.google.common.collect.ImmutableSet;

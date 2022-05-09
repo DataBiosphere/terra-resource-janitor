@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.janitor.common.BaseUnitTest;
-import bio.terra.janitor.common.NotFoundException;
+import bio.terra.janitor.common.exception.NotFoundException;
 import bio.terra.janitor.db.*;
 import bio.terra.janitor.db.ResourceMetadata;
 import bio.terra.janitor.generated.model.*;

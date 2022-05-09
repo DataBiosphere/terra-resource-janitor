@@ -3,6 +3,7 @@ package bio.terra.janitor.service.iam;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.iam.AuthenticatedUserRequest;
 import bio.terra.janitor.app.configuration.IamConfiguration;
+import bio.terra.janitor.common.exception.InvalidTestUserException;
 import bio.terra.janitor.common.exception.SaCredentialsMissingException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -49,7 +50,7 @@ public class IamService {
    */
   public void requireTestUser(String userEmail) {
     if (!userEmail.endsWith("@" + iamConfiguration.getTestUserDomain())) {
-      throw new UnauthorizedException(
+      throw new InvalidTestUserException(
           "User "
               + userEmail
               + " is not a test user in the "

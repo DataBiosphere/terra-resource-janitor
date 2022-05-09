@@ -916,7 +916,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         new ApiException(HttpStatus.SC_NOT_FOUND, "sorry, your workspace is in another castle");
     Mockito.doThrow(workspaceAlreadyDeletedException)
         .when(mockWorkspaceManagerService)
-        .cleanupWorkspace(any(), any(), any());
+        .deleteWorkspace(any(), any(), any());
 
     CloudResourceUid resource =
         new CloudResourceUid()

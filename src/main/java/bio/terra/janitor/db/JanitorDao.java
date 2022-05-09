@@ -426,7 +426,7 @@ public class JanitorDao {
   @VisibleForTesting
   static @Nullable String serialize(ResourceMetadata metadata) {
     try {
-      return SERDES_MAPPER.writeValueAsString(MetadataModelV2.from(metadata));
+      return SERDES_MAPPER.writeValueAsString(MetadataModelV1.from(metadata));
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to serialize ResourceMetadata");
     }
@@ -439,7 +439,7 @@ public class JanitorDao {
       return ResourceMetadata.none();
     }
     try {
-      return SERDES_MAPPER.readValue(resource, MetadataModelV2.class).toMetadata();
+      return SERDES_MAPPER.readValue(resource, MetadataModelV1.class).toMetadata();
     } catch (JsonProcessingException e) {
       throw new InvalidResourceUidException("Failed to deserialize ResourceMetadata: " + resource);
     }
@@ -451,15 +451,15 @@ public class JanitorDao {
    * version 1.
    */
   @VisibleForTesting
-  static class MetadataModelV2 {
+  static class MetadataModelV1 {
     /** Version marker to store in the db so that we can update the format later if we need to. */
     @JsonProperty final long version = 2;
 
     @JsonProperty @Nullable String googleProjectParent;
     @JsonProperty @Nullable String workspaceOwner;
 
-    public static MetadataModelV2 from(ResourceMetadata metadata) {
-      MetadataModelV2 model = new MetadataModelV2();
+    public static MetadataModelV1 from(ResourceMetadata metadata) {
+      MetadataModelV1 model = new MetadataModelV1();
       model.googleProjectParent = metadata.googleProjectParent().orElse(null);
       model.workspaceOwner = metadata.workspaceOwner().orElse(null);
       return model;

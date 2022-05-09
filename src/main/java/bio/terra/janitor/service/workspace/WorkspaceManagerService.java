@@ -32,8 +32,8 @@ public class WorkspaceManagerService {
   }
 
   private ApiClient getApiClient(String accessToken, String basePath) {
-    ApiClient client = new ApiClient().setHttpClient(commonHttpClient);
-    client.setBasePath(basePath).setAccessToken(accessToken);
+    ApiClient client = new ApiClient().setHttpClient(commonHttpClient).setBasePath(basePath);
+    client.setAccessToken(accessToken);
     return client;
   }
 
@@ -44,7 +44,7 @@ public class WorkspaceManagerService {
     return workspaceClient;
   }
 
-  public void cleanupWorkspace(UUID workspaceId, String testUser, String instanceId)
+  public void deleteWorkspace(UUID workspaceId, String testUser, String instanceId)
       throws ApiException {
     AccessToken userAccessToken = iamService.impersonateTestUser(testUser);
     String wsmUrl =

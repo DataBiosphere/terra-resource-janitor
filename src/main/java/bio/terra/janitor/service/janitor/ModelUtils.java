@@ -30,7 +30,7 @@ public class ModelUtils {
     stateMap.put(TrackedResourceState.ERROR, ResourceState.ERROR);
     stateMap.put(TrackedResourceState.DONE, ResourceState.DONE);
     stateMap.put(TrackedResourceState.ABANDONED, ResourceState.ABANDONED);
-    stateMap.put(TrackedResourceState.DUPLICATED, ResourceState.DUPLICATED);
+    stateMap.put(TrackedResourceState.DUPLICATED, ResourceState.DUPLIATED);
   }
 
   public static TrackRequest createTrackRequest(CreateResourceRequestBody body) {
