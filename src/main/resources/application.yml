@@ -34,9 +34,7 @@ janitor:
     retention-check-interval: 1d
     completed-flight-retention: 7d
   workspace-manager:
-    instances:
-      dev: https://workspace.dsde-dev.broadinstitute.org
-      wsmtest: https://workspace.wsmtest.integ.envs.broadinstitute.org
+    instances: ["https://workspace.dsde-dev.broadinstitute.org", "https://workspace.wsmtest.integ.envs.broadinstitute.org"]
   azure:
     managed-app-client-id: ${AZURE_MANAGED_APP_CLIENT_ID}
     managed-app-client-secret: ${AZURE_MANAGED_APP_CLIENT_SECRET}

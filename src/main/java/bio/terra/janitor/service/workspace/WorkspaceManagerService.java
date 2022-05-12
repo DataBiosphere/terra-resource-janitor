@@ -7,7 +7,6 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import com.google.auth.oauth2.AccessToken;
-import java.util.Optional;
 import java.util.UUID;
 import javax.ws.rs.client.Client;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,13 +43,12 @@ public class WorkspaceManagerService {
     return workspaceClient;
   }
 
-  public void deleteWorkspace(UUID workspaceId, String testUser, String instanceId)
+  public void deleteWorkspace(UUID workspaceId, String testUser, String wsmUrl)
       throws ApiException {
     AccessToken userAccessToken = iamService.impersonateTestUser(testUser);
-    String wsmUrl =
-        Optional.ofNullable(workspaceManagerConfiguration.getInstances().get(instanceId))
-            .orElseThrow(
-                () -> new InvalidResourceUidException("Invalid workspace instance identifier"));
+    if (!workspaceManagerConfiguration.getInstances().contains(wsmUrl)) {
+      throw new InvalidResourceUidException("Invalid workspace instance url provded");
+    }
     WorkspaceApi workspaceClient = getWorkspaceApi(userAccessToken.getTokenValue(), wsmUrl);
     workspaceClient.deleteWorkspace(workspaceId);
   }
