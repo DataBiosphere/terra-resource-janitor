@@ -33,6 +33,8 @@ import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.containerinstance.ContainerInstanceManager;
 import com.azure.resourcemanager.containerinstance.models.ContainerGroup;
+import com.azure.resourcemanager.msi.MsiManager;
+import com.azure.resourcemanager.msi.models.Identity;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
@@ -101,6 +103,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private ComputeManager computeManager;
   private RelayManager relayManager;
   private ContainerInstanceManager containerInstanceManager;
+  private MsiManager msiManager;
   @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
 
   private static final Map<String, String> DEFAULT_LABELS =
@@ -155,6 +158,8 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
     containerInstanceManager =
         crlConfiguration.buildContainerInstance(testConfiguration.getAzureResourceGroup());
+
+    msiManager = crlConfiguration.buildMsiManager(testConfiguration.getAzureResourceGroup());
   }
 
   @AfterEach
@@ -927,6 +932,39 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     ResourceMetadata metadata = new ResourceMetadata().workspaceOwner(fakeWorkspaceOwner);
     // This should succeed despite the 404 response from mock WSM.
     publishAndVerify(resource, ResourceState.DONE, metadata);
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_azureManagedIdentity() throws Exception {
+    // Creates managed identity
+    String identityName = randomNameWithUnderscore();
+    Identity createdIdentity =
+        msiManager
+            .identities()
+            .define(identityName)
+            .withRegion(Region.US_EAST)
+            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
+            .withTag("janitor.integration.test", "true")
+            .create();
+
+    // Verify resources are created in Azure
+    assertEquals(identityName, msiManager.identities().getById(createdIdentity.id()).name());
+
+    CloudResourceUid identityUid =
+        new CloudResourceUid()
+            .azureManagedIdentity(
+                new AzureManagedIdentity()
+                    .identityName(identityName)
+                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
+
+    // Publish a message to cleanup the managed identity.
+    publishAndVerify(identityUid, ResourceState.DONE);
+
+    // Resource is removed
+    ManagementException identityDeleted =
+        assertThrows(
+            ManagementException.class, () -> msiManager.identities().getById(createdIdentity.id()));
+    assertEquals("ResourceNotFound", identityDeleted.getValue().getCode());
   }
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
