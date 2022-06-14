@@ -48,6 +48,8 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
         return FlightSubmission.create(AzureContainerInstanceCleanupFlight.class, flightMap);
       case TERRA_WORKSPACE:
         return FlightSubmission.create(TerraWorkspaceCleanupFlight.class, flightMap);
+      case AZURE_MANAGED_IDENTITY:
+        return FlightSubmission.create(AzureManagedIdentityCleanupFlight.class, flightMap);
       default:
         return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
     }

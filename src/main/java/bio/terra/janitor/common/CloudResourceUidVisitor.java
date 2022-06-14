@@ -2,6 +2,7 @@ package bio.terra.janitor.common;
 
 import bio.terra.janitor.generated.model.AzureContainerInstance;
 import bio.terra.janitor.generated.model.AzureDisk;
+import bio.terra.janitor.generated.model.AzureManagedIdentity;
 import bio.terra.janitor.generated.model.AzureNetwork;
 import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
 import bio.terra.janitor.generated.model.AzurePublicIp;
@@ -49,6 +50,8 @@ public interface CloudResourceUidVisitor<R> {
 
   R visit(TerraWorkspaceUid resource);
 
+  R visit(AzureManagedIdentity resource);
+
   R noResourceVisited(CloudResourceUid resource);
 
   static <R> R visit(CloudResourceUid resource, CloudResourceUidVisitor<R> visitor) {
@@ -82,6 +85,8 @@ public interface CloudResourceUidVisitor<R> {
       return visitor.visit(resource.getAzureContainerInstance());
     } else if (resource.getTerraWorkspace() != null) {
       return visitor.visit(resource.getTerraWorkspace());
+    } else if (resource.getAzureManagedIdentity() != null) {
+      return visitor.visit(resource.getAzureManagedIdentity());
     } else {
       return visitor.noResourceVisited(resource);
     }

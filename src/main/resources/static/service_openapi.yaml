@@ -302,7 +302,7 @@ components:
         workspaceOwner:
           type: string
           description: |
-            The email identifier of the user who owns a workspace. Janitor will 
+            The email identifier of the user who owns a workspace. Janitor will
             impersonate this user when deleting the workspace. This must only be
             set for workspace resources.
 
@@ -550,6 +550,17 @@ components:
           description: |
             The URL of the Workspace Manager instance which manages this workspace. This must be
             in Janitor's configured allowlist.
+    AzureManagedIdentity:
+      type: object
+      required:
+        - resourceGroup
+        - identityName
+      properties:
+        resourceGroup:
+          $ref: '#/components/schemas/AzureResourceGroup'
+        identityName:
+          type: string
+          description: The user-provided name to identify the managed identity.
 
     # A cloud resource unique identifier. Each CloudResourceUid represents exactly one cloud resource.
     # We are not doing polymorphism at this moment because of lack of support in swagger-codegen or openApiGenerator
@@ -588,6 +599,8 @@ components:
           $ref: '#/components/schemas/AzureContainerInstance'
         terraWorkspace:
           $ref: '#/components/schemas/TerraWorkspaceUid'
+        azureManagedIdentity:
+          $ref: '#/components/schemas/AzureManagedIdentity'
 
   responses:
     ErrorResponse:
