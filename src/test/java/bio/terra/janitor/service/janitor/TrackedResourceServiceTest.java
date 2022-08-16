@@ -5,9 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.exception.NotFoundException;
-import bio.terra.janitor.db.*;
+import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.db.ResourceMetadata;
-import bio.terra.janitor.generated.model.*;
+import bio.terra.janitor.db.TrackRequest;
+import bio.terra.janitor.db.TrackedResource;
+import bio.terra.janitor.db.TrackedResourceFilter;
+import bio.terra.janitor.db.TrackedResourceId;
+import bio.terra.janitor.db.TrackedResourceState;
+import bio.terra.janitor.generated.model.CloudResourceUid;
+import bio.terra.janitor.generated.model.GoogleProjectUid;
+import bio.terra.janitor.generated.model.ResourceState;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.List;
@@ -22,7 +29,7 @@ import org.springframework.test.annotation.DirtiesContext;
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TrackedResourceServiceTest extends BaseUnitTest {
-  private static final Instant DEFAULT_TIME = Instant.now();
+  private static final Instant DEFAULT_TIME = JanitorDao.currentInstant();
   @Autowired private TrackedResourceService trackedResourceService;
   @Autowired private JanitorDao janitorDao;
 

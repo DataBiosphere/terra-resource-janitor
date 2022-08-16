@@ -6,7 +6,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import bio.terra.janitor.app.configuration.PrimaryConfiguration;
 import bio.terra.janitor.common.BaseUnitTest;
-import bio.terra.janitor.db.*;
+import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.ResourceMetadata;
+import bio.terra.janitor.db.TrackedResource;
+import bio.terra.janitor.db.TrackedResourceId;
+import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.GoogleBucketUid;
 import bio.terra.janitor.service.cleanup.flight.FatalStep;
@@ -18,7 +22,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.test.annotation.DirtiesContext;
@@ -90,7 +95,7 @@ public class FlightSchedulerTest extends BaseUnitTest {
         trackedResource ->
             FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap()));
 
-    TrackedResource resource = newReadyExpiredResource(Instant.now());
+    TrackedResource resource = newReadyExpiredResource(JanitorDao.currentInstant());
     janitorDao.createResource(resource, ImmutableMap.of());
 
     pollUntil(
@@ -106,7 +111,7 @@ public class FlightSchedulerTest extends BaseUnitTest {
             FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap());
     initializeScheduler(fatalFactory);
 
-    TrackedResource resource = newReadyExpiredResource(Instant.now());
+    TrackedResource resource = newReadyExpiredResource(JanitorDao.currentInstant());
     janitorDao.createResource(resource, ImmutableMap.of());
 
     pollUntil(
@@ -117,7 +122,7 @@ public class FlightSchedulerTest extends BaseUnitTest {
 
   @Test
   public void recordResourceCount() throws Exception {
-    TrackedResource resource = newReadyExpiredResource(Instant.now());
+    TrackedResource resource = newReadyExpiredResource(JanitorDao.currentInstant());
     janitorDao.createResource(resource, ImmutableMap.of());
 
     initializeScheduler(
