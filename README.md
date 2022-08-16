@@ -18,24 +18,27 @@ done by multiple instances should be confined to the primary.
 
 # Development
 
-## Prerequisites
-Follow [this instruction](https://adoptopenjdk.net/installation.html) to install AdoptOpenJDK Java 11. 
-Here's an easy way on Mac, using [jEnv](https://www.jenv.be/) to manage the active version.
-
 ## Configs Rendering
+
 Local Testing and Github Action tests require credentials to be able to call GCP, run
 ``` local-dev/render-config.sh``` first for local testing. It generates:
+
 * A Google Service Account Secret to create/delete cloud resources in test.
 * A Google Service Account Secret to publish message to 'prod' Janitor instance.
 * A Google Service Account Secret to publish message to 'test' Janitor instance.
 
 ## Run Locally
+
+Use JDK 17, [instructions](https://github.com/DataBiosphere/terra-workspace-manager/blob/main/DEVELOPMENT.md#jdk)
+
 Set executable permissions:
+
 ```
 chmod +x gradlew
 ```
 
 To spin up the local postgres, run:
+
 ```
 local-dev/run_postgres.sh start
 ```
@@ -80,8 +83,9 @@ You may need to use gcloud to provide GCR
 local-dev/setup_gke_deploy.sh <environment>
 ```
 
-where `environment` is your personal environment (e.g. `gjordan`) or an existing Terra env (e.g. `toolsalpha`).
-You can now push to the specified environment by running
+where `environment` is
+your [personal environment](https://github.com/DataBiosphere/terra/blob/main/docs/dev-guides/personal-environments.md) (
+e.g. `gjordan`) or an existing Terra env (e.g. `toolsalpha`). You can now push to the specified environment by running
 
 ```
 skaffold run
@@ -114,7 +118,7 @@ to ensure that builds use the same transitive dependencies, so they're reproduci
 adding or updating a dependency requires telling Gradle to save the change. If you're getting errors
 that mention "dependency lock state" after changing a dep, you need to do this step.
 
-```sh
+```
 ./gradlew dependencies --write-locks
 ```
 

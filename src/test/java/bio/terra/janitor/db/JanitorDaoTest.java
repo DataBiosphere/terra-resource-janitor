@@ -1,7 +1,9 @@
 package bio.terra.janitor.db;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.janitor.app.configuration.JanitorJdbcConfiguration;
 import bio.terra.janitor.common.BaseUnitTest;
@@ -13,7 +15,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableTable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +34,7 @@ public class JanitorDaoTest extends BaseUnitTest {
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
 
-  private static final Instant CREATION = Instant.now();
+  private static final Instant CREATION = JanitorDao.currentInstant();
   private static final Instant EXPIRATION = CREATION.plus(1, ChronoUnit.MINUTES);
 
   @Autowired JanitorJdbcConfiguration jdbcConfiguration;

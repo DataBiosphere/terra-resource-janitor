@@ -20,7 +20,29 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.janitor.app.configuration.CrlConfiguration;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
-import bio.terra.janitor.generated.model.*;
+import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.generated.model.AzureContainerInstance;
+import bio.terra.janitor.generated.model.AzureDisk;
+import bio.terra.janitor.generated.model.AzureManagedIdentity;
+import bio.terra.janitor.generated.model.AzureNetwork;
+import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
+import bio.terra.janitor.generated.model.AzurePublicIp;
+import bio.terra.janitor.generated.model.AzureRelay;
+import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
+import bio.terra.janitor.generated.model.AzureVirtualMachine;
+import bio.terra.janitor.generated.model.CloudResourceUid;
+import bio.terra.janitor.generated.model.CreateResourceRequestBody;
+import bio.terra.janitor.generated.model.GoogleAiNotebookInstanceUid;
+import bio.terra.janitor.generated.model.GoogleBigQueryDatasetUid;
+import bio.terra.janitor.generated.model.GoogleBigQueryTableUid;
+import bio.terra.janitor.generated.model.GoogleBlobUid;
+import bio.terra.janitor.generated.model.GoogleBucketUid;
+import bio.terra.janitor.generated.model.GoogleProjectUid;
+import bio.terra.janitor.generated.model.ResourceMetadata;
+import bio.terra.janitor.generated.model.ResourceState;
+import bio.terra.janitor.generated.model.TerraWorkspaceUid;
+import bio.terra.janitor.generated.model.TrackedResourceInfo;
+import bio.terra.janitor.generated.model.TrackedResourceInfoList;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import bio.terra.janitor.service.workspace.WorkspaceManagerService;
 import bio.terra.workspace.client.ApiException;
@@ -65,7 +87,6 @@ import com.google.pubsub.v1.TopicName;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -493,7 +514,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     // by metadata, we can successfully recognize that the project never existed.
     CreateResourceRequestBody request =
         newExpiredCreateResourceMessage(
-                resource, OffsetDateTime.now(ZoneOffset.UTC), /*resourceMetadata=*/ null)
+                resource, JanitorDao.currentOffsetDateTime(), /*resourceMetadata=*/ null)
             .resourceMetadata(
                 new ResourceMetadata()
                     .googleProjectParent(testConfiguration.getParentResourceId()));
@@ -975,7 +996,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private void publishAndVerify(
       CloudResourceUid resource, ResourceState expectedState, ResourceMetadata resourceMetadata)
       throws Exception {
-    OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
+    OffsetDateTime publishTime = JanitorDao.currentOffsetDateTime();
     publishAndVerify(
         newExpiredCreateResourceMessage(resource, publishTime, resourceMetadata), expectedState);
   }

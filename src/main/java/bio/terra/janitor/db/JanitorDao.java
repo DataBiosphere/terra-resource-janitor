@@ -12,9 +12,17 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.time.temporal.ChronoUnit;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -470,5 +478,17 @@ public class JanitorDao {
           .workspaceOwner(Optional.ofNullable(workspaceOwner))
           .build();
     }
+  }
+
+  // TODO: move to terra-common-lib PF-1912
+  /** Helper function to return Millisecond precision OffsetDateTime supported by most DBs */
+  public static OffsetDateTime currentOffsetDateTime() {
+    return OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS);
+  }
+
+  // TODO: move to terra-common-lib PF-1912
+  /** Helper function to return Millisecond precision Instant supported by most DBs */
+  public static Instant currentInstant() {
+    return Instant.now().truncatedTo(ChronoUnit.MILLIS);
   }
 }

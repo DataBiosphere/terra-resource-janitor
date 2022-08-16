@@ -21,7 +21,7 @@ import org.springframework.test.annotation.DirtiesContext;
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class JanitorApiServiceTest extends BaseUnitTest {
-  private static final OffsetDateTime DEFAULT_TIME = OffsetDateTime.now();
+  private static final OffsetDateTime DEFAULT_TIME = JanitorDao.currentOffsetDateTime();
   private static final String ADMIN_USER_EMAIL = "test1@email.com";
   private static final String ADMIN_SUBJECT_ID = "test1";
   private static final String ADMIN_TOKEN = "1234.ab-CD";

@@ -7,7 +7,7 @@ plugins {
 }
 
 // CRL consumes this and is Java 8 to allow other services to use CRL while on Java 8.
-sourceCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()

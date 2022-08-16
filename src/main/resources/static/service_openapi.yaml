@@ -193,8 +193,8 @@ components:
       type: object
       properties:
         ok:
-          type: boolean
           description: status of this service
+          type: boolean
         systems:
           type: object
           additionalProperties:
@@ -238,12 +238,12 @@ components:
       type: object
       properties:
         id:
-          type: string
           description: UUID of a newly-created tracked resource
+          type: string
 
     TrackedResourceInfo:
-      type: object
       description: Information about a resource tracked for cleanup.
+      type: object
       properties:
         id:
           description: The Janitor UUID of the tracked resource.
@@ -271,8 +271,8 @@ components:
             type: string
 
     TrackedResourceInfoList:
-      type: object
       description: A list of tracked resources.
+      type: object
       properties:
         resources:
           type: array
@@ -280,8 +280,8 @@ components:
             $ref: '#/components/schemas/TrackedResourceInfo'
 
     ResourceState:
-      type: string
       description: Possible tracked resource cleaning states.
+      type: string
       enum:
         - READY
         - CLEANING
@@ -291,20 +291,20 @@ components:
         - DUPLIATED
 
     ResourceMetadata:
-      type: object
       description: Additional information about a resource that does not uniquely identify.
+      type: object
       properties:
         googleProjectParent:
-          type: string
           description: |
             The parent resource name of a Google Project resource, e.g. "folders/1234" or
             "organizations/1234". This must only be set for Google Project resources.
-        workspaceOwner:
           type: string
+        workspaceOwner:
           description: |
             The email identifier of the user who owns a workspace. Janitor will
             impersonate this user when deleting the workspace. This must only be
             set for workspace resources.
+          type: string
 
     GoogleAiNotebookInstanceUid:
       type: object
@@ -316,11 +316,12 @@ components:
         projectId:
           type: string
         location:
-          type: string
           description: The location of the instance, e.g. 'uswest1-b'.
-        instanceId:
           type: string
+        instanceId:
           description: The user-provided instance id to identify the instance.
+          type: string
+
     GoogleBigQueryDatasetUid:
       type: object
       required:
@@ -331,6 +332,7 @@ components:
           type: string
         datasetId:
           type: string
+
     GoogleBigQueryTableUid:
       type: object
       required:
@@ -344,6 +346,7 @@ components:
           type: string
         tableId:
           type: string
+
     GoogleBlobUid:
       type: object
       required:
@@ -354,6 +357,7 @@ components:
           type: string
         blobName:
           type: string
+
     GoogleBucketUid:
       type: object
       required:
@@ -361,6 +365,7 @@ components:
       properties:
         bucketName:
           type: string
+
     GoogleProjectUid:
       type: object
       required:
@@ -368,22 +373,24 @@ components:
       properties:
         projectId:
           type: string
+
     AzureResourceGroup:
       type: object
       required:
-        - tenantId
+      - tenantId
         - subscriptionId
-        - resourceGroupName
+      - resourceGroupName
       properties:
         tenantId:
-          type: string
           description: The tenant ID.
+          type: string
         subscriptionId:
-          type: string
           description: The subscription ID.
-        resourceGroupName:
           type: string
+        resourceGroupName:
           description: Name of the resource group.
+          type: string
+
     AzurePublicIp:
       type: object
       required:
@@ -393,8 +400,9 @@ components:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
         ipName:
-          type: string
           description: The user-provided name to identify the IP.
+          type: string
+
     AzureDisk:
       type: object
       required:
@@ -404,8 +412,9 @@ components:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
         diskName:
-          type: string
           description: The user-provided name to identify the disk.
+          type: string
+
     AzureNetwork:
       type: object
       required:
@@ -415,8 +424,9 @@ components:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
         networkName:
-          type: string
           description: The user-provided name to identify the network.
+          type: string
+
     AzureNetworkSecurityGroup:
       type: object
       required:
@@ -426,8 +436,9 @@ components:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
         networkSecurityGroupName:
-          type: string
           description: The user-provided name to identify the network security group.
+          type: string
+
     AzureVirtualMachine:
       type: object
       required:
@@ -437,8 +448,9 @@ components:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
         vmName:
-          type: string
           description: The user-provided name to identify the VM.
+          type: string
+
     AzureRelay:
       type: object
       required:
@@ -448,8 +460,9 @@ components:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
         relayName:
-          type: string
           description: The user-provided name to identify the relay.
+          type: string
+
     AzureRelayHybridConnection:
       type: object
       required:
@@ -460,11 +473,12 @@ components:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
         namespace:
-          type: string
           description: The user-provided name to identify the Relay.
-        hybridConnectionName:
           type: string
+        hybridConnectionName:
           description: The user-provided name to identify the Relay HybridConnection.
+          type: string
+
     AzureContainerInstance:
       type: object
       required:
@@ -476,11 +490,11 @@ components:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
         containerGroupName:
-          type: string
           description: The name of the container group.
+          type: string
         containers:
-          type: array
           description: The containers within the container group.
+          type: array
           items:
             type: object
             required:
@@ -488,19 +502,19 @@ components:
               - image
             properties:
               name:
-                type: string
                 description: The user-provided name of the container instance.
-              image:
                 type: string
+              image:
                 description: The name of the image used to create the container instance.
+                type: string
               command:
-                type: array
                 description: The commands to execute within the container instance in exec form.
+                type: array
                 items:
                   type: string
               ports:
-                type: array
                 description: The exposed ports on the container instance.
+                type: array
                 items:
                   type: object
                   required:
@@ -508,33 +522,34 @@ components:
                     - port
                   properties:
                     protocol:
-                      type: string
                       description: The protocol associated with the port.
+                      type: string
                       enum: [TCP, UDP]
                     port:
                       type: integer
                       description: The port number exposed within the container group.
               environmentVariables:
-                type: array
                 description: The environment variables to set in the container instance.
+                type: array
                 items:
                   type: object
                   required:
                     - name
                   properties:
                     name:
-                      type: string
                       description: The name of the environment variable.
+                      type: string
                     value:
-                      type: string
                       description: The value of the environment variable.
-                    secureValue:
                       type: string
+                    secureValue:
                       description: The value of the secure environment variable.
+                      type: string
         operatingSystemTypes:
-          type: string
           description: The operating system type required by the containers in the container group.
+          type: string
           enum: [Windows, Linux]
+
     TerraWorkspaceUid:
       type: object
       required:
@@ -542,14 +557,15 @@ components:
       - workspaceManagerInstance
       properties:
         workspaceId:
+          description: The UUID of the workspace
           type: string
           format: uuid
-          description: The UUID of the workspace
         workspaceManagerInstance:
-          type: string
           description: |
             The URL of the Workspace Manager instance which manages this workspace. This must be
             in Janitor's configured allowlist.
+          type: string
+
     AzureManagedIdentity:
       type: object
       required:
@@ -559,8 +575,8 @@ components:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
         identityName:
-          type: string
           description: The user-provided name to identify the managed identity.
+          type: string
 
     # A cloud resource unique identifier. Each CloudResourceUid represents exactly one cloud resource.
     # We are not doing polymorphism at this moment because of lack of support in swagger-codegen or openApiGenerator

@@ -7,7 +7,6 @@ import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
-import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -107,7 +106,7 @@ public class FlightScheduler {
   private void scheduleFlights() {
     logger.info("Beginning scheduling flights.");
     int flightsScheduled = 0;
-    while (flightManager.submitFlight(Instant.now()).isPresent()) {
+    while (flightManager.submitFlight(JanitorDao.currentInstant()).isPresent()) {
       ++flightsScheduled;
     }
     logger.info("Done scheduling {} flights.", flightsScheduled);

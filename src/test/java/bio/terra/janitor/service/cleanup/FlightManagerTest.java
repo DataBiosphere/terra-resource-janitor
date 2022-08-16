@@ -135,8 +135,7 @@ public class FlightManagerTest extends BaseUnitTest {
     // Create a resource with a flight outside of the manager to represent a stored flight that was
     // not submitted.
     TrackedResource resource =
-        newResourceForCleaning()
-            .toBuilder()
+        newResourceForCleaning().toBuilder()
             .trackedResourceState(TrackedResourceState.CLEANING)
             .build();
     janitorDao.createResource(resource, ImmutableMap.of());
@@ -330,8 +329,7 @@ public class FlightManagerTest extends BaseUnitTest {
 
     assertEquals(
         Optional.of(
-            duplicatedResource
-                .toBuilder()
+            duplicatedResource.toBuilder()
                 .trackedResourceState(TrackedResourceState.DUPLICATED)
                 .build()),
         janitorDao.retrieveTrackedResource(duplicatedResource.trackedResourceId()));
@@ -340,8 +338,7 @@ public class FlightManagerTest extends BaseUnitTest {
 
     assertEquals(
         Optional.of(
-            abandonedResource
-                .toBuilder()
+            abandonedResource.toBuilder()
                 .trackedResourceState(TrackedResourceState.ABANDONED)
                 .build()),
         janitorDao.retrieveTrackedResource(abandonedResource.trackedResourceId()));
@@ -419,8 +416,7 @@ public class FlightManagerTest extends BaseUnitTest {
 
     assertEquals(
         Optional.of(
-            duplicatedResource
-                .toBuilder()
+            duplicatedResource.toBuilder()
                 .trackedResourceState(TrackedResourceState.DUPLICATED)
                 .build()),
         janitorDao.retrieveTrackedResource(duplicatedResource.trackedResourceId()));
@@ -429,8 +425,7 @@ public class FlightManagerTest extends BaseUnitTest {
 
     assertEquals(
         Optional.of(
-            abandonedResource
-                .toBuilder()
+            abandonedResource.toBuilder()
                 .trackedResourceState(TrackedResourceState.ABANDONED)
                 .build()),
         janitorDao.retrieveTrackedResource(abandonedResource.trackedResourceId()));

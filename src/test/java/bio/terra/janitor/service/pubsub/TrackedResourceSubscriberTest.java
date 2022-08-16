@@ -5,8 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.common.exception.InvalidMessageException;
-import bio.terra.janitor.db.*;
-import bio.terra.janitor.generated.model.*;
+import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.TrackedResource;
+import bio.terra.janitor.db.TrackedResourceAndLabels;
+import bio.terra.janitor.db.TrackedResourceFilter;
+import bio.terra.janitor.db.TrackedResourceState;
+import bio.terra.janitor.generated.model.CloudResourceUid;
+import bio.terra.janitor.generated.model.CreateResourceRequestBody;
+import bio.terra.janitor.generated.model.GoogleBucketUid;
 import bio.terra.janitor.service.janitor.TrackedResourceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
@@ -14,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
@@ -34,7 +39,7 @@ public class TrackedResourceSubscriberTest extends BaseUnitTest {
 
   @Test
   public void receiveMessage() throws Exception {
-    OffsetDateTime publishTime = OffsetDateTime.now(ZoneOffset.UTC);
+    OffsetDateTime publishTime = JanitorDao.currentOffsetDateTime();
     CloudResourceUid resource =
         new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName("bucket"));
     Map<String, String> labels = ImmutableMap.of("key1", "value1", "key2", "value2");

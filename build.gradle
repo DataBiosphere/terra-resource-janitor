@@ -1,20 +1,25 @@
 plugins {
     id 'idea'
+    id 'jacoco'
     id 'java'
 
-    id 'com.diffplug.gradle.spotless' version '3.27.2'
-    id 'com.github.ben-manes.versions' version '0.33.0'
+    id 'com.diffplug.spotless' version '6.9.1'
+    id 'com.github.ben-manes.versions' version '0.42.0'
     id 'com.google.cloud.tools.jib' version '3.2.1'
-    id 'de.undercouch.download' version '5.0.4'
-    id 'io.spring.dependency-management' version '1.0.10.RELEASE'
-    id 'org.hidetake.swagger.generator' version '2.18.2'
-    id 'org.springframework.boot' version '2.6.6'
+    id 'de.undercouch.download' version '5.1.0'
+    id 'io.spring.dependency-management' version '1.0.13.RELEASE'
+    id 'org.hidetake.swagger.generator' version '2.19.2'
+    id 'org.springframework.boot' version '2.7.2'
 }
+
+sourceCompatibility = JavaVersion.VERSION_17
+
+// If true, search local repository (~/.m2/repository/) first for dependencies.
+def useMavenLocal = false
 
 allprojects {
     group = 'bio.terra'
     version = gradle.janitorVersion
-    sourceCompatibility = JavaVersion.VERSION_11
     ext {
         artifactGroup = "${group}.janitor"
         swaggerOutputDir = "${buildDir}/generated"
@@ -22,19 +27,19 @@ allprojects {
     }
 
     // specifying versions for dependencies, not adding the dependencies themselves (yet)
-    apply plugin: "io.spring.dependency-management"
+    apply plugin: 'io.spring.dependency-management'
     dependencyManagement {
         imports {
             mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
         }
         dependencies {
-            dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.5"
-            dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.22"
-            dependency group: 'io.swagger', name: 'swagger-annotations', version: '1.6.2'
+            dependency group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.2.2'
+            dependency group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli', version: '3.0.35'
+            dependency group: 'io.swagger', name: 'swagger-annotations', version: '1.6.6'
         }
     }
 
-    apply plugin: "idea"
+    apply plugin: 'idea'
     idea {
         module {
             generatedSourceDirs = [file("${swaggerOutputDir}/src/main/java")]
@@ -44,33 +49,37 @@ allprojects {
 }
 
 repositories {
-//    mavenLocal()
+    if (useMavenLocal) {
+        mavenLocal() // must be listed first to take effect
+    }
     mavenCentral()
+    maven {
+        url 'https://broadinstitute.jfrog.io/broadinstitute/libs-release/'
+    }
     maven {
         url 'https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/'
     }
-    maven {
-        url 'https://broadinstitute.jfrog.io/broadinstitute/libs-release-local/'
-    }
+
 }
 
 dependencies {
     // Terra deps - we get Stairway via TCL
-    implementation group: 'bio.terra', name: 'terra-common-lib', version: '0.0.56-SNAPSHOT'
+    implementation group: 'bio.terra', name: 'terra-common-lib', version: '0.0.67-SNAPSHOT'
     implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: '1.2.0-SNAPSHOT'
-    implementation group: 'bio.terra', name: 'workspace-manager-client', version: '0.254.237-SNAPSHOT'
+    implementation group: 'bio.terra', name: 'workspace-manager-client', version: '0.254.345-SNAPSHOT'
+
     // hk2 is required to use WSM client, but not correctly exposed by the client
-    implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.35"
+    implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: '3.0.6'
 
     // Versioned direct deps
-    implementation group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.7.3'
+    implementation group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.9'
+    implementation group: 'com.google.cloud', name: 'google-cloud-pubsub', version: '1.120.11'
     implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
-    implementation group: 'org.webjars', name: 'webjars-locator-core', version: '0.46'
-    implementation group: 'com.google.cloud', name: 'google-cloud-pubsub', version: '1.116.3'
-    implementation group: 'io.opencensus', name: 'opencensus-exporter-stats-stackdriver', version: '0.26.0'
+    implementation group: 'io.opencensus', name: 'opencensus-exporter-stats-stackdriver', version: '0.31.1'
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
-    implementation group: 'org.liquibase' , name: 'liquibase-core', version: '3.10.0'
-    runtimeOnly group: 'org.postgresql', name: 'postgresql', version: '42.3.3'
+    implementation group: 'org.liquibase', name: 'liquibase-core', version: '4.15.0'
+    implementation group: 'org.webjars', name: 'webjars-locator-core', version: '0.52'
+    runtimeOnly group: 'org.postgresql', name: 'postgresql', version: '42.4.1'
 
     // Deps whose versions are controlled by Spring
     implementation group: 'org.apache.commons', name: 'commons-dbcp2'
@@ -80,18 +89,18 @@ dependencies {
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
 
     // Swagger deps
-    swaggerCodegen group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli'
-    runtimeOnly group: 'org.webjars.npm', name: 'swagger-ui-dist', version: '3.35.2'
-    implementation group: 'io.swagger.core.v3', name: 'swagger-annotations'
-    implementation group: 'io.swagger', name: 'swagger-annotations'
+    implementation group: 'io.swagger', name: 'swagger-annotations', version: '1.6.6'
+    implementation group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.2.2'
+    runtimeOnly group: 'org.webjars.npm', name: 'swagger-ui-dist', version: '3.36.2'
+    swaggerCodegen group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli', version: '3.0.34'
 
     // Test deps
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
 
-    annotationProcessor group: 'com.google.auto.value', name: 'auto-value', version: '1.7.3'
-    annotationProcessor group: 'org.springframework.boot', name: 'spring-boot-configuration-processor'
+    annotationProcessor group: 'com.google.auto.value', name: 'auto-value', version: '1.9'
+    annotationProcessor group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version: '2.7.2'
 }
 
 dependencyLocking {
@@ -108,6 +117,9 @@ if (hasProperty('buildScan')) {
 
 java {
     withJavadocJar()
+}
+tasks.withType(Javadoc) {
+    options.addStringOption('Xdoclint:none', '-quiet')
 }
 
 // Download and extract the Cloud Profiler Java Agent
@@ -130,7 +142,7 @@ task extractProfilerAgent(dependsOn: downloadProfilerAgent, type: Copy) {
 
 jib {
     from {
-        image = "adoptopenjdk:11-jre-hotspot"
+        image = 'eclipse-temurin:17.0.4_8-jre'
     }
     extraDirectories {
         paths = [file(jibExtraDirectory)]
@@ -152,6 +164,26 @@ tasks.jib.dependsOn extractProfilerAgent
 tasks.jibDockerBuild.dependsOn extractProfilerAgent
 tasks.jibBuildTar.dependsOn extractProfilerAgent
 
+// OpenAPI/Swagger Server Generation
+swaggerSources {
+    server {
+        inputFile = file("${resourceDir}/static/service_openapi.yaml")
+        code {
+            language = 'spring'
+            library = 'spring-boot'
+            outputDir = file("${swaggerOutputDir}")
+            components = ['models', 'apis']
+            rawOptions = [
+                    '--api-package', "${artifactGroup}.generated.controller",
+                    '--model-package', "${artifactGroup}.generated.model",
+                    '-D', 'interfaceOnly=true,' +
+                            'useTags=true,' +
+                            'dateLibrary=java8'
+            ]
+        }
+    }
+}
+
 // Linter
 spotless {
     java {
@@ -159,26 +191,30 @@ spotless {
         targetExclude "${buildDir}/**"
     }
 }
+tasks.withType(com.diffplug.gradle.spotless.SpotlessTask) {
+    it.dependsOn(swaggerSources.server.code)
+}
 
-// OpenAPI/Swagger Server Generation
-swaggerSources {
-    server {
-        inputFile = file("${resourceDir}/static/service_openapi.yaml")
-        code {
-            language = "spring"
-            library = "spring-boot"
-            outputDir = file("${swaggerOutputDir}")
-            components = ["models", "apis"]
-            rawOptions = [
-                    "--api-package", "${artifactGroup}.generated.controller",
-                    "--model-package", "${artifactGroup}.generated.model",
-                    "-D", "interfaceOnly=true," +
-                            "useTags=true," +
-                            "dateLibrary=java8"
-            ]
+tasks.withType(JacocoReport) {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/jacocoHtml")
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.1
+            }
         }
     }
 }
+check.dependsOn jacocoTestCoverageVerification
 
 // Testing config
 
@@ -190,7 +226,7 @@ tasks.withType(Test) {
             'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
     ]
     testLogging {
-        events = ["passed", "failed", "skipped"]
+        events = ['passed', 'failed', 'skipped']
         // Causes the correct line to be reported on an exception.
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
         reports {
@@ -214,7 +250,7 @@ task unitTest(type: Test) {
 
 task integrationTest(type: Test) {
     useJUnitPlatform {
-        includeTags "integration"
+        includeTags 'integration'
     }
     // Force tests to always be re-run, since integration tests involve communicating with external
     // resources.
