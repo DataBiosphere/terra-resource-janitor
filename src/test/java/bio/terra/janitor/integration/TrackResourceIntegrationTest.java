@@ -598,7 +598,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         assertThrows(
             ManagementException.class,
             () -> relayManager.hybridConnections().getById(createdHc.id()));
-    assertEquals("NotFound", removeHc.getValue().getCode());
+    assertEquals("EntityNotFound", removeHc.getValue().getCode());
 
     // Publish a message to cleanup the IP.
     publishAndVerify(relayUid, ResourceState.DONE);
