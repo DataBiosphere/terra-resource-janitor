@@ -4,7 +4,7 @@
 # TODO(PF-67): Find solution for piping configs and secrets.
 
 VAULT_TOKEN=${1:-$(cat $HOME/.vault-token)}
-DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:consul-0.20.0
+DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:dev
 VAULT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/app-sa
 VAULT_CLIENT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/client-sa
 VAULT_TOOLS_CLIENT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa
