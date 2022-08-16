@@ -3,17 +3,26 @@ package bio.terra.janitor.app.controller;
 import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.janitor.app.Main;
+import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.db.TrackedResourceState;
-import bio.terra.janitor.generated.model.*;
+import bio.terra.janitor.generated.model.CloudResourceUid;
+import bio.terra.janitor.generated.model.CreateResourceRequestBody;
+import bio.terra.janitor.generated.model.CreatedResource;
+import bio.terra.janitor.generated.model.GoogleProjectUid;
+import bio.terra.janitor.generated.model.ResourceMetadata;
+import bio.terra.janitor.generated.model.ResourceState;
+import bio.terra.janitor.generated.model.TrackedResourceInfo;
+import bio.terra.janitor.generated.model.TrackedResourceInfoList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,9 +52,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 public class JanitorApiControllerTest {
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
-  private static final OffsetDateTime CREATION = OffsetDateTime.now(ZoneOffset.UTC);
+  private static final OffsetDateTime CREATION = JanitorDao.currentOffsetDateTime();
   private static final OffsetDateTime EXPIRATION =
-      OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(10);
+      JanitorDao.currentOffsetDateTime().plusMinutes(10);
   private static final String PROJECT_PARENT = "folders/1234";
   private static final String CLAIM_EMAIL_KEY = "OIDC_CLAIM_email";
   private static final String CLAIM_SUBJECT_KEY = "OIDC_CLAIM_user_id";
