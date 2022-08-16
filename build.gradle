@@ -5,7 +5,6 @@ plugins {
 
     id 'com.diffplug.spotless' version '6.9.1'
     id 'com.github.ben-manes.versions' version '0.42.0'
-    id 'com.github.spotbugs' version '5.0.9'
     id 'com.google.cloud.tools.jib' version '3.2.1'
     id 'de.undercouch.download' version '5.1.0'
     id 'io.spring.dependency-management' version '1.0.13.RELEASE'
@@ -194,30 +193,6 @@ spotless {
 }
 tasks.withType(com.diffplug.gradle.spotless.SpotlessTask) {
     it.dependsOn(swaggerSources.server.code)
-}
-
-// Static analysis
-spotbugs {
-    effort = 'max'
-    // This makes the "html" reports come out in plain text so you can just open the file in IntelliJ
-    // and look at your bugs instead of having to switch to a browser.
-    extraArgs = ['-emacs']
-}
-spotbugsMain {
-    reports {
-        html {
-            enabled = true
-            destination = file("$buildDir/reports/spotbugs/main.html")
-        }
-    }
-}
-spotbugsTest {
-    reports {
-        html {
-            enabled = true
-            destination = file("$buildDir/reports/spotbugs/test.html")
-        }
-    }
 }
 
 tasks.withType(JacocoReport) {
