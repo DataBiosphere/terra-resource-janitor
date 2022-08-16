@@ -22,6 +22,7 @@ import org.springframework.web.servlet.NoHandlerFoundException;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+  // TODO: move to terra-common-lib PF-1912
   private final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   // -- Error Report - one of our exceptions --
@@ -43,7 +44,7 @@ public class GlobalExceptionHandler {
   // -- catchall - log so we can understand what we have missed in the handlers above
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorReport> catchallHandler(Exception ex) {
-    logger.error("Exception caught by catchall hander", ex);
+    logger.error("Exception caught by catch-all handler", ex);
     return buildErrorReport(ex, HttpStatus.INTERNAL_SERVER_ERROR, null);
   }
 

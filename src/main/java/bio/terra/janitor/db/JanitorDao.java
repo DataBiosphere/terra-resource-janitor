@@ -480,13 +480,13 @@ public class JanitorDao {
     }
   }
 
-  // TODO: move to terro-common-lib PF-1912
+  // TODO: move to terra-common-lib PF-1912
   /** Helper function to return Millisecond precision OffsetDateTime supported by most DBs */
   public static OffsetDateTime currentOffsetDateTime() {
     return OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS);
   }
 
-  // TODO: move to terro-common-lib PF-1912
+  // TODO: move to terra-common-lib PF-1912
   /** Helper function to return Millisecond precision Instant supported by most DBs */
   public static Instant currentInstant() {
     return Instant.now().truncatedTo(ChronoUnit.MILLIS);
