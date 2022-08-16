@@ -1,6 +1,6 @@
 plugins {
     id 'idea'
-    id "jacoco"
+    id 'jacoco'
     id 'java'
 
     id 'com.diffplug.spotless' version '6.9.1'
@@ -27,19 +27,19 @@ allprojects {
     }
 
     // specifying versions for dependencies, not adding the dependencies themselves (yet)
-    apply plugin: "io.spring.dependency-management"
+    apply plugin: 'io.spring.dependency-management'
     dependencyManagement {
         imports {
             mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
         }
         dependencies {
-            dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.2.2"
-            dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.35"
+            dependency group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.2.2'
+            dependency group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli', version: '3.0.35'
             dependency group: 'io.swagger', name: 'swagger-annotations', version: '1.6.6'
         }
     }
 
-    apply plugin: "idea"
+    apply plugin: 'idea'
     idea {
         module {
             generatedSourceDirs = [file("${swaggerOutputDir}/src/main/java")]
@@ -169,16 +169,16 @@ swaggerSources {
     server {
         inputFile = file("${resourceDir}/static/service_openapi.yaml")
         code {
-            language = "spring"
-            library = "spring-boot"
+            language = 'spring'
+            library = 'spring-boot'
             outputDir = file("${swaggerOutputDir}")
-            components = ["models", "apis"]
+            components = ['models', 'apis']
             rawOptions = [
-                    "--api-package", "${artifactGroup}.generated.controller",
-                    "--model-package", "${artifactGroup}.generated.model",
-                    "-D", "interfaceOnly=true," +
-                            "useTags=true," +
-                            "dateLibrary=java8"
+                    '--api-package', "${artifactGroup}.generated.controller",
+                    '--model-package', "${artifactGroup}.generated.model",
+                    '-D', 'interfaceOnly=true,' +
+                            'useTags=true,' +
+                            'dateLibrary=java8'
             ]
         }
     }
@@ -226,7 +226,7 @@ tasks.withType(Test) {
             'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
     ]
     testLogging {
-        events = ["passed", "failed", "skipped"]
+        events = ['passed', 'failed', 'skipped']
         // Causes the correct line to be reported on an exception.
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
         reports {
@@ -250,7 +250,7 @@ task unitTest(type: Test) {
 
 task integrationTest(type: Test) {
     useJUnitPlatform {
-        includeTags "integration"
+        includeTags 'integration'
     }
     // Force tests to always be re-run, since integration tests involve communicating with external
     // resources.
