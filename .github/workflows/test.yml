@@ -8,8 +8,9 @@ on:
     branches: [ master ]
     paths-ignore: [ '**.md' ]
   pull_request:
+    # Branch settings require status checks before merging, so don't add paths-ignore.
     branches: [ '**' ]
-    paths-ignore: [ '**.md' ]
+
 env:
   VAULT_ADDR: https://clotho.broadinstitute.org:8200
   VAULT_SERVICE_ACCOUNT_PATH: secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/app-sa
