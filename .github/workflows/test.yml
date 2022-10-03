@@ -45,8 +45,6 @@ jobs:
         run: echo $env.JAVA_HOME_17_X64
       - name: Test1.4
         run: echo ${{ env.JAVA_HOME_17_X64 }}
-      - name: Test1.5
-        run: echo ${{ JAVA_HOME_17_X64 }}
       - name: Set Java version
         id: java-home-setup
         run: echo ${{ env.JAVA_HOME_17_X64 }} >> JAVA_HOME
