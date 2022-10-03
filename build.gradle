@@ -47,8 +47,6 @@ allprojects {
             downloadJavadoc = true
         }
     }
-
-    sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
 }
 
 // If true, search local repository (~/.m2/repository/) first for dependencies.
@@ -128,6 +126,6 @@ tasks.withType(com.diffplug.gradle.spotless.SpotlessTask) {
     it.dependsOn(swaggerSources.server.code)
 }
 
+sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
+
 // TODO - update deps
-// client update
-// add spotlessCheck to test.yml

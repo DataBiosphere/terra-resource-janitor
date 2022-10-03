@@ -27,8 +27,12 @@ env:
   VAULT_ADDR: https://clotho.broadinstitute.org:8200
 jobs:
   tag-build-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04 # from https://github.com/actions/runner-images
     steps:
+      - name: Set Java version
+        id: java-home-setup
+        env:
+          JAVA_HOME: ${{ JAVA_HOME_17_X64 }}
       - name: Set part of semantic version to bump
         id: controls
         run: |
@@ -109,12 +113,6 @@ jobs:
       - name: Explicitly auth Docker for GCR
         if: steps.skiptest.outputs.is-bump == 'no'
         run: gcloud auth configure-docker --quiet
-      - name: Set up JDK 17
-        if: steps.skiptest.outputs.is-bump == 'no'
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: 17
       - name: Grant execute permission for gradlew
         if: steps.skiptest.outputs.is-bump == 'no'
         run: chmod +x gradlew

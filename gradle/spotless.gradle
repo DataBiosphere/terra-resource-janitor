@@ -9,7 +9,3 @@ spotless {
         targetExclude "${buildDir}/**"
     }
 }
-
-
-
-

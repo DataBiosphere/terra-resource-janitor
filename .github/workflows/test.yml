@@ -22,7 +22,7 @@ env:
   SERVICE_ACCOUNT_CLOUD_ACCESS_FILE: src/test/resources/rendered/cloud-access-sa-account.json
 jobs:
   unit-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04 # from https://github.com/actions/runner-images
     services:
       postgres:
         image: postgres:12.3
@@ -37,6 +37,10 @@ jobs:
           - 5432:5432
 
     steps:
+      - name: Set Java version
+        id: java-home-setup
+        env:
+          JAVA_HOME: ${{ JAVA_HOME_17_X64 }}
       - uses: actions/checkout@v2
       - name: Skip version bump merges
         id: skiptest
@@ -70,12 +74,6 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h 127.0.0.1 -U postgres -f ./local-dev/local-postgres-init.sql
-      - name: Set up JDK 17
-        if: steps.skiptest.outputs.is-bump == 'no'
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: 17
       - name: Cache Gradle packages
         if: steps.skiptest.outputs.is-bump == 'no'
         uses: actions/cache@v2

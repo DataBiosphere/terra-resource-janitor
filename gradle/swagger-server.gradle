@@ -18,4 +18,4 @@ swaggerSources {
     }
 }
 
-compileJava.dependsOn swaggerSources.server.code
+compileJava.dependsOn swaggerSources.server.code, spotlessApply
