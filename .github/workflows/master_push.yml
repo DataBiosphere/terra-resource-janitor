@@ -33,7 +33,7 @@ jobs:
         run: echo $JAVA_HOME
       - name: Set Java version
         id: java-home-setup
-        run: echo ${{ env.JAVA_HOME_17_X64 }} >> $JAVA_HOME
+        run: echo ${{ env.JAVA_HOME_17_X64 }} >> JAVA_HOME
       - name: Test2
         run: echo $JAVA_HOME
       - name: Set part of semantic version to bump
