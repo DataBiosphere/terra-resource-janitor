@@ -43,8 +43,14 @@ jobs:
         run: echo $JAVA_HOME_17_X64
       - name: Set Java version
         id: java-home-setup
-        run: JAVA_HOME=${JAVA_HOME_17_X64}
+        run: |
+        echo "JAVA_HOME=${JAVA_HOME_17_X64}" >> $GITHUB_ENV
       - name: Test2
+        run: echo $JAVA_HOME
+      - name: Set Java version
+        id: java-home-setup
+        run: echo "JAVA_HOME=${JAVA_HOME_17_X64}" >> $GITHUB_ENV
+      - name: Test3
         run: echo $JAVA_HOME
       - uses: actions/checkout@v2
       - name: Skip version bump merges
