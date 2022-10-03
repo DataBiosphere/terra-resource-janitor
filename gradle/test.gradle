@@ -1,5 +1,5 @@
 // This is the path to the default Google service account for the janitor service to run as.
-def googleCredentialsFile = "${rootProject}/src/test/resources/rendered/sa-account.json"
+def googleCredentialsFile = "${rootDir}/src/test/resources/rendered/sa-account.json"
 
 test {
     useJUnitPlatform()
@@ -15,9 +15,9 @@ tasks.withType(Test) {
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
         reports {
             // Write XML file (used by CircleCI, Jenkins, etc) to build/test-results/*
-            junitXml.enabled = true
+            junitXml.required = true
             // Write human-readable test report to build/reports/tests/*
-            html.enabled = true
+            html.required = true
         }
     }
 }
