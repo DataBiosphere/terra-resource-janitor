@@ -18,4 +18,4 @@ swaggerSources {
     }
 }
 
-sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
+compileJava.dependsOn swaggerSources.server.code

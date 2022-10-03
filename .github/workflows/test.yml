@@ -91,6 +91,8 @@ jobs:
       - name: Check Javadoc
         if: steps.skiptest.outputs.is-bump == 'no'
         run: ./gradlew javadoc --scan
+      - name: Lint
+        run: ./gradlew spotlessCheck
       - name: Run unit tests
         if: steps.skiptest.outputs.is-bump == 'no'
         id: unit-test
