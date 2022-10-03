@@ -130,3 +130,4 @@ tasks.withType(com.diffplug.gradle.spotless.SpotlessTask) {
 
 // TODO - update deps
 // client update
+// add spotlessCheck to test.yml
