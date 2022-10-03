@@ -41,7 +41,7 @@ jobs:
         run: echo $JAVA_HOME
       - name: Set Java version
         id: java-home-setup
-        run: echo "JAVA_HOME=$(echo $env.JAVA_HOME_17_X64)" >> $JAVA_HOME
+        run: echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $JAVA_HOME
       - name: Test2
         run: echo $JAVA_HOME
       - uses: actions/checkout@v2
