@@ -37,8 +37,16 @@ jobs:
           - 5432:5432
 
     steps:
-      - name: Test1
+      - name: Test1.1
         run: echo $JAVA_HOME
+      - name: Test1.2
+        run: echo $JAVA_HOME_17_X64
+      - name: Test1.3
+        run: echo $env.JAVA_HOME_17_X64
+      - name: Test1.4
+        run: echo ${{ env.JAVA_HOME_17_X64 }}
+      name: Test1.5
+        run: echo ${{ JAVA_HOME_17_X64 }}
       - name: Set Java version
         id: java-home-setup
         run: echo ${{ env.JAVA_HOME_17_X64 }} >> JAVA_HOME
