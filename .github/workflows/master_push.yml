@@ -29,10 +29,6 @@ jobs:
   tag-build-push:
     runs-on: ubuntu-20.04 # from https://github.com/actions/runner-images
     steps:
-      - name: Set Java version
-        id: java-home-setup
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
       - name: Set part of semantic version to bump
         id: controls
         run: |
