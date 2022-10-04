@@ -20,6 +20,7 @@ dependencies {
     swaggerCodegen group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli'
 }
 
+apply from: "$rootDir/gradle/dependency-locking.gradle"
 apply from: "$rootDir/gradle/publishing.gradle"
 apply from: "$rootDir/gradle/swagger-client.gradle"
 

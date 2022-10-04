@@ -134,6 +134,10 @@ apply from: "$rootDir/gradle/spotless.gradle"
 apply from: "$rootDir/gradle/swagger-server.gradle"
 apply from: "$rootDir/gradle/test.gradle"
 
+tasks.named('dependencies') {
+    dependsOn(':terra-resource-janitor-client:dependencies')
+}
+
 tasks.withType(com.diffplug.gradle.spotless.SpotlessTask) {
     it.dependsOn(swaggerSources.server.code)
 }
