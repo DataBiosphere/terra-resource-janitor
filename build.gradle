@@ -103,15 +103,6 @@ dependencies {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
 
-    // TODO(PF-2299): Remove this once all dependencies are using >3.0.0. This
-    //  is forced to version 2.1.6 here to paper over a breaking change in the
-    //  underlying library (the move from javax.ws... to jakarta.ws... package).
-    implementation('jakarta.ws.rs:jakarta.ws.rs-api') {
-        version {
-            strictly '2.1.6'
-        }
-    }
-
     // Transitive dependency constraints due to security vulnerabilities in prior versions.
     // These are not directly included, they are just constrained if they are pulled in as
     // transitive dependencies.
@@ -121,6 +112,20 @@ dependencies {
         implementation('io.projectreactor.netty:reactor-netty-http:1.0.24')
         implementation('org.bouncycastle:bcpkix-jdk15on:1.70')
         implementation('org.bouncycastle:bcprov-jdk15on:1.70')
+        // TODO(PF-2299): Remove these once all dependencies are using >3.0.0. This
+        //  is forced to version 2.1.6 here to paper over a breaking change in the
+        //  underlying library (the move from javax.ws... to jakarta.ws... package).
+        implementation('jakarta.ws.rs:jakarta.ws.rs-api') {
+            version {
+                strictly '2.1.6'
+            }
+        }
+        implementation('org.glassfish.jersey.core:jersey-common') {
+            version {
+                strictly '2.35'
+            }
+        }
+
     }
 }
 
