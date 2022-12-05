@@ -7,9 +7,8 @@ plugins {
     id 'com.github.ben-manes.versions' version '0.42.0'
     id 'com.google.cloud.tools.jib' version '3.3.0'
     id 'de.undercouch.download' version '5.2.1'
-    id 'io.spring.dependency-management' version '1.0.14.RELEASE'
     id 'org.hidetake.swagger.generator' version '2.19.2'
-    id 'org.springframework.boot' version '2.7.4'
+    id 'org.springframework.boot' version '2.7.6'
 }
 
 allprojects {
@@ -24,19 +23,6 @@ allprojects {
     java {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(17))
-        }
-    }
-
-    // specifying versions for dependencies, not adding the dependencies themselves (yet)
-    apply plugin: 'io.spring.dependency-management'
-    dependencyManagement {
-        imports {
-            mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
-        }
-        dependencies {
-            dependency group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.2.2'
-            dependency group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli', version: '3.0.35'
-            dependency group: 'io.swagger', name: 'swagger-annotations', version: '1.6.6'
         }
     }
 
@@ -65,15 +51,15 @@ repositories {
 }
 
 dependencies {
-    // Common utils - versions are controlled by Spring dependency management
-    implementation group: 'org.apache.commons', name: 'commons-dbcp2'
-    implementation group: 'org.apache.commons', name: 'commons-lang3'
-    implementation group: 'org.apache.commons', name: 'commons-pool2'
+    // Common utils
+    implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.9.0'
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
+    implementation group: 'org.apache.commons', name: 'commons-pool2', version: '2.11.1'
 
-    // Spring - versions are controlled by Spring dependency management
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jdbc'
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
-    annotationProcessor group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version: '2.7.2'
+    // Spring
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jdbc', version: '2.7.6'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.7.6'
+    annotationProcessor group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version: '2.7.6'
 
     // Misc. Services
     implementation group: 'org.webjars', name: 'webjars-locator-core', version: '0.52'
@@ -86,10 +72,10 @@ dependencies {
     implementation platform('com.google.cloud:libraries-bom:26.0.0') // use common bom
 
     implementation group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.9'
-    implementation group: 'com.google.cloud', name: 'google-cloud-billing'
-    implementation group: 'com.google.cloud', name: 'google-cloud-core-http'
-    implementation group: 'com.google.cloud', name: 'google-cloud-pubsub'
-    implementation group: 'com.google.cloud', name: 'google-cloud-storage'
+    implementation group: 'com.google.cloud', name: 'google-cloud-billing', version: '2.3.0'
+    implementation group: 'com.google.cloud', name: 'google-cloud-core-http', version: '2.8.0'
+    implementation group: 'com.google.cloud', name: 'google-cloud-pubsub', version: '1.120.0'
+    implementation group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.9.2'
     annotationProcessor group: 'com.google.auto.value', name: 'auto-value', version: '1.9'
 
     // Database
@@ -97,7 +83,7 @@ dependencies {
     runtimeOnly group: 'org.postgresql', name: 'postgresql', version: '42.5.0'
 
     // Terra libraries
-    implementation group: 'bio.terra', name: 'terra-common-lib', version: '0.0.75-SNAPSHOT'
+    implementation group: 'bio.terra', name: 'terra-common-lib', version: '0.0.76-SNAPSHOT'
     implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: '1.2.4-SNAPSHOT'
     implementation group: 'bio.terra', name: 'workspace-manager-client', version: '0.254.345-SNAPSHOT'
 
@@ -110,11 +96,31 @@ dependencies {
     // Swagger deps
     implementation group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.2.2'
     runtimeOnly group: 'org.webjars.npm', name: 'swagger-ui-dist', version: '3.36.2'
-    swaggerCodegen group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli', version: '3.0.34'
+    swaggerCodegen group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli', version: '3.0.35'
 
     // Test deps
-    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+    testImplementation('org.springframework.boot:spring-boot-starter-test:2.7.6') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+
+    // TODO(PF-2299): Remove this once all dependencies are using >3.0.0. This
+    //  is forced to version 2.1.6 here to paper over a breaking change in the
+    //  underlying library (the move from javax.ws... to jakarta.ws... package).
+    implementation('jakarta.ws.rs:jakarta.ws.rs-api') {
+        version {
+            strictly '2.1.6'
+        }
+    }
+
+    // Transitive dependency constraints due to security vulnerabilities in prior versions.
+    // These are not directly included, they are just constrained if they are pulled in as
+    // transitive dependencies.
+    constraints {
+        implementation('com.google.protobuf:protobuf-java:3.21.10')
+        implementation('org.yaml:snakeyaml:1.33')
+        implementation('io.projectreactor.netty:reactor-netty-http:1.0.24')
+        implementation('org.bouncycastle:bcpkix-jdk15on:1.70')
+        implementation('org.bouncycastle:bcprov-jdk15on:1.70')
     }
 }
 
