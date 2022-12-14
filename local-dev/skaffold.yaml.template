@@ -3,7 +3,7 @@ apiVersion: skaffold/v2beta17
 kind: Config
 build:
   artifacts:
-  - image: gcr.io/terra-kernel-k8s/terra-resource-janitor
+  - image: gcr.io/broad-dsp-gcr-public/terra-resource-janitor
     context: ../
     jib: {}
 deploy:
