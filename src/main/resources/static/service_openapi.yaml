@@ -550,6 +550,18 @@ components:
           type: string
           enum: [Windows, Linux]
 
+    AzureBatchPool:
+      type: object
+      required:
+        - resourceGroup
+        - id
+      properties:
+        resourceGroup:
+          $ref: '#/components/schemas/AzureResourceGroup'
+        id:
+          description: Identifier of a Batch Pool
+          type: string
+
     TerraWorkspaceUid:
       type: object
       required:
@@ -613,6 +625,8 @@ components:
           $ref: '#/components/schemas/AzureRelayHybridConnection'
         azureContainerInstance:
           $ref: '#/components/schemas/AzureContainerInstance'
+        azureBatchPool:
+          $ref: '#/components/schemas/AzureBatchPool'
         terraWorkspace:
           $ref: '#/components/schemas/TerraWorkspaceUid'
         azureManagedIdentity:
