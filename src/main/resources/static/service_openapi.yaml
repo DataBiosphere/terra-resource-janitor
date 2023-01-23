@@ -555,11 +555,15 @@ components:
       required:
         - resourceGroup
         - id
+        - batchAccountName
       properties:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
         id:
           description: Identifier of a Batch Pool
+          type: string
+        batchAccountName:
+          description: Name of a batch account
           type: string
 
     TerraWorkspaceUid:
