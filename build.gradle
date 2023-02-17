@@ -125,6 +125,13 @@ dependencies {
                 strictly '2.35'
             }
         }
+        // slf4j-api is pulled in via TCL, Janitor cannot go to version 2.0 until
+        // TCL does.
+        implementation('org.slf4j:slf4j-api') {
+            version {
+                strictly '1.7.36'
+            }
+        }
 
     }
 }
