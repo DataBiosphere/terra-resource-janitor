@@ -47,7 +47,7 @@ public class WorkspaceManagerService {
       throws ApiException {
     AccessToken userAccessToken = iamService.impersonateTestUser(testUser);
     if (!workspaceManagerConfiguration.getInstances().contains(wsmUrl)) {
-      throw new InvalidResourceUidException("Invalid workspace instance url provded");
+      throw new InvalidResourceUidException("Invalid workspace instance url provided");
     }
     WorkspaceApi workspaceClient = getWorkspaceApi(userAccessToken.getTokenValue(), wsmUrl);
     workspaceClient.deleteWorkspace(workspaceId);
