@@ -53,8 +53,8 @@ repositories {
 
 dependencies {
     ext {
-        jerseyVersion = "2.35"
-        springVersion = "2.7.6"
+        jerseyVersion = '2.35'
+        springVersion = '2.7.6'
     }
     // Common utils
     implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.9.0'
@@ -72,7 +72,7 @@ dependencies {
 
     // Google dependencies
     constraints {
-        implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre' // "-jre' for Java 8 or higher
+        implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre' // '-jre' for Java 8 or higher
     }
     implementation platform('com.google.cloud:libraries-bom:26.0.0') // use common bom
 
@@ -154,16 +154,19 @@ apply from: "$gradleIncDir/dependency-locking.gradle"
 apply from: "$gradleIncDir/jacoco.gradle"
 apply from: "$gradleIncDir/javadoc.gradle"
 apply from: "$gradleIncDir/jib.gradle"
+apply from: "$gradleIncDir/publishing.gradle"
 apply from: "$gradleIncDir/sonarqube.gradle"
+apply from: "$gradleIncDir/spotbugs.gradle"
 apply from: "$gradleIncDir/spotless.gradle"
 apply from: "$gradleIncDir/swagger-server.gradle"
-apply from: "$gradleIncDir/test.gradle"
+apply from: "$gradleIncDir/testing.gradle"
 
 tasks.named('dependencies') {
     dependsOn(':terra-resource-janitor-client:dependencies')
 }
 
-tasks.withType(com.diffplug.gradle.spotless.SpotlessTask) {
+import com.diffplug.gradle.spotless.SpotlessTask
+tasks.withType(SpotlessTask) {
     it.dependsOn(swaggerSources.server.code)
 }
 
