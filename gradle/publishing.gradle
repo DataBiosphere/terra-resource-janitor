@@ -9,19 +9,18 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
+// Publish jar file to a Maven module/artifact using the maven-publish plugin.
 publishing {
     publications {
         janitorClientLibrary(MavenPublication) {
+            version = gradle.janitorVersion
+            artifactId = rootProject.name
             from components.java
-            versionMapping {
-                usage('java-runtime') {
-                    fromResolutionResult()
-                }
-            }
         }
     }
 }
 
+// Upload Maven artifacts to Artifactory using the Artifactory plugin.
 artifactory {
     publish {
         contextUrl = 'https://broadinstitute.jfrog.io/broadinstitute/'
