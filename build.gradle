@@ -161,6 +161,7 @@ apply from: "$gradleIncDir/publishing.gradle"
 apply from: "$gradleIncDir/sonarqube.gradle"
 apply from: "$gradleIncDir/spotbugs.gradle"
 apply from: "$gradleIncDir/spotless.gradle"
+apply from: "$gradleIncDir/swagger-client.gradle"
 apply from: "$gradleIncDir/swagger-server.gradle"
 apply from: "$gradleIncDir/testing.gradle"
 
