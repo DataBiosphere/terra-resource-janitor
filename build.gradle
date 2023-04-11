@@ -16,7 +16,7 @@ plugins {
 }
 
 allprojects {
-    group = 'bio.terra'
+    group = gradle.projectGroup
     version = gradle.janitorVersion
     ext {
         artifactGroup = "${group}.janitor"

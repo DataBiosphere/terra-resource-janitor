@@ -13,8 +13,9 @@ gradle.taskGraph.whenReady { taskGraph ->
 publishing {
     publications {
         janitorClientLibrary(MavenPublication) {
-            version = gradle.janitorVersion
+            groupId = gradle.projectGroup
             artifactId = rootProject.name
+            version = gradle.janitorVersion
             from components.java
         }
     }
