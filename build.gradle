@@ -2,7 +2,6 @@ plugins {
     id 'idea'
     id 'jacoco'
     id 'java'
-    id 'maven-publish'
 
     id 'com.diffplug.spotless' version '6.16.0'
     id 'com.github.spotbugs' version '5.0.13'
