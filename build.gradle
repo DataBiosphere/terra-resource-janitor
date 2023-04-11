@@ -22,6 +22,7 @@ allprojects {
         artifactGroup = "${group}.janitor"
         swaggerOutputDir = "${buildDir}/generated"
         resourceDir = "${rootDir}/src/main/resources"
+        isCiServer = System.getenv().containsKey("CI")
     }
 
     java {
@@ -157,11 +158,9 @@ apply from: "$gradleIncDir/dependency-locking.gradle"
 apply from: "$gradleIncDir/jacoco.gradle"
 apply from: "$gradleIncDir/javadoc.gradle"
 apply from: "$gradleIncDir/jib.gradle"
-apply from: "$gradleIncDir/publishing.gradle"
 apply from: "$gradleIncDir/sonarqube.gradle"
 apply from: "$gradleIncDir/spotbugs.gradle"
 apply from: "$gradleIncDir/spotless.gradle"
-apply from: "$gradleIncDir/swagger-client.gradle"
 apply from: "$gradleIncDir/swagger-server.gradle"
 apply from: "$gradleIncDir/testing.gradle"
 
