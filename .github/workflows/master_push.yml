@@ -62,7 +62,7 @@ jobs:
           OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
           RELEASE_BRANCHES: master
           VERSION_FILE_PATH: settings.gradle
-          VERSION_LINE_MATCH: "^gradle.ext.janitorVersion\\s*=\\s*\".*\""
+          VERSION_LINE_MATCH: "^\\s*gradle.ext.janitorVersion\\s*=\\s*'.*'"
           VERSION_SUFFIX: SNAPSHOT
       - name: Auth to GCR
         if: steps.skiptest.outputs.is-bump == 'no'
