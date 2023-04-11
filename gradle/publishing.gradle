@@ -13,10 +13,12 @@ gradle.taskGraph.whenReady { taskGraph ->
 publishing {
     publications {
         janitorClientLibrary(MavenPublication) {
-            groupId = gradle.projectGroup
-            artifactId = rootProject.name
-            version = gradle.janitorVersion
             from components.java
+            versionMapping {
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
         }
     }
 }
