@@ -15,7 +15,7 @@ publishing {
         janitorClientLibrary(MavenPublication) {
             from components.java
             versionMapping {
-                usage("java-runtime") {
+                usage('java-runtime') {
                     fromResolutionResult()
                 }
             }
