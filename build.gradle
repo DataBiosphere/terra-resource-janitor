@@ -10,7 +10,7 @@ plugins {
     id 'de.undercouch.download' version '5.2.1'
     id 'org.hidetake.swagger.generator' version '2.19.2'
     id 'org.sonarqube' version '4.0.0.2929'
-    id 'org.springframework.boot' version '2.7.9'
+    id 'org.springframework.boot' version '2.7.11'
 }
 
 allprojects {
@@ -56,7 +56,7 @@ repositories {
 dependencies {
     ext {
         jerseyVersion = '2.35'
-        springVersion = '2.7.9'
+        springVersion = '2.7.11'
     }
     // Common utils
     implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.9.0'
@@ -106,7 +106,7 @@ dependencies {
     swaggerCodegen group: 'io.swagger.codegen.v3', name: 'swagger-codegen-cli', version: '3.0.35'
 
     // Test deps
-    testImplementation('org.springframework.boot:spring-boot-starter-test:2.7.9') {
+    testImplementation('org.springframework.boot:spring-boot-starter-test:2.7.11') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
 
