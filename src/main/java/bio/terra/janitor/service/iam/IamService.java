@@ -69,9 +69,13 @@ public class IamService {
    * Generate an access token to impersonate the provided test user.
    *
    * <p>This relies on the Janitor SA's usage of Domain-Wide Delegation to impersonate users in the
-   * test domain. Unfortunately, application-default credentials acquired via Workload Identity on
-   * GKE do not appear to support DWD. Instead, this method builds a custom JWT with the "sub" claim
-   * and then uses the ADC to sign the JWT via the IamCredentials API.
+   * test domain. Application-default credentials acquired via Workload Identity on GKE do not
+   * support DWD. Instead, this method builds a custom JWT with the "sub" claim and then uses the
+   * ADC to sign the JWT via the IamCredentials API.
+   *
+   * @param testUserEmail Email of the test user to impersonate. This will be validated against the
+   * domain allowed in configuration properties
+   * @return Signed JWT authorizing the caller to impersonate the provided user.
    */
   public String impersonateTestUser(String testUserEmail) {
     requireTestUser(testUserEmail);
