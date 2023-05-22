@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -98,7 +99,7 @@ public class IamService {
     // The client uses application-default credentials to make calls as the Janitor service account.
     try (IamCredentialsClient client = IamCredentialsClient.create()) {
       return client
-          .signJwt(janitorSaName, USER_IMPERSONATION_SCOPES, jwtClaims.toString())
+          .signJwt(janitorSaName, Collections.emptyList(), jwtClaims.toString())
           .getSignedJwt();
     } catch (IOException e) {
       throw new SaCredentialsMissingException(
