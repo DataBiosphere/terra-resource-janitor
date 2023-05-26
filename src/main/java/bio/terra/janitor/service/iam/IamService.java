@@ -61,6 +61,8 @@ public class IamService {
     this.iamConfiguration = iamConfiguration;
     this.crlConfiguration = crlConfiguration;
     this.gcpTokenClient = HttpClients.createDefault();
+    // By default, the IamCredentialsClient uses application-default credentials to make calls as
+    // the Janitor service account.
     this.iamCredentialsClient = IamCredentialsClient.create();
   }
 
@@ -116,12 +118,10 @@ public class IamService {
    */
   public String impersonateTestUser(String testUserEmail) {
     requireTestUser(testUserEmail);
-    // By default, the IamCredentialsClient uses application-default credentials to make calls as
-    // the Janitor service account.
     try {
-      String janitorSaEmail = getAdcEmail(gcpTokenClient);
-      // Per documentation, the `-` wildcard character is required; replacing it with a project ID
-      // is invalid.
+      String janitorSaEmail = getAdcEmail();
+      // Per IamCredentialsClient.signJwt() documentation, the `-` wildcard character is required;
+      // replacing it with a real project ID is invalid.
       ServiceAccountName janitorSaName = ServiceAccountName.of("-", janitorSaEmail);
       String signedJwt =
           iamCredentialsClient
@@ -130,7 +130,7 @@ public class IamService {
                   /*delegates=*/ Collections.emptyList(),
                   buildJwtRequestBody(testUserEmail, janitorSaEmail))
               .getSignedJwt();
-      // Google's auth library does not support exchanging a signed JWT for an access token yet,
+      // Google's auth library does not support exchanging a signed JWT for an access token,
       // so this needs to be an explicit POST call to the Google token server.
       URI fullUri =
           new URIBuilder(GoogleOAuthConstants.TOKEN_SERVER_URL)
@@ -156,10 +156,9 @@ public class IamService {
   /**
    * Get the email of the application default credentials. Generally, this should be the Janitor
    * service account. This requires a call to GCP's tokeninfo endpoint, as client libraries only
-   * support introspection for ID tokens.
+   * support introspection for ID tokens, not the credentials generated as ADC.
    */
-  private String getAdcEmail(HttpClient client)
-      throws IOException, GeneralSecurityException, URISyntaxException {
+  private String getAdcEmail() throws IOException, GeneralSecurityException, URISyntaxException {
     GoogleCredentials janitorADC =
         crlConfiguration.getApplicationDefaultCredentials().createScoped("email");
     janitorADC.refreshIfExpired();
@@ -168,7 +167,7 @@ public class IamService {
             .addParameter("access_token", janitorADC.getAccessToken().getTokenValue())
             .build();
     HttpGet tokenInfoRequest = new HttpGet(tokenInfoUri);
-    HttpResponse response = client.execute(tokenInfoRequest);
+    HttpResponse response = gcpTokenClient.execute(tokenInfoRequest);
     return JsonParser.parseString(EntityUtils.toString(response.getEntity()))
         .getAsJsonObject()
         .get("email")
