@@ -55,7 +55,9 @@ public class IamServiceTest extends BaseUnitTest {
     iamService.setGcpTokenClientClient(mockGcpTokenClient);
 
     Mockito.when(
-            mockCredentialsClient.signJwt(eq(ServiceAccountName.of("-", "FAKE_JANITOR_SA_EMAIL")), any(), any()).getSignedJwt())
+            mockCredentialsClient
+                .signJwt(eq(ServiceAccountName.of("-", "FAKE_JANITOR_SA_EMAIL")), any(), any())
+                .getSignedJwt())
         .thenReturn("FAKE_JWT");
     iamService.setIamCredentialsClient(mockCredentialsClient);
   }
