@@ -46,13 +46,13 @@ public class CrlConfiguration {
   @Bean
   @Lazy
   public AIPlatformNotebooksCow notebooksCow() throws IOException, GeneralSecurityException {
-    return AIPlatformNotebooksCow.create(clientConfig, GoogleCredentials.getApplicationDefault());
+    return AIPlatformNotebooksCow.create(clientConfig, getApplicationDefaultCredentials());
   }
 
   @Bean
   @Lazy
   public BigQueryCow bigQueryCow() throws IOException, GeneralSecurityException {
-    return BigQueryCow.create(clientConfig, GoogleCredentials.getApplicationDefault());
+    return BigQueryCow.create(clientConfig, getApplicationDefaultCredentials());
   }
 
   @Bean
@@ -66,7 +66,7 @@ public class CrlConfiguration {
                 Defaults.jsonFactory(),
                 setHttpResourceManagerTimeout(
                     new HttpCredentialsAdapter(
-                        GoogleCredentials.getApplicationDefault()
+                        getApplicationDefaultCredentials()
                             .createScoped(CloudResourceManagerScopes.all()))))
             .setApplicationName(clientConfig.getClientName()));
   }
@@ -75,6 +75,11 @@ public class CrlConfiguration {
   @Lazy
   public StorageCow storageCow() {
     return new StorageCow(clientConfig, StorageOptions.getDefaultInstance());
+  }
+
+  /** Injection point for application-default credentials */
+  public GoogleCredentials getApplicationDefaultCredentials() throws IOException {
+    return GoogleCredentials.getApplicationDefault();
   }
 
   /** Sets longer timeout because ResourceManager operation may take longer than default timeout. */
