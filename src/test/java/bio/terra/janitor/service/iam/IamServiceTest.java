@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import bio.terra.janitor.app.configuration.CrlConfiguration;
 import bio.terra.janitor.app.configuration.IamConfiguration;
@@ -34,14 +36,13 @@ public class IamServiceTest extends BaseUnitTest {
   @MockBean(answer = Answers.RETURNS_DEEP_STUBS)
   CrlConfiguration crlConfiguration;
 
-  HttpClient mockGcpTokenClient = Mockito.mock(HttpClient.class, Mockito.RETURNS_DEEP_STUBS);
+  HttpClient mockGcpTokenClient = mock(HttpClient.class, Mockito.RETURNS_DEEP_STUBS);
   IamCredentialsClient mockCredentialsClient =
       Mockito.mock(IamCredentialsClient.class, Mockito.RETURNS_DEEP_STUBS);
 
   @BeforeEach
   void setup() throws IOException {
-    Mockito.when(
-            crlConfiguration.getApplicationDefaultCredentials().getAccessToken().getTokenValue())
+    when(crlConfiguration.getApplicationDefaultCredentials().getAccessToken().getTokenValue())
         .thenReturn("fakeJanitorSaToken");
 
     // Return a JSON object with both 'access_token' and 'email' fields for all tokenClient calls.
@@ -51,13 +52,12 @@ public class IamServiceTest extends BaseUnitTest {
     fakeResponseJson.addProperty("email", "FAKE_JANITOR_SA_EMAIL");
     String serializedResponse = fakeResponseJson.toString();
     HttpEntity fakeResponse = new StringEntity(serializedResponse, ContentType.APPLICATION_JSON);
-    Mockito.when(mockGcpTokenClient.execute(any()).getEntity()).thenReturn(fakeResponse);
+    when(mockGcpTokenClient.execute(any()).getEntity()).thenReturn(fakeResponse);
     iamService.setGcpTokenClientClient(mockGcpTokenClient);
 
-    Mockito.when(
-            mockCredentialsClient
-                .signJwt(eq(ServiceAccountName.of("-", "FAKE_JANITOR_SA_EMAIL")), any(), any())
-                .getSignedJwt())
+    when(mockCredentialsClient
+            .signJwt(eq(ServiceAccountName.of("-", "FAKE_JANITOR_SA_EMAIL")), any(), any())
+            .getSignedJwt())
         .thenReturn("FAKE_JWT");
     iamService.setIamCredentialsClient(mockCredentialsClient);
   }
