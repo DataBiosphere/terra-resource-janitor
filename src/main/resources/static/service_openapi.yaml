@@ -566,6 +566,25 @@ components:
           description: Name of a batch account
           type: string
 
+    AzureStorageContainer:
+      type: object
+      required:
+        - resourceGroup
+        - id
+        - storageContainerName
+      properties:
+        resourceGroup:
+          $ref: '#/components/schemas/AzureResourceGroup'
+        id:
+          description: Identifier of a storage container
+          type: string
+        storageAccountName:
+          description: Name of storage account containing this storage container
+          type: string
+        storageContainerName:
+          description: Name of a storage container
+          type: string
+
     TerraWorkspaceUid:
       type: object
       required:
@@ -635,6 +654,8 @@ components:
           $ref: '#/components/schemas/TerraWorkspaceUid'
         azureManagedIdentity:
           $ref: '#/components/schemas/AzureManagedIdentity'
+        azureStorageContainer:
+          $ref: '#/components/schemas/AzureStorageContainer'
 
   responses:
     ErrorResponse:
