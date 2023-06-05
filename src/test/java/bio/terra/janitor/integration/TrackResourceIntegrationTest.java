@@ -1031,16 +1031,21 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         createdStorageContainer.name()).name());
 
     // publish and verify cleanup of storage container by Janitor
-    publishAndVerify(new CloudResourceUid().azureStorageContainer(
-        new AzureStorageContainer().storageContainerName(storageContainerName)
-            .storageAccountName(storageAccountName)), ResourceState.DONE);
+    publishAndVerify(
+        new CloudResourceUid()
+            .azureStorageContainer(
+                new AzureStorageContainer()
+                    .storageContainerName(storageContainerName)
+                    .storageAccountName(storageAccountName)
+                    .resourceGroup(testConfiguration.getAzureResourceGroup()))
+        , ResourceState.DONE);
 
     // verify storage container is no longer present in Azure
     ManagementException removeStorageContainer = assertThrows(ManagementException.class, () ->
         storageManager.blobContainers().get(
             testConfiguration.getAzureManagedResourceGroupName(), storageAccountName,
             createdStorageContainer.name()));
-    assertEquals("ResourceNotFound", removeStorageContainer.getValue().getCode());
+    assertEquals("ContainerNotFound", removeStorageContainer.getValue().getCode());
   }
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
