@@ -83,6 +83,7 @@ dependencies {
     implementation group: 'com.google.cloud', name: 'google-cloud-core-http', version: '2.8.0'
     implementation group: 'com.google.cloud', name: 'google-cloud-pubsub', version: '1.120.0'
     implementation group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.9.2'
+    implementation group: 'com.google.cloud', name: 'google-cloud-iamcredentials', version: '2.17.0'
     annotationProcessor group: 'com.google.auto.value', name: 'auto-value', version: '1.9'
 
     // Database
@@ -109,6 +110,8 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test:2.7.11') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+    // Allows us to mock final classes
+    testImplementation 'org.mockito:mockito-inline:2.13.0'
 
     // Transitive dependency constraints due to security vulnerabilities in prior versions.
     // These are not directly included, they are just constrained if they are pulled in as
