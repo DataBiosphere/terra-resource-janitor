@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
@@ -29,6 +30,7 @@ import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
 import bio.terra.janitor.generated.model.AzurePublicIp;
 import bio.terra.janitor.generated.model.AzureRelay;
 import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
+import bio.terra.janitor.generated.model.AzureStorageContainer;
 import bio.terra.janitor.generated.model.AzureVirtualMachine;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.CreateResourceRequestBody;
@@ -64,6 +66,9 @@ import com.azure.resourcemanager.network.models.PublicIpAddress;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.relay.models.HybridConnection;
 import com.azure.resourcemanager.relay.models.RelayNamespace;
+import com.azure.resourcemanager.storage.StorageManager;
+import com.azure.resourcemanager.storage.models.BlobContainer;
+import com.azure.resourcemanager.storage.models.PublicAccess;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -104,15 +109,20 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 @AutoConfigureMockMvc
 public class TrackResourceIntegrationTest extends BaseIntegrationTest {
-  @Autowired private TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
-  @Autowired private TestConfiguration testConfiguration;
-  @Autowired private MockMvc mvc;
+
+  @Autowired
+  private TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
+  @Autowired
+  private TestConfiguration testConfiguration;
+  @Autowired
+  private MockMvc mvc;
 
   @Autowired
   @Qualifier(OBJECT_MAPPER)
   private ObjectMapper objectMapper;
 
-  @Autowired private CrlConfiguration crlConfiguration;
+  @Autowired
+  private CrlConfiguration crlConfiguration;
 
   private Publisher publisher;
 
@@ -125,7 +135,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private RelayManager relayManager;
   private ContainerInstanceManager containerInstanceManager;
   private MsiManager msiManager;
-  @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
+  private StorageManager storageManager;
+  @MockBean
+  private WorkspaceManagerService mockWorkspaceManagerService;
 
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
@@ -181,6 +193,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         crlConfiguration.buildContainerInstance(testConfiguration.getAzureResourceGroup());
 
     msiManager = crlConfiguration.buildMsiManager(testConfiguration.getAzureResourceGroup());
+
+    storageManager = crlConfiguration.buildStorageManager(
+        testConfiguration.getAzureResourceGroup());
   }
 
   @AfterEach
@@ -210,7 +225,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertNull(storageCow.get(blobId));
   }
 
-  /** Try to let Janitor cleanup a Bucket that is already deleted in cloud. */
+  /**
+   * Try to let Janitor cleanup a Bucket that is already deleted in cloud.
+   */
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedBucket() throws Exception {
     // Creates bucket and verify.
@@ -251,7 +268,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     storageCow.delete(bucketName);
   }
 
-  /** Try to let Janitor cleanup a Blob that is already deleted in cloud. */
+  /**
+   * Try to let Janitor cleanup a Blob that is already deleted in cloud.
+   */
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedBlob() throws Exception {
     // Creates Blob and verify.
@@ -514,7 +533,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     // by metadata, we can successfully recognize that the project never existed.
     CreateResourceRequestBody request =
         newExpiredCreateResourceMessage(
-                resource, JanitorDao.currentOffsetDateTime(), /*resourceMetadata=*/ null)
+            resource, JanitorDao.currentOffsetDateTime(), /*resourceMetadata=*/ null)
             .resourceMetadata(
                 new ResourceMetadata()
                     .googleProjectParent(testConfiguration.getParentResourceId()));
@@ -911,7 +930,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("ResourceNotFound", vmDeleted.getValue().getCode());
   }
 
-  /** Clean up a fake WSM workspace. */
+  /**
+   * Clean up a fake WSM workspace.
+   */
   @Test
   public void subscribeAndCleanupResource_terraWorkspace() throws Exception {
     // Cleaning up workspaces relies on domain-wide delegation to impersonate test users. The tools
@@ -932,7 +953,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publishAndVerify(resource, ResourceState.DONE, metadata);
   }
 
-  /** Try to clean up an already deleted workspace, should succeed. */
+  /**
+   * Try to clean up an already deleted workspace, should succeed.
+   */
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedTerraWorkspace() throws Exception {
     UUID fakeWorkspaceId = UUID.randomUUID();
@@ -988,6 +1011,43 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("ResourceNotFound", identityDeleted.getValue().getCode());
   }
 
+  @Test
+  public void subscribeAndCleanupResource_azureStorageContainer() throws Exception {
+    String storageAccountName = "teststgacctdonotdelete";
+    String storageContainerName = randomName();
+
+    // create storage container
+    BlobContainer createdStorageContainer = storageManager
+        .blobContainers()
+        .defineContainer(storageContainerName)
+        .withExistingStorageAccount(
+            testConfiguration.getAzureManagedResourceGroupName(), storageAccountName)
+        .withPublicAccess(PublicAccess.NONE)
+        .create();
+
+    // verify container is created in Azure
+    assertEquals(storageContainerName, storageManager.blobContainers().get(
+        testConfiguration.getAzureManagedResourceGroupName(), storageAccountName,
+        createdStorageContainer.name()).name());
+
+    // publish and verify cleanup of storage container by Janitor
+    publishAndVerify(
+        new CloudResourceUid()
+            .azureStorageContainer(
+                new AzureStorageContainer()
+                    .storageContainerName(storageContainerName)
+                    .storageAccountName(storageAccountName)
+                    .resourceGroup(testConfiguration.getAzureResourceGroup()))
+        , ResourceState.DONE);
+
+    // verify storage container is no longer present in Azure
+    ManagementException removeStorageContainer = assertThrows(ManagementException.class, () ->
+        storageManager.blobContainers().get(
+            testConfiguration.getAzureManagedResourceGroupName(), storageAccountName,
+            createdStorageContainer.name()));
+    assertEquals("ContainerNotFound", removeStorageContainer.getValue().getCode());
+  }
+
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
       throws Exception {
     publishAndVerify(resource, expectedState, null);
@@ -1023,7 +1083,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals(expectedState, trackedResourceInfo.getState());
   }
 
-  /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
+  /**
+   * Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup.
+   */
   private CreateResourceRequestBody newExpiredCreateResourceMessage(
       CloudResourceUid resource, OffsetDateTime now, ResourceMetadata metadata) {
     return new CreateResourceRequestBody()
@@ -1068,7 +1130,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertNull(operation.getOperation().getError());
   }
 
-  /** Creates an {@link Instance} that's ready to be created. */
+  /**
+   * Creates an {@link Instance} that's ready to be created.
+   */
   private static Instance defaultInstance() {
     return new Instance()
         // A VM or Container image is required.
@@ -1078,33 +1142,46 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         .setMachineType("e2-standard-2");
   }
 
-  /** Generates a random name to use for a cloud resource. */
+  /**
+   * Generates a random name to use for a cloud resource.
+   */
   private static String randomName() {
     return UUID.randomUUID().toString();
   }
-  /** Generates a random name to use for a cloud resource. */
+
+  /**
+   * Generates a random name to use for a cloud resource.
+   */
   private static String randomRelayNameSpace() {
     return "a" + randomName().substring(0, 8) + "b";
   }
 
-  /** Generates a random name to and replace '-' with '_'. */
+  /**
+   * Generates a random name to and replace '-' with '_'.
+   */
   private static String randomNameWithUnderscore() {
     return UUID.randomUUID().toString().replace('-', '_');
   }
 
-  /** Generates a random project id start with a letter and 30 characters long. */
+  /**
+   * Generates a random project id start with a letter and 30 characters long.
+   */
   private static String randomProjectId() {
     // Project ids must starting with a letter and be no more than 30 characters long.
     return "p" + randomName().substring(0, 29);
   }
 
-  /** Generates a random notebook instance id. */
+  /**
+   * Generates a random notebook instance id.
+   */
   private static String randomNotebookInstanceId() {
     // Instance ids must start with a letter, be all lower case letters, numbers, and dashses.
     return "n" + randomName().toLowerCase();
   }
 
-  /** Poll from get resource endpoint until it gets resources from Janitor in the expected state. */
+  /**
+   * Poll from get resource endpoint until it gets resources from Janitor in the expected state.
+   */
   private TrackedResourceInfoList pollUntilResourceState(
       CloudResourceUid resource, ResourceState expectedState, Duration period, int maxNumPolls)
       throws Exception {

@@ -89,6 +89,11 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   }
 
   @Override
+  public ResourceType visit(AzureStorageContainer resource) {
+    return AZURE_STORAGE_CONTAINER;
+  }
+
+  @Override
   public ResourceType noResourceVisited(CloudResourceUid resource) {
     throw new InvalidResourceUidException("invalid CloudResourceUid for" + resource);
   }

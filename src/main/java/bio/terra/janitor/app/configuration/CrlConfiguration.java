@@ -15,6 +15,7 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.containerinstance.ContainerInstanceManager;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.relay.RelayManager;
+import com.azure.resourcemanager.storage.StorageManager;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.cloudresourcemanager.v3.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.v3.CloudResourceManagerScopes;
@@ -120,6 +121,13 @@ public class CrlConfiguration {
   public MsiManager buildMsiManager(AzureResourceGroup resourceGroup) {
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
             clientConfig, MsiManager.configure())
+        .authenticate(getAzureCredential(), getAzureProfile(resourceGroup));
+  }
+
+  /** Creates an Azure {@link StorageManager} client for a given managed resource group. */
+  public StorageManager buildStorageManager(AzureResourceGroup resourceGroup) {
+    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+            clientConfig, StorageManager.configure())
         .authenticate(getAzureCredential(), getAzureProfile(resourceGroup));
   }
 
