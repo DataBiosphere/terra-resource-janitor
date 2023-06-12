@@ -571,6 +571,7 @@ components:
       required:
         - resourceGroup
         - id
+        - storageAccountName
         - storageContainerName
       properties:
         resourceGroup:
