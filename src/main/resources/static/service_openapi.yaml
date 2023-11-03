@@ -499,10 +499,14 @@ components:
       type: object
       required:
         - resourceGroup
+        - serverName
         - databaseName
       properties:
         resourceGroup:
           $ref: '#/components/schemas/AzureResourceGroup'
+        serverName:
+          description: Name of the Postgres server
+          type: string
         databaseName:
           description: Name of the database
           type: string
