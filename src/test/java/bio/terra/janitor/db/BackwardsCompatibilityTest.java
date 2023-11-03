@@ -34,7 +34,9 @@ public class BackwardsCompatibilityTest extends BaseUnitTest {
         ResourceType.AZURE_RELAY_CONNECTION, ResourceType.valueOf("AZURE_RELAY_CONNECTION"));
     assertEquals(ResourceType.TERRA_WORKSPACE, ResourceType.valueOf("TERRA_WORKSPACE"));
     assertEquals(ResourceType.AZURE_DATABASE, ResourceType.valueOf("AZURE_DATABASE"));
-    assertEquals(ResourceType.AZURE_KUBERNETES_NAMESPACE, ResourceType.valueOf("AZURE_KUBERNETES_NAMESPACE"));
+    assertEquals(
+        ResourceType.AZURE_KUBERNETES_NAMESPACE,
+        ResourceType.valueOf("AZURE_KUBERNETES_NAMESPACE"));
   }
 
   /**
