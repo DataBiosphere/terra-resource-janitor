@@ -98,6 +98,9 @@ dependencies {
     // hk2 is required to use WSM client, but not correctly exposed by the client
     implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jerseyVersion
 
+    // Kubernetes client
+    implementation group: "io.kubernetes", name: "client-java", version: "18.0.0"
+
     // Metrics & Tracing
     implementation group: 'io.opencensus', name: 'opencensus-exporter-stats-stackdriver', version: '0.31.1'
 
