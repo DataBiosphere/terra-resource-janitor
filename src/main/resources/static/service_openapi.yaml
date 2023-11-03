@@ -517,14 +517,15 @@ components:
         - resourceGroup
         - clusterName
         - namespaceName
-      resourceGroup:
-        $ref: '#/components/schemas/AzureResourceGroup'
-      clusterName:
-        description: Name of the AKS cluster
-        type: string
-      namespaceName:
-        description: Namespace name
-        type: string
+      properties:
+        resourceGroup:
+          $ref: '#/components/schemas/AzureResourceGroup'
+        clusterName:
+          description: Name of the AKS cluster
+          type: string
+        namespaceName:
+          description: Namespace name
+          type: string
 
     # A cloud resource unique identifier. Each CloudResourceUid represents exactly one cloud resource.
     # We are not doing polymorphism at this moment because of lack of support in swagger-codegen or openApiGenerator
