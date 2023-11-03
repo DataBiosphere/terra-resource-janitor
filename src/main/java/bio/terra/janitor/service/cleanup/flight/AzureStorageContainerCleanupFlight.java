@@ -21,5 +21,4 @@ public class AzureStorageContainerCleanupFlight extends Flight {
     addStep(new AzureStorageContainerCleanupStep(crlConfiguration, janitorDao), retryRule);
     addStep(new FinalCleanupStep(janitorDao));
   }
-
 }

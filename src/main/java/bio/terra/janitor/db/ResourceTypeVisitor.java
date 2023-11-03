@@ -39,21 +39,6 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   }
 
   @Override
-  public ResourceType visit(AzurePublicIp resource) {
-    return AZURE_PUBLIC_IP;
-  }
-
-  @Override
-  public ResourceType visit(AzureNetworkSecurityGroup resource) {
-    return AZURE_NETWORK_SECURITY_GROUP;
-  }
-
-  @Override
-  public ResourceType visit(AzureNetwork resource) {
-    return AZURE_NETWORK;
-  }
-
-  @Override
   public ResourceType visit(AzureDisk resource) {
     return AZURE_DISK;
   }
@@ -64,18 +49,8 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   }
 
   @Override
-  public ResourceType visit(AzureRelay resource) {
-    return AZURE_RELAY;
-  }
-
-  @Override
   public ResourceType visit(AzureRelayHybridConnection resource) {
     return AZURE_RELAY_CONNECTION;
-  }
-
-  @Override
-  public ResourceType visit(AzureContainerInstance resource) {
-    return AZURE_CONTAINER_INSTANCE;
   }
 
   @Override
@@ -91,6 +66,16 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   @Override
   public ResourceType visit(AzureStorageContainer resource) {
     return AZURE_STORAGE_CONTAINER;
+  }
+
+  @Override
+  public ResourceType visit(AzureDatabase resource) {
+    return AZURE_DATABASE;
+  }
+
+  @Override
+  public ResourceType visit(AzureKubernetesNamespace resource) {
+    return AZURE_KUBERNETES_NAMESPACE;
   }
 
   @Override
