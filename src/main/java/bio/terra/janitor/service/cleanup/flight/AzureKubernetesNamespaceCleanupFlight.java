@@ -15,11 +15,16 @@ public class AzureKubernetesNamespaceCleanupFlight extends Flight {
     ApplicationContext appContext = (ApplicationContext) applicationContext;
     JanitorDao janitorDao = appContext.getBean(JanitorDao.class);
     CrlConfiguration crlConfiguration = appContext.getBean(CrlConfiguration.class);
+    KubernetesClientProvider kubernetesClientProvider =
+        appContext.getBean(KubernetesClientProvider.class);
     RetryRuleFixedInterval retryRule =
         new RetryRuleFixedInterval(/* intervalSeconds =*/ 180, /* maxCount =*/ 5);
 
     addStep(new InitialCleanupStep(janitorDao));
-    addStep(new AzureKubernetesNamespaceCleanupStep(crlConfiguration, janitorDao), retryRule);
+    addStep(
+        new AzureKubernetesNamespaceCleanupStep(
+            crlConfiguration, janitorDao, kubernetesClientProvider),
+        retryRule);
     addStep(new FinalCleanupStep(janitorDao));
   }
 }
