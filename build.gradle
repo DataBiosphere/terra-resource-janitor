@@ -99,7 +99,7 @@ dependencies {
     implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jerseyVersion
 
     // Kubernetes client
-    implementation group: "io.kubernetes", name: "client-java", version: "18.0.0"
+    implementation group: 'io.kubernetes', name: 'client-java', version: '18.0.0'
 
     // Metrics & Tracing
     implementation group: 'io.opencensus', name: 'opencensus-exporter-stats-stackdriver', version: '0.31.1'
@@ -121,7 +121,11 @@ dependencies {
     // transitive dependencies.
     constraints {
         implementation('com.google.protobuf:protobuf-java:3.21.10')
-        implementation('org.yaml:snakeyaml:1.33')
+        implementation('org.yaml:snakeyaml') {
+            version {
+                strictly '1.33'
+            }
+        }
         implementation('io.projectreactor.netty:reactor-netty-http:1.0.24')
         implementation('com.fasterxml.jackson:jackson-bom:2.14.2')
         implementation('org.bouncycastle:bcpkix-jdk15on:1.70')
