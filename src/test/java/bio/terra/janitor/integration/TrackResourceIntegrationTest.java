@@ -21,6 +21,7 @@ import bio.terra.janitor.app.configuration.CrlConfiguration;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.generated.model.AzureDatabase;
 import bio.terra.janitor.generated.model.AzureDisk;
 import bio.terra.janitor.generated.model.AzureManagedIdentity;
 import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
@@ -53,6 +54,8 @@ import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.models.Identity;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
+import com.azure.resourcemanager.postgresqlflexibleserver.PostgreSqlManager;
+import com.azure.resourcemanager.postgresqlflexibleserver.models.Database;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.relay.models.HybridConnection;
 import com.azure.resourcemanager.storage.StorageManager;
@@ -120,6 +123,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private RelayManager relayManager;
   private MsiManager msiManager;
   private StorageManager storageManager;
+  private PostgreSqlManager postgreSqlManager;
   @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
 
   private static final Map<String, String> DEFAULT_LABELS =
@@ -177,7 +181,8 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     storageManager =
         crlConfiguration.buildStorageManager(testConfiguration.getAzureResourceGroup());
 
-    // TODO: test DB and namespace
+    postgreSqlManager =
+        crlConfiguration.buildPostgreSqlManager(testConfiguration.getAzureResourceGroup());
   }
 
   @AfterEach
@@ -817,7 +822,56 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("ContainerNotFound", removeStorageContainer.getValue().getCode());
   }
 
-  // TODO add test cases for database, k8s namespace in the next PR
+  @Test
+  public void subscribeAndCleanupResource_azureDatabase() throws Exception {
+    String databaseName = "testdb" + System.currentTimeMillis();
+
+    // create postgres database
+    Database createdDatabase =
+        postgreSqlManager
+            .databases()
+            .define(databaseName)
+            .withExistingFlexibleServer(
+                testConfiguration.getAzureManagedResourceGroupName(),
+                testConfiguration.getAzurePostgresServerName())
+            .create();
+
+    // verify database is created in Azure
+    assertEquals(
+        databaseName,
+        postgreSqlManager
+            .databases()
+            .get(
+                testConfiguration.getAzureManagedResourceGroupName(),
+                testConfiguration.getAzurePostgresServerName(),
+                createdDatabase.name())
+            .name());
+
+    // publish and verify cleanup of the database by Janitor
+    publishAndVerify(
+        new CloudResourceUid()
+            .azureDatabase(
+                new AzureDatabase()
+                    .databaseName(databaseName)
+                    .serverName(testConfiguration.getAzurePostgresServerName())
+                    .resourceGroup(testConfiguration.getAzureResourceGroup())),
+        ResourceState.DONE);
+
+    // verify database is no longer present in Azure
+    ManagementException removeDatabase =
+        assertThrows(
+            ManagementException.class,
+            () ->
+                postgreSqlManager
+                    .databases()
+                    .get(
+                        testConfiguration.getAzureManagedResourceGroupName(),
+                        testConfiguration.getAzurePostgresServerName(),
+                        createdDatabase.name()));
+    assertEquals("ResourceNotFound", removeDatabase.getValue().getCode());
+  }
+
+  // TODO add test case k8s namespace
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
       throws Exception {
