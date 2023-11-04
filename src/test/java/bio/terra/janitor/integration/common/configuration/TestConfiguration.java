@@ -64,6 +64,9 @@ public class TestConfiguration {
   /** Name of the static Azure vnet. */
   private String azureVnetName;
 
+  /** Name of the static AKS cluster. */
+  private String aksClusterName;
+
   public String getTrackResourceTopicId() {
     return trackResourceTopicId;
   }
@@ -170,6 +173,14 @@ public class TestConfiguration {
 
   public void setAzureVnetName(String azureVnetName) {
     this.azureVnetName = azureVnetName;
+  }
+
+  public String getAksClusterName() {
+    return aksClusterName;
+  }
+
+  public void setAksClusterName(String aksClusterName) {
+    this.aksClusterName = aksClusterName;
   }
 
   /**

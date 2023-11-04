@@ -23,6 +23,7 @@ import bio.terra.janitor.common.BaseIntegrationTest;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.generated.model.AzureDatabase;
 import bio.terra.janitor.generated.model.AzureDisk;
+import bio.terra.janitor.generated.model.AzureKubernetesNamespace;
 import bio.terra.janitor.generated.model.AzureManagedIdentity;
 import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
 import bio.terra.janitor.generated.model.AzureStorageContainer;
@@ -41,6 +42,7 @@ import bio.terra.janitor.generated.model.TerraWorkspaceUid;
 import bio.terra.janitor.generated.model.TrackedResourceInfo;
 import bio.terra.janitor.generated.model.TrackedResourceInfoList;
 import bio.terra.janitor.integration.common.configuration.TestConfiguration;
+import bio.terra.janitor.service.cleanup.flight.KubernetesClientProvider;
 import bio.terra.janitor.service.workspace.WorkspaceManagerService;
 import bio.terra.workspace.client.ApiException;
 import com.azure.core.management.Region;
@@ -81,6 +83,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1Namespace;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -111,6 +116,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private ObjectMapper objectMapper;
 
   @Autowired private CrlConfiguration crlConfiguration;
+  @Autowired private KubernetesClientProvider kubernetesClientProvider;
 
   private Publisher publisher;
 
@@ -824,7 +830,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   public void subscribeAndCleanupResource_azureDatabase() throws Exception {
-    String databaseName = "testdb" + System.currentTimeMillis();
+    String databaseName = "janitortest" + System.currentTimeMillis();
 
     // create postgres database
     Database createdDatabase =
@@ -871,7 +877,43 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("ResourceNotFound", removeDatabase.getValue().getCode());
   }
 
-  // TODO add test case k8s namespace
+  @Test
+  public void subscribeAndCleanupResource_azureKubernetesNamespace() throws Exception {
+    String namespaceName = randomName();
+
+    // create kubernetes namespace
+    CoreV1Api coreApiClient =
+        kubernetesClientProvider.createCoreApiClient(
+            testConfiguration.getAzureResourceGroup(), testConfiguration.getAksClusterName());
+    V1Namespace createdNamespace =
+        coreApiClient.createNamespace(
+            new V1Namespace().metadata(new V1ObjectMeta().name(namespaceName)),
+            null,
+            null,
+            null,
+            null);
+
+    // verify namespace is created
+    assertEquals(
+        namespaceName, coreApiClient.readNamespace(namespaceName, null).getMetadata().getName());
+
+    // publish and verify cleanup of the namespace by Janitor
+    publishAndVerify(
+        new CloudResourceUid()
+            .azureKubernetesNamespace(
+                new AzureKubernetesNamespace()
+                    .namespaceName(namespaceName)
+                    .clusterName(testConfiguration.getAksClusterName())
+                    .resourceGroup(testConfiguration.getAzureResourceGroup())),
+        ResourceState.DONE);
+
+    // verify namespace is no longer present in Azure
+    io.kubernetes.client.openapi.ApiException removeNamespace =
+        assertThrows(
+            io.kubernetes.client.openapi.ApiException.class,
+            () -> coreApiClient.readNamespace(namespaceName, null));
+    assertEquals(404, removeNamespace.getCode());
+  }
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
       throws Exception {
