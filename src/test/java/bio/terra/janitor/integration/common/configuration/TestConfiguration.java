@@ -52,6 +52,18 @@ public class TestConfiguration {
   /** Name of the Azure managed resource group to create resources within. */
   private String azureManagedResourceGroupName;
 
+  /** Name of the static Azure storage account. */
+  private String azureStorageAccountName;
+
+  /** Name of the static Azure Relay namespace. */
+  private String azureRelayNamespace;
+
+  /** Name of the status Azure postgres flex server. */
+  private String azurePostgresServerName;
+
+  /** Name of the static Azure vnet. */
+  private String azureVnetName;
+
   public String getTrackResourceTopicId() {
     return trackResourceTopicId;
   }
@@ -126,6 +138,38 @@ public class TestConfiguration {
 
   public void setAzureManagedResourceGroupName(String azureManagedResourceGroupName) {
     this.azureManagedResourceGroupName = azureManagedResourceGroupName;
+  }
+
+  public String getAzureStorageAccountName() {
+    return azureStorageAccountName;
+  }
+
+  public void setAzureStorageAccountName(String azureStorageAccountName) {
+    this.azureStorageAccountName = azureStorageAccountName;
+  }
+
+  public String getAzureRelayNamespace() {
+    return azureRelayNamespace;
+  }
+
+  public void setAzureRelayNamespace(String azureRelayNamespace) {
+    this.azureRelayNamespace = azureRelayNamespace;
+  }
+
+  public String getAzurePostgresServerName() {
+    return azurePostgresServerName;
+  }
+
+  public void setAzurePostgresServerName(String azurePostgresServerName) {
+    this.azurePostgresServerName = azurePostgresServerName;
+  }
+
+  public String getAzureVnetName() {
+    return azureVnetName;
+  }
+
+  public void setAzureVnetName(String azureVnetName) {
+    this.azureVnetName = azureVnetName;
   }
 
   /**

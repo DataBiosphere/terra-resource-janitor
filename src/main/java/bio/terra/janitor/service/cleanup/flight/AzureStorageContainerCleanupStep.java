@@ -9,13 +9,12 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import com.azure.resourcemanager.storage.StorageManager;
 
-
 public class AzureStorageContainerCleanupStep extends ResourceCleanupStep {
 
   private final CrlConfiguration crlConfiguration;
 
-  public AzureStorageContainerCleanupStep(CrlConfiguration crlConfiguration,
-      JanitorDao janitorDao) {
+  public AzureStorageContainerCleanupStep(
+      CrlConfiguration crlConfiguration, JanitorDao janitorDao) {
     super(janitorDao);
     this.crlConfiguration = crlConfiguration;
   }
@@ -24,8 +23,8 @@ public class AzureStorageContainerCleanupStep extends ResourceCleanupStep {
   protected StepResult cleanUp(CloudResourceUid resourceUid, ResourceMetadata metadata)
       throws InterruptedException, RetryException {
     AzureStorageContainer storageContainer = resourceUid.getAzureStorageContainer();
-    StorageManager storageManager = crlConfiguration.buildStorageManager(
-        storageContainer.getResourceGroup());
+    StorageManager storageManager =
+        crlConfiguration.buildStorageManager(storageContainer.getResourceGroup());
 
     return AzureUtils.ignoreNotFound(
         () ->

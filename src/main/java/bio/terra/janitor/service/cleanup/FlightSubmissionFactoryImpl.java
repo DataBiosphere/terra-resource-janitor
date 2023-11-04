@@ -30,22 +30,12 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
         return FlightSubmission.create(GoogleAiNotebookInstanceCleanupFlight.class, flightMap);
       case GOOGLE_PROJECT:
         return FlightSubmission.create(GoogleProjectCleanupFlight.class, flightMap);
-      case AZURE_PUBLIC_IP:
-        return FlightSubmission.create(AzurePublicIpCleanupFlight.class, flightMap);
-      case AZURE_NETWORK_SECURITY_GROUP:
-        return FlightSubmission.create(AzureNetworkSecurityGroupCleanupFlight.class, flightMap);
-      case AZURE_NETWORK:
-        return FlightSubmission.create(AzureNetworkCleanupFlight.class, flightMap);
       case AZURE_DISK:
         return FlightSubmission.create(AzureDiskCleanupFlight.class, flightMap);
       case AZURE_VIRTUAL_MACHINE:
         return FlightSubmission.create(AzureVirtualMachineCleanupFlight.class, flightMap);
-      case AZURE_RELAY:
-        return FlightSubmission.create(AzureRelayCleanupFlight.class, flightMap);
       case AZURE_RELAY_CONNECTION:
         return FlightSubmission.create(AzureRelayHybridConnectionCleanupFlight.class, flightMap);
-      case AZURE_CONTAINER_INSTANCE:
-        return FlightSubmission.create(AzureContainerInstanceCleanupFlight.class, flightMap);
       case TERRA_WORKSPACE:
         return FlightSubmission.create(TerraWorkspaceCleanupFlight.class, flightMap);
       case AZURE_MANAGED_IDENTITY:

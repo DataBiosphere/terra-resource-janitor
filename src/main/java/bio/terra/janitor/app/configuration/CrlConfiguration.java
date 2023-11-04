@@ -12,7 +12,6 @@ import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.compute.ComputeManager;
-import com.azure.resourcemanager.containerinstance.ContainerInstanceManager;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.storage.StorageManager;
@@ -105,15 +104,6 @@ public class CrlConfiguration {
   public RelayManager buildRelayManager(AzureResourceGroup resourceGroup) {
     return bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
             clientConfig, RelayManager.configure())
-        .authenticate(getAzureCredential(), getAzureProfile(resourceGroup));
-  }
-
-  /**
-   * Creates an Azure {@link ContainerInstanceManager} client for a given managed resource group.
-   */
-  public ContainerInstanceManager buildContainerInstance(AzureResourceGroup resourceGroup) {
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, ContainerInstanceManager.configure())
         .authenticate(getAzureCredential(), getAzureProfile(resourceGroup));
   }
 
