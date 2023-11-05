@@ -46,6 +46,8 @@ public class AzureDiskCleanupStep extends ResourceCleanupStep {
                 .networkInterfaceIds()
                 .forEach(
                     nic -> computeManager.networkManager().networkInterfaces().deleteById(nic));
+            // Delete the OS disk
+            computeManager.disks().deleteById(resolvedVm.osDiskId());
           }
 
           // Delete the disk
