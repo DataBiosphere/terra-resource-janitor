@@ -40,7 +40,7 @@ public class AzureDiskCleanupStep extends ResourceCleanupStep {
             VirtualMachine resolvedVm =
                 computeManager.virtualMachines().getById(resolvedDisk.virtualMachineId());
             // Delete the VM
-            computeManager.virtualMachines().deleteById(resolvedVm.vmId());
+            computeManager.virtualMachines().deleteById(resolvedVm.id());
             // Delete the NICs
             resolvedVm
                 .networkInterfaceIds()
