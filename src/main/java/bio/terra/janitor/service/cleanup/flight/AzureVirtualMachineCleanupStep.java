@@ -47,6 +47,10 @@ public class AzureVirtualMachineCleanupStep extends ResourceCleanupStep {
 
           // Delete the OS disk
           computeManager.disks().deleteById(resolvedVm.osDiskId());
+
+          // Delete the user disks
+          resolvedVm.dataDisks().values().stream()
+              .forEach(disk -> computeManager.disks().deleteById(disk.id()));
         });
   }
 }

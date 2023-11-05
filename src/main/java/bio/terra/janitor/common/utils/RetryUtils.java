@@ -9,7 +9,10 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** RetryUtils provides static methods for waiting and retrying. */
+/**
+ * RetryUtils provides static methods for waiting and retrying. Borrowed from Workspace Manager:
+ * https://github.com/DataBiosphere/terra-workspace-manager/blob/main/integration/src/main/java/scripts/utils/RetryUtils.java
+ */
 public class RetryUtils {
   // Retry duration defaults - defaults are set for IAM propagation
   public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(30);

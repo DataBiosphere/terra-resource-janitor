@@ -61,11 +61,9 @@ public class KubernetesClientProvider {
             .stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("No kubeconfig found"));
-    var kubeConfig =
-        KubeConfig.loadKubeConfig(
-            new InputStreamReader(
-                new ByteArrayInputStream(rawKubeConfig.value()), StandardCharsets.UTF_8));
-    return kubeConfig;
+    return KubeConfig.loadKubeConfig(
+        new InputStreamReader(
+            new ByteArrayInputStream(rawKubeConfig.value()), StandardCharsets.UTF_8));
   }
 
   public Optional<RuntimeException> convertApiException(
