@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
@@ -22,13 +21,8 @@ import bio.terra.janitor.app.configuration.CrlConfiguration;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
 import bio.terra.janitor.db.JanitorDao;
-import bio.terra.janitor.generated.model.AzureContainerInstance;
 import bio.terra.janitor.generated.model.AzureDisk;
 import bio.terra.janitor.generated.model.AzureManagedIdentity;
-import bio.terra.janitor.generated.model.AzureNetwork;
-import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
-import bio.terra.janitor.generated.model.AzurePublicIp;
-import bio.terra.janitor.generated.model.AzureRelay;
 import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
 import bio.terra.janitor.generated.model.AzureStorageContainer;
 import bio.terra.janitor.generated.model.AzureVirtualMachine;
@@ -55,17 +49,12 @@ import com.azure.resourcemanager.compute.models.Disk;
 import com.azure.resourcemanager.compute.models.KnownLinuxVirtualMachineImage;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
-import com.azure.resourcemanager.containerinstance.ContainerInstanceManager;
-import com.azure.resourcemanager.containerinstance.models.ContainerGroup;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.models.Identity;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkInterface;
-import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
-import com.azure.resourcemanager.network.models.PublicIpAddress;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.relay.models.HybridConnection;
-import com.azure.resourcemanager.relay.models.RelayNamespace;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.BlobContainer;
 import com.azure.resourcemanager.storage.models.PublicAccess;
@@ -110,19 +99,15 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 @AutoConfigureMockMvc
 public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
-  @Autowired
-  private TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
-  @Autowired
-  private TestConfiguration testConfiguration;
-  @Autowired
-  private MockMvc mvc;
+  @Autowired private TrackResourcePubsubConfiguration trackResourcePubsubConfiguration;
+  @Autowired private TestConfiguration testConfiguration;
+  @Autowired private MockMvc mvc;
 
   @Autowired
   @Qualifier(OBJECT_MAPPER)
   private ObjectMapper objectMapper;
 
-  @Autowired
-  private CrlConfiguration crlConfiguration;
+  @Autowired private CrlConfiguration crlConfiguration;
 
   private Publisher publisher;
 
@@ -133,11 +118,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private String projectId;
   private ComputeManager computeManager;
   private RelayManager relayManager;
-  private ContainerInstanceManager containerInstanceManager;
   private MsiManager msiManager;
   private StorageManager storageManager;
-  @MockBean
-  private WorkspaceManagerService mockWorkspaceManagerService;
+  @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
 
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
@@ -189,13 +172,12 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
     relayManager = crlConfiguration.buildRelayManager(testConfiguration.getAzureResourceGroup());
 
-    containerInstanceManager =
-        crlConfiguration.buildContainerInstance(testConfiguration.getAzureResourceGroup());
-
     msiManager = crlConfiguration.buildMsiManager(testConfiguration.getAzureResourceGroup());
 
-    storageManager = crlConfiguration.buildStorageManager(
-        testConfiguration.getAzureResourceGroup());
+    storageManager =
+        crlConfiguration.buildStorageManager(testConfiguration.getAzureResourceGroup());
+
+    // TODO: test DB and namespace
   }
 
   @AfterEach
@@ -225,9 +207,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertNull(storageCow.get(blobId));
   }
 
-  /**
-   * Try to let Janitor cleanup a Bucket that is already deleted in cloud.
-   */
+  /** Try to let Janitor cleanup a Bucket that is already deleted in cloud. */
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedBucket() throws Exception {
     // Creates bucket and verify.
@@ -268,9 +248,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     storageCow.delete(bucketName);
   }
 
-  /**
-   * Try to let Janitor cleanup a Blob that is already deleted in cloud.
-   */
+  /** Try to let Janitor cleanup a Blob that is already deleted in cloud. */
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedBlob() throws Exception {
     // Creates Blob and verify.
@@ -533,7 +511,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     // by metadata, we can successfully recognize that the project never existed.
     CreateResourceRequestBody request =
         newExpiredCreateResourceMessage(
-            resource, JanitorDao.currentOffsetDateTime(), /*resourceMetadata=*/ null)
+                resource, JanitorDao.currentOffsetDateTime(), /*resourceMetadata=*/ null)
             .resourceMetadata(
                 new ResourceMetadata()
                     .googleProjectParent(testConfiguration.getParentResourceId()));
@@ -554,230 +532,37 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
-  public void subscribeAndCleanupResource_azurePublicIp() throws Exception {
-    // Creates IP
-    String ipName = randomNameWithUnderscore();
-    PublicIpAddress createdIp =
-        computeManager
-            .networkManager()
-            .publicIpAddresses()
-            .define(ipName)
-            .withRegion(Region.US_EAST)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withDynamicIP()
-            .withTag("janitor.integration.test", "true")
-            .create();
-
-    // Verify resources are created in Azure
-    assertEquals(
-        ipName, computeManager.networkManager().publicIpAddresses().getById(createdIp.id()).name());
-
-    CloudResourceUid ipUid =
-        new CloudResourceUid()
-            .azurePublicIp(
-                new AzurePublicIp()
-                    .ipName(ipName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
-
-    // Publish a message to cleanup the IP.
-    publishAndVerify(ipUid, ResourceState.DONE);
-
-    // Resource is removed
-    ManagementException ipDeleted =
-        assertThrows(
-            ManagementException.class,
-            () -> computeManager.networkManager().publicIpAddresses().getById(createdIp.id()));
-    assertEquals("ResourceNotFound", ipDeleted.getValue().getCode());
-  }
-
-  @Test
-  public void subscribeAndCleanupResource_azureRelayAndHybridConnections() throws Exception {
-    // Creates IP
-    String relayName = randomRelayNameSpace();
-    RelayNamespace createdNameSpace =
-        relayManager
-            .namespaces()
-            .define(relayName)
-            .withRegion(Region.US_EAST)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .create();
-
-    // Verify resources are created in Azure
-    assertEquals(relayName, relayManager.namespaces().getById(createdNameSpace.id()).name());
-
+  public void subscribeAndCleanupResource_azureRelayHybridConnections() throws Exception {
     String hybridConnectionName = randomNameWithUnderscore();
     HybridConnection createdHc =
         relayManager
             .hybridConnections()
             .define(hybridConnectionName)
-            .withExistingNamespace(testConfiguration.getAzureManagedResourceGroupName(), relayName)
+            .withExistingNamespace(
+                testConfiguration.getAzureManagedResourceGroupName(),
+                testConfiguration.getAzureRelayNamespace())
             .create();
 
     assertEquals(
         hybridConnectionName, relayManager.hybridConnections().getById(createdHc.id()).name());
-
-    CloudResourceUid relayUid =
-        new CloudResourceUid()
-            .azureRelay(
-                new AzureRelay()
-                    .relayName(relayName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
 
     CloudResourceUid hcUid =
         new CloudResourceUid()
             .azureRelayHybridConnection(
                 new AzureRelayHybridConnection()
                     .hybridConnectionName(hybridConnectionName)
-                    .namespace(relayName)
+                    .namespace(testConfiguration.getAzureRelayNamespace())
                     .resourceGroup(testConfiguration.getAzureResourceGroup()));
 
-    // Publish a message to cleanup the IP.
+    // Publish a message to cleanup the hybrid connection.
     publishAndVerify(hcUid, ResourceState.DONE);
+
     // Resource is removed
     ManagementException removeHc =
         assertThrows(
             ManagementException.class,
             () -> relayManager.hybridConnections().getById(createdHc.id()));
     assertEquals("EntityNotFound", removeHc.getValue().getCode());
-
-    // Publish a message to cleanup the IP.
-    publishAndVerify(relayUid, ResourceState.DONE);
-
-    // Resource is removed
-    ManagementException removeRelay =
-        assertThrows(
-            ManagementException.class,
-            () -> relayManager.namespaces().getById(createdNameSpace.id()));
-    assertEquals("NotFound", removeRelay.getValue().getCode());
-  }
-
-  @Test
-  public void subscribeAndCleanupResource_azureContainerInstance() throws Exception {
-    String containerGroupName = randomName();
-    // create container group
-    ContainerGroup createdContainerInstance =
-        containerInstanceManager
-            .containerGroups()
-            .define(containerGroupName)
-            .withRegion(Region.US_EAST)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withLinux()
-            .withPublicImageRegistryOnly()
-            .withoutVolume()
-            .defineContainerInstance("test-container-instance")
-            .withImage("busybox")
-            .withoutPorts()
-            .attach()
-            .create();
-
-    // Verify resources are created in Azure
-    assertEquals(
-        containerGroupName,
-        containerInstanceManager.containerGroups().getById(createdContainerInstance.id()).name());
-
-    CloudResourceUid containerGroupUid =
-        new CloudResourceUid()
-            .azureContainerInstance(
-                new AzureContainerInstance()
-                    .containerGroupName(containerGroupName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
-
-    // publish and verify to clean up the container group
-    publishAndVerify(containerGroupUid, ResourceState.DONE);
-
-    // Resource is removed
-    ManagementException removeContainerGroup =
-        assertThrows(
-            ManagementException.class,
-            () ->
-                containerInstanceManager.containerGroups().getById(createdContainerInstance.id()));
-    assertEquals("ResourceNotFound", removeContainerGroup.getValue().getCode());
-  }
-
-  @Test
-  public void subscribeAndCleanupResource_azureNetworkSecurityGroup() throws Exception {
-    // Creates network security group
-    String networkSgName = randomNameWithUnderscore();
-    NetworkSecurityGroup createdNetworkSg =
-        computeManager
-            .networkManager()
-            .networkSecurityGroups()
-            .define(networkSgName)
-            .withRegion(Region.US_EAST)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withTag("janitor.integration.test", "true")
-            .create();
-
-    // Verify resources are created in Azure
-    assertEquals(
-        networkSgName,
-        computeManager
-            .networkManager()
-            .networkSecurityGroups()
-            .getById(createdNetworkSg.id())
-            .name());
-
-    CloudResourceUid networkSgUid =
-        new CloudResourceUid()
-            .azureNetworkSecurityGroup(
-                new AzureNetworkSecurityGroup()
-                    .networkSecurityGroupName(networkSgName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
-
-    // Publish a message to cleanup the network security group.
-    publishAndVerify(networkSgUid, ResourceState.DONE);
-
-    // Resource is removed
-    ManagementException networkSgDeleted =
-        assertThrows(
-            ManagementException.class,
-            () ->
-                computeManager
-                    .networkManager()
-                    .networkSecurityGroups()
-                    .getById(createdNetworkSg.id()));
-    assertEquals("ResourceNotFound", networkSgDeleted.getValue().getCode());
-  }
-
-  @Test
-  public void subscribeAndCleanupResource_azureNetwork() throws Exception {
-    // Creates network
-    String networkName = randomNameWithUnderscore();
-    Network createdNetwork =
-        computeManager
-            .networkManager()
-            .networks()
-            .define(networkName)
-            .withRegion(Region.US_EAST)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withTag("janitor.integration.test", "true")
-            .withAddressSpace("10.0.0.0/16")
-            .defineSubnet("mysubnet")
-            .withAddressPrefix("10.0.0.0/24")
-            .attach()
-            .create();
-
-    // Verify resources are created in Azure
-    assertEquals(
-        networkName,
-        computeManager.networkManager().networks().getById(createdNetwork.id()).name());
-
-    CloudResourceUid networkUid =
-        new CloudResourceUid()
-            .azureNetwork(
-                new AzureNetwork()
-                    .networkName(networkName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
-
-    // Publish a message to cleanup the network.
-    publishAndVerify(networkUid, ResourceState.DONE);
-
-    // Resource is removed
-    ManagementException networkDeleted =
-        assertThrows(
-            ManagementException.class,
-            () -> computeManager.networkManager().networks().getById(createdNetwork.id()));
-    assertEquals("ResourceNotFound", networkDeleted.getValue().getCode());
   }
 
   @Test
@@ -788,7 +573,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         computeManager
             .disks()
             .define(diskName)
-            .withRegion(Region.US_EAST)
+            .withRegion(Region.US_SOUTH_CENTRAL)
             .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
             .withData()
             .withSizeInGB(500)
@@ -817,46 +602,39 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   public void subscribeAndCleanupResource_azureVirtualMachine() throws Exception {
-    // Creates network
-    String networkName = randomNameWithUnderscore();
-    String subnetName = randomNameWithUnderscore();
-    Network createdNetwork =
-        computeManager
-            .networkManager()
-            .networks()
-            .define(networkName)
-            .withRegion(Region.US_EAST)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withTag("janitor.integration.test", "true")
-            .withAddressSpace("10.0.0.0/16")
-            .defineSubnet(subnetName)
-            .withAddressPrefix("10.0.0.0/24")
-            .attach()
-            .create();
-
     // Creates disk
     String diskName = randomNameWithUnderscore();
     Disk createdDisk =
         computeManager
             .disks()
             .define(diskName)
-            .withRegion(Region.US_EAST)
+            .withRegion(Region.US_SOUTH_CENTRAL)
             .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
             .withData()
             .withSizeInGB(500)
             .withTag("janitor.integration.test", "true")
             .create();
 
+    // Resolve network
+    Network network =
+        computeManager
+            .networkManager()
+            .networks()
+            .getByResourceGroup(
+                testConfiguration.getAzureManagedResourceGroupName(),
+                testConfiguration.getAzureVnetName());
+
+    // Create nic
     String nicName = randomNameWithUnderscore();
     NetworkInterface createdNetworkInterface =
         computeManager
             .networkManager()
             .networkInterfaces()
             .define(nicName)
-            .withRegion(Region.US_EAST)
+            .withRegion(Region.US_SOUTH_CENTRAL)
             .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withExistingPrimaryNetwork(createdNetwork)
-            .withSubnet(subnetName)
+            .withExistingPrimaryNetwork(network)
+            .withSubnet("COMPUTE_SUBNET")
             .withPrimaryPrivateIPAddressDynamic()
             .withTag("janitor.integration.test", "true")
             .create();
@@ -867,7 +645,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         computeManager
             .virtualMachines()
             .define(vmName)
-            .withRegion(Region.US_EAST)
+            .withRegion(Region.US_SOUTH_CENTRAL)
             .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
             .withExistingPrimaryNetworkInterface(createdNetworkInterface)
             .withPopularLinuxImage(KnownLinuxVirtualMachineImage.CENTOS_8_3)
@@ -879,20 +657,9 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
             .create();
 
     // Verify resources are created in Azure
-    assertEquals(
-        networkName,
-        computeManager.networkManager().networks().getById(createdNetwork.id()).name());
-
     assertEquals(diskName, computeManager.disks().getById(createdDisk.id()).name());
-
     assertEquals(vmName, computeManager.virtualMachines().getById(createdVm.id()).name());
 
-    CloudResourceUid networkUid =
-        new CloudResourceUid()
-            .azureNetwork(
-                new AzureNetwork()
-                    .networkName(networkName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
     CloudResourceUid diskUid =
         new CloudResourceUid()
             .azureDisk(
@@ -906,22 +673,15 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
                     .vmName(vmName)
                     .resourceGroup(testConfiguration.getAzureResourceGroup()));
 
-    // Publish messages to cleanup the vm, network, and disk.
+    // Publish messages to cleanup the vm and disk.
     publishAndVerify(vmUid, ResourceState.DONE);
     publishAndVerify(diskUid, ResourceState.DONE);
-    publishAndVerify(networkUid, ResourceState.DONE);
 
     // All resources are removed
     ManagementException diskDeleted =
         assertThrows(
             ManagementException.class, () -> computeManager.disks().getById(createdDisk.id()));
     assertEquals("ResourceNotFound", diskDeleted.getValue().getCode());
-
-    ManagementException networkDeleted =
-        assertThrows(
-            ManagementException.class,
-            () -> computeManager.networkManager().networks().getById(createdNetwork.id()));
-    assertEquals("ResourceNotFound", networkDeleted.getValue().getCode());
 
     ManagementException vmDeleted =
         assertThrows(
@@ -930,9 +690,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("ResourceNotFound", vmDeleted.getValue().getCode());
   }
 
-  /**
-   * Clean up a fake WSM workspace.
-   */
+  /** Clean up a fake WSM workspace. */
   @Test
   public void subscribeAndCleanupResource_terraWorkspace() throws Exception {
     // Cleaning up workspaces relies on domain-wide delegation to impersonate test users. The tools
@@ -953,9 +711,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publishAndVerify(resource, ResourceState.DONE, metadata);
   }
 
-  /**
-   * Try to clean up an already deleted workspace, should succeed.
-   */
+  /** Try to clean up an already deleted workspace, should succeed. */
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedTerraWorkspace() throws Exception {
     UUID fakeWorkspaceId = UUID.randomUUID();
@@ -986,7 +742,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         msiManager
             .identities()
             .define(identityName)
-            .withRegion(Region.US_EAST)
+            .withRegion(Region.US_SOUTH_CENTRAL)
             .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
             .withTag("janitor.integration.test", "true")
             .create();
@@ -1013,22 +769,29 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   public void subscribeAndCleanupResource_azureStorageContainer() throws Exception {
-    String storageAccountName = "teststgacctdonotdelete";
     String storageContainerName = randomName();
 
     // create storage container
-    BlobContainer createdStorageContainer = storageManager
-        .blobContainers()
-        .defineContainer(storageContainerName)
-        .withExistingStorageAccount(
-            testConfiguration.getAzureManagedResourceGroupName(), storageAccountName)
-        .withPublicAccess(PublicAccess.NONE)
-        .create();
+    BlobContainer createdStorageContainer =
+        storageManager
+            .blobContainers()
+            .defineContainer(storageContainerName)
+            .withExistingStorageAccount(
+                testConfiguration.getAzureManagedResourceGroupName(),
+                testConfiguration.getAzureStorageAccountName())
+            .withPublicAccess(PublicAccess.NONE)
+            .create();
 
     // verify container is created in Azure
-    assertEquals(storageContainerName, storageManager.blobContainers().get(
-        testConfiguration.getAzureManagedResourceGroupName(), storageAccountName,
-        createdStorageContainer.name()).name());
+    assertEquals(
+        storageContainerName,
+        storageManager
+            .blobContainers()
+            .get(
+                testConfiguration.getAzureManagedResourceGroupName(),
+                testConfiguration.getAzureStorageAccountName(),
+                createdStorageContainer.name())
+            .name());
 
     // publish and verify cleanup of storage container by Janitor
     publishAndVerify(
@@ -1036,17 +799,25 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
             .azureStorageContainer(
                 new AzureStorageContainer()
                     .storageContainerName(storageContainerName)
-                    .storageAccountName(storageAccountName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()))
-        , ResourceState.DONE);
+                    .storageAccountName(testConfiguration.getAzureStorageAccountName())
+                    .resourceGroup(testConfiguration.getAzureResourceGroup())),
+        ResourceState.DONE);
 
     // verify storage container is no longer present in Azure
-    ManagementException removeStorageContainer = assertThrows(ManagementException.class, () ->
-        storageManager.blobContainers().get(
-            testConfiguration.getAzureManagedResourceGroupName(), storageAccountName,
-            createdStorageContainer.name()));
+    ManagementException removeStorageContainer =
+        assertThrows(
+            ManagementException.class,
+            () ->
+                storageManager
+                    .blobContainers()
+                    .get(
+                        testConfiguration.getAzureManagedResourceGroupName(),
+                        testConfiguration.getAzureStorageAccountName(),
+                        createdStorageContainer.name()));
     assertEquals("ContainerNotFound", removeStorageContainer.getValue().getCode());
   }
+
+  // TODO add test cases for database, k8s namespace in the next PR
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
       throws Exception {
@@ -1083,9 +854,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals(expectedState, trackedResourceInfo.getState());
   }
 
-  /**
-   * Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup.
-   */
+  /** Returns a new {@link CreateResourceRequestBody} for a resource that is ready for cleanup. */
   private CreateResourceRequestBody newExpiredCreateResourceMessage(
       CloudResourceUid resource, OffsetDateTime now, ResourceMetadata metadata) {
     return new CreateResourceRequestBody()
@@ -1130,9 +899,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertNull(operation.getOperation().getError());
   }
 
-  /**
-   * Creates an {@link Instance} that's ready to be created.
-   */
+  /** Creates an {@link Instance} that's ready to be created. */
   private static Instance defaultInstance() {
     return new Instance()
         // A VM or Container image is required.
@@ -1142,46 +909,34 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         .setMachineType("e2-standard-2");
   }
 
-  /**
-   * Generates a random name to use for a cloud resource.
-   */
+  /** Generates a random name to use for a cloud resource. */
   private static String randomName() {
     return UUID.randomUUID().toString();
   }
 
-  /**
-   * Generates a random name to use for a cloud resource.
-   */
+  /** Generates a random name to use for a cloud resource. */
   private static String randomRelayNameSpace() {
     return "a" + randomName().substring(0, 8) + "b";
   }
 
-  /**
-   * Generates a random name to and replace '-' with '_'.
-   */
+  /** Generates a random name to and replace '-' with '_'. */
   private static String randomNameWithUnderscore() {
     return UUID.randomUUID().toString().replace('-', '_');
   }
 
-  /**
-   * Generates a random project id start with a letter and 30 characters long.
-   */
+  /** Generates a random project id start with a letter and 30 characters long. */
   private static String randomProjectId() {
     // Project ids must starting with a letter and be no more than 30 characters long.
     return "p" + randomName().substring(0, 29);
   }
 
-  /**
-   * Generates a random notebook instance id.
-   */
+  /** Generates a random notebook instance id. */
   private static String randomNotebookInstanceId() {
     // Instance ids must start with a letter, be all lower case letters, numbers, and dashses.
     return "n" + randomName().toLowerCase();
   }
 
-  /**
-   * Poll from get resource endpoint until it gets resources from Janitor in the expected state.
-   */
+  /** Poll from get resource endpoint until it gets resources from Janitor in the expected state. */
   private TrackedResourceInfoList pollUntilResourceState(
       CloudResourceUid resource, ResourceState expectedState, Duration period, int maxNumPolls)
       throws Exception {

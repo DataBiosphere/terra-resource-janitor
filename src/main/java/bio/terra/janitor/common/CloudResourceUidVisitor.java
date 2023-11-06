@@ -1,12 +1,9 @@
 package bio.terra.janitor.common;
 
-import bio.terra.janitor.generated.model.AzureContainerInstance;
+import bio.terra.janitor.generated.model.AzureDatabase;
 import bio.terra.janitor.generated.model.AzureDisk;
+import bio.terra.janitor.generated.model.AzureKubernetesNamespace;
 import bio.terra.janitor.generated.model.AzureManagedIdentity;
-import bio.terra.janitor.generated.model.AzureNetwork;
-import bio.terra.janitor.generated.model.AzureNetworkSecurityGroup;
-import bio.terra.janitor.generated.model.AzurePublicIp;
-import bio.terra.janitor.generated.model.AzureRelay;
 import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
 import bio.terra.janitor.generated.model.AzureStorageContainer;
 import bio.terra.janitor.generated.model.AzureVirtualMachine;
@@ -33,27 +30,21 @@ public interface CloudResourceUidVisitor<R> {
 
   R visit(GoogleAiNotebookInstanceUid resource);
 
-  R visit(AzurePublicIp resource);
-
-  R visit(AzureNetworkSecurityGroup resource);
-
-  R visit(AzureNetwork resource);
-
   R visit(AzureDisk resource);
 
   R visit(AzureVirtualMachine resource);
 
-  R visit(AzureRelay resource);
-
   R visit(AzureRelayHybridConnection resource);
-
-  R visit(AzureContainerInstance resource);
 
   R visit(TerraWorkspaceUid resource);
 
   R visit(AzureManagedIdentity resource);
 
   R visit(AzureStorageContainer resource);
+
+  R visit(AzureDatabase resource);
+
+  R visit(AzureKubernetesNamespace resource);
 
   R noResourceVisited(CloudResourceUid resource);
 
@@ -70,28 +61,22 @@ public interface CloudResourceUidVisitor<R> {
       return visitor.visit(resource.getGoogleBigQueryTableUid());
     } else if (resource.getGoogleAiNotebookInstanceUid() != null) {
       return visitor.visit(resource.getGoogleAiNotebookInstanceUid());
-    } else if (resource.getAzurePublicIp() != null) {
-      return visitor.visit(resource.getAzurePublicIp());
-    } else if (resource.getAzureNetworkSecurityGroup() != null) {
-      return visitor.visit(resource.getAzureNetworkSecurityGroup());
-    } else if (resource.getAzureNetwork() != null) {
-      return visitor.visit(resource.getAzureNetwork());
     } else if (resource.getAzureDisk() != null) {
       return visitor.visit(resource.getAzureDisk());
     } else if (resource.getAzureVirtualMachine() != null) {
       return visitor.visit(resource.getAzureVirtualMachine());
-    } else if (resource.getAzureRelay() != null) {
-      return visitor.visit(resource.getAzureRelay());
     } else if (resource.getAzureRelayHybridConnection() != null) {
       return visitor.visit(resource.getAzureRelayHybridConnection());
-    } else if (resource.getAzureContainerInstance() != null) {
-      return visitor.visit(resource.getAzureContainerInstance());
     } else if (resource.getTerraWorkspace() != null) {
       return visitor.visit(resource.getTerraWorkspace());
     } else if (resource.getAzureManagedIdentity() != null) {
       return visitor.visit(resource.getAzureManagedIdentity());
     } else if (resource.getAzureStorageContainer() != null) {
       return visitor.visit(resource.getAzureStorageContainer());
+    } else if (resource.getAzureDatabase() != null) {
+      return visitor.visit(resource.getAzureDatabase());
+    } else if (resource.getAzureKubernetesNamespace() != null) {
+      return visitor.visit(resource.getAzureKubernetesNamespace());
     } else {
       return visitor.noResourceVisited(resource);
     }
