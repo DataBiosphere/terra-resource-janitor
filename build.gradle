@@ -126,7 +126,7 @@ dependencies {
                 strictly '1.33'
             }
         }
-        implementation('io.projectreactor.netty:reactor-netty-http:1.1.12')
+        implementation('io.projectreactor.netty:reactor-netty-http:1.0.38')
         implementation('com.fasterxml.jackson:jackson-bom:2.14.2')
         implementation('org.bouncycastle:bcpkix-jdk15on:1.70')
         implementation('org.bouncycastle:bcprov-jdk15on:1.70')
