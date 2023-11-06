@@ -25,4 +25,6 @@ janitor:
     azure-relay-namespace: lza4d2630f51887e75b724e5a75d0634c4be23b5ad97dbedc2
     azure-postgres-server-name: lz1e3aee11b147c43091902a440b1d0eb9c0e873ab499fb06af81b16551e0cd
     azure-vnet-name: lzd6da2d9d8904cad604d7cf3fd092afcf75242cb8ba6aa345974876fa9f1c26
+    aks-cluster-name: lz53014f3263f862f3
+    azure-batch-account-name: lzef5360f976b846ac11a47d
 

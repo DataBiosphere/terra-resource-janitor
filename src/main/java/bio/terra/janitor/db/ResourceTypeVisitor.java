@@ -79,6 +79,11 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   }
 
   @Override
+  public ResourceType visit(AzureBatchPool resource) {
+    return AZURE_BATCH_POOL;
+  }
+
+  @Override
   public ResourceType noResourceVisited(CloudResourceUid resource) {
     throw new InvalidResourceUidException("invalid CloudResourceUid for" + resource);
   }

@@ -1,5 +1,6 @@
 package bio.terra.janitor.common;
 
+import bio.terra.janitor.generated.model.AzureBatchPool;
 import bio.terra.janitor.generated.model.AzureDatabase;
 import bio.terra.janitor.generated.model.AzureDisk;
 import bio.terra.janitor.generated.model.AzureKubernetesNamespace;
@@ -46,6 +47,8 @@ public interface CloudResourceUidVisitor<R> {
 
   R visit(AzureKubernetesNamespace resource);
 
+  R visit(AzureBatchPool resource);
+
   R noResourceVisited(CloudResourceUid resource);
 
   static <R> R visit(CloudResourceUid resource, CloudResourceUidVisitor<R> visitor) {
@@ -77,6 +80,8 @@ public interface CloudResourceUidVisitor<R> {
       return visitor.visit(resource.getAzureDatabase());
     } else if (resource.getAzureKubernetesNamespace() != null) {
       return visitor.visit(resource.getAzureKubernetesNamespace());
+    } else if (resource.getAzureBatchPool() != null) {
+      return visitor.visit(resource.getAzureBatchPool());
     } else {
       return visitor.noResourceVisited(resource);
     }
