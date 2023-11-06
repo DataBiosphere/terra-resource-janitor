@@ -11,6 +11,7 @@ import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.resourcemanager.batch.BatchManager;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.containerservice.ContainerServiceManager;
 import com.azure.resourcemanager.msi.MsiManager;
@@ -134,6 +135,13 @@ public class CrlConfiguration {
   public ContainerServiceManager buildContainerServiceManager(AzureResourceGroup resourceGroup) {
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
             clientConfig, ContainerServiceManager.configure())
+        .authenticate(getAzureCredential(), getAzureProfile(resourceGroup));
+  }
+
+  /** Creates an Azure {@link BatchManager} client for a given managed resource group. */
+  public BatchManager buildBatchManager(AzureResourceGroup resourceGroup) {
+    return bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
+            clientConfig, BatchManager.configure())
         .authenticate(getAzureCredential(), getAzureProfile(resourceGroup));
   }
 

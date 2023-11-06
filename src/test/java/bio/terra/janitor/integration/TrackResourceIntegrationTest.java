@@ -21,6 +21,7 @@ import bio.terra.janitor.app.configuration.CrlConfiguration;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.generated.model.AzureBatchPool;
 import bio.terra.janitor.generated.model.AzureDatabase;
 import bio.terra.janitor.generated.model.AzureDisk;
 import bio.terra.janitor.generated.model.AzureKubernetesNamespace;
@@ -47,6 +48,11 @@ import bio.terra.janitor.service.workspace.WorkspaceManagerService;
 import bio.terra.workspace.client.ApiException;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
+import com.azure.resourcemanager.batch.BatchManager;
+import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
+import com.azure.resourcemanager.batch.models.ImageReference;
+import com.azure.resourcemanager.batch.models.Pool;
+import com.azure.resourcemanager.batch.models.VirtualMachineConfiguration;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.Disk;
 import com.azure.resourcemanager.compute.models.KnownLinuxVirtualMachineImage;
@@ -130,6 +136,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private MsiManager msiManager;
   private StorageManager storageManager;
   private PostgreSqlManager postgreSqlManager;
+  private BatchManager batchManager;
   @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
 
   private static final Map<String, String> DEFAULT_LABELS =
@@ -189,6 +196,8 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
 
     postgreSqlManager =
         crlConfiguration.buildPostgreSqlManager(testConfiguration.getAzureResourceGroup());
+
+    batchManager = crlConfiguration.buildBatchManager(testConfiguration.getAzureResourceGroup());
   }
 
   @AfterEach
@@ -913,6 +922,66 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
             io.kubernetes.client.openapi.ApiException.class,
             () -> coreApiClient.readNamespace(namespaceName, null));
     assertEquals(404, removeNamespace.getCode());
+  }
+
+  @Test
+  public void subscribeAndCleanupResource_azureBatchPool() throws Exception {
+    String poolName = randomName();
+
+    // create batch pool database
+    Pool createdBatchPool =
+        batchManager
+            .pools()
+            .define(poolName)
+            .withExistingBatchAccount(
+                testConfiguration.getAzureResourceGroup().getResourceGroupName(),
+                testConfiguration.getAzureBatchAccountName())
+            .withDeploymentConfiguration(
+                new DeploymentConfiguration()
+                    .withVirtualMachineConfiguration(
+                        new VirtualMachineConfiguration()
+                            .withImageReference(
+                                new ImageReference()
+                                    .withOffer("ubuntuserver")
+                                    .withPublisher("canonical")
+                                    .withSku("18.04-lts"))
+                            .withNodeAgentSkuId("batch.node.ubuntu 18.04")))
+            .withVmSize("Standard_D2s_v3")
+            .create();
+
+    // verify pool is created in Azure
+    assertEquals(
+        poolName,
+        batchManager
+            .pools()
+            .get(
+                testConfiguration.getAzureManagedResourceGroupName(),
+                testConfiguration.getAzureBatchAccountName(),
+                createdBatchPool.name())
+            .name());
+
+    // publish and verify cleanup of the pool by Janitor
+    publishAndVerify(
+        new CloudResourceUid()
+            .azureBatchPool(
+                new AzureBatchPool()
+                    .id(createdBatchPool.id())
+                    .batchAccountName(testConfiguration.getAzureBatchAccountName())
+                    .resourceGroup(testConfiguration.getAzureResourceGroup())),
+        ResourceState.DONE);
+
+    // verify pool is no longer present in Azure
+    ManagementException removePool =
+        assertThrows(
+            ManagementException.class,
+            () ->
+                batchManager
+                    .pools()
+                    .get(
+                        testConfiguration.getAzureManagedResourceGroupName(),
+                        testConfiguration.getAzureBatchAccountName(),
+                        createdBatchPool.name()));
+    assertEquals("PoolNotFound", removePool.getValue().getCode());
   }
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)

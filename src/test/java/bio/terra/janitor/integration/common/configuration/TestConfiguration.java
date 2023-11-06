@@ -67,6 +67,9 @@ public class TestConfiguration {
   /** Name of the static AKS cluster. */
   private String aksClusterName;
 
+  /** Name of the static Azure batch account. */
+  private String azureBatchAccountName;
+
   public String getTrackResourceTopicId() {
     return trackResourceTopicId;
   }
@@ -181,6 +184,14 @@ public class TestConfiguration {
 
   public void setAksClusterName(String aksClusterName) {
     this.aksClusterName = aksClusterName;
+  }
+
+  public String getAzureBatchAccountName() {
+    return azureBatchAccountName;
+  }
+
+  public void setAzureBatchAccountName(String azureBatchAccountName) {
+    this.azureBatchAccountName = azureBatchAccountName;
   }
 
   /**
