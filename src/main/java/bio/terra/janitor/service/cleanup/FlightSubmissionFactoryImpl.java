@@ -42,6 +42,12 @@ public class FlightSubmissionFactoryImpl implements FlightSubmissionFactory {
         return FlightSubmission.create(AzureManagedIdentityCleanupFlight.class, flightMap);
       case AZURE_STORAGE_CONTAINER:
         return FlightSubmission.create(AzureStorageContainerCleanupFlight.class, flightMap);
+      case AZURE_DATABASE:
+        return FlightSubmission.create(AzureDatabaseCleanupFlight.class, flightMap);
+      case AZURE_KUBERNETES_NAMESPACE:
+        return FlightSubmission.create(AzureKubernetesNamespaceCleanupFlight.class, flightMap);
+      case AZURE_BATCH_POOL:
+        return FlightSubmission.create(AzureBatchPoolCleanupFlight.class, flightMap);
       default:
         return FlightSubmission.create(UnsupportedCleanupFlight.class, new FlightMap());
     }
