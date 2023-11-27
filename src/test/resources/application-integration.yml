@@ -20,7 +20,7 @@ janitor:
     # Reusing static MRG from https://github.com/broadinstitute/terra-github-workflows/blob/main/.github/workflows/attach-billing-project-to-landing-zone.yaml
     azure-tenant-id: fad90753-2022-4456-9b0a-c7e5b934e408
     azure-subscription-id: f557c728-871d-408c-a28b-eb6b2141a087
-    azure-managed-resource-group-name: e2e-90b7728d-dfcd-4d64-9082-58bf63031c64
+    azure-managed-resource-group-name: e2e-8n6xqg
     azure-storage-account-name: lze1e654d6c6562ee363b56d
     azure-relay-namespace: lza4d2630f51887e75b724e5a75d0634c4be23b5ad97dbedc2
     azure-postgres-server-name: lz1e3aee11b147c43091902a440b1d0eb9c0e873ab499fb06af81b16551e0cd
