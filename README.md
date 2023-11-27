@@ -10,7 +10,7 @@ CRL will publish a message to the Janitor's pubsub with the cloud resource's uni
 cleanup.
 3. Once the resource has expired, the Janitor Service uses Stairway to delete the cloud resource. 
 
-## Primay & Secondary Instances
+## Primary & Secondary Instances
 The Janitor is expected to be deployed with one primary instance and 0-many secondary instances.
 The primary instance controls the lifecycle of tracked resources. Having a single primary instance
 live at a given time makes it easier to reason about concurrency. Only actions that should not be
@@ -97,7 +97,7 @@ to install Cloud SQL Proxy
 
 Go to cloud console to get the instance name you want to connect to, then start the proxy:
 ```
-./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:5432
+./cloud-sql-proxy <INSTANCE_CONNECTION_STRING> --port 5432 
 ```
 Start the client session
 ```
