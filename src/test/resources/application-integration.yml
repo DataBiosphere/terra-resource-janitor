@@ -21,10 +21,10 @@ janitor:
     azure-tenant-id: fad90753-2022-4456-9b0a-c7e5b934e408
     azure-subscription-id: f557c728-871d-408c-a28b-eb6b2141a087
     azure-managed-resource-group-name: e2e-8n6xqg
-    azure-storage-account-name: lze1e654d6c6562ee363b56d
-    azure-relay-namespace: lza4d2630f51887e75b724e5a75d0634c4be23b5ad97dbedc2
-    azure-postgres-server-name: lz1e3aee11b147c43091902a440b1d0eb9c0e873ab499fb06af81b16551e0cd
-    azure-vnet-name: lzd6da2d9d8904cad604d7cf3fd092afcf75242cb8ba6aa345974876fa9f1c26
-    aks-cluster-name: lz53014f3263f862f3
-    azure-batch-account-name: lzef5360f976b846ac11a47d
+    azure-storage-account-name: lzc7d4c83cf0d1105da3c14e
+    azure-relay-namespace: lzd6394da0606d5327c5628030031dda04807c83e58980b2da
+    azure-postgres-server-name: lz98b99c0482ee03fc715711d8b2921b3d7b721527f3c126555e71b2e258ebc
+    azure-vnet-name: lze2850b505ff0795a57099536f1186615704d7e8b070b6cd76065de1fdf6c44
+    aks-cluster-name: lzf811925220d21fd2
+    azure-batch-account-name: lzc4ab0e46675c5ce0e01be6
 
