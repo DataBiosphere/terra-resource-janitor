@@ -19,8 +19,11 @@ janitor:
       subscription: ${TRACK_RESOURCE_PUBSUB_SUBSCRIPTION}
   server:
     port: 8080
-  stackdriver:
-    enabled: true
+  google:
+    monitoring:
+      enabled: ${TERRA_COMMON_TRACING_STACKDRIVER_EXPORT_ENABLED:true}
+    tracing:
+      enabled: ${TRACING_ENABLED:false}
   stairway:
     db:
       password: ${STAIRWAY_DATABASE_USER_PASSWORD}
@@ -56,3 +59,16 @@ spring:
     static-locations: classpath:/api/
   config:
     import: optional:file:config/local-properties.yml
+
+otel:
+  sdk:
+    disabled: false # set to true to disable all open telemetry features
+  traces:
+    sampler:
+      probability: ${SAMPLING_PROBABILITY:0}
+
+  springboot:
+    resource:
+      attributes:
+        service:
+          name: ${spring.application.name}

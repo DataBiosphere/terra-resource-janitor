@@ -1,6 +1,6 @@
 package bio.terra.janitor.common.exception;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 /**
  * Janitor impersonates test users to clean up WSM workspaces (and possibly for other purposes in

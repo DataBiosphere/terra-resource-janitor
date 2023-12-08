@@ -49,16 +49,19 @@ class FlightManager {
   private final JanitorDao janitorDao;
   private final TransactionTemplate transactionTemplate;
   private final FlightSubmissionFactory submissionFactory;
+  private final MetricsHelper metricsHelper;
 
   public FlightManager(
       Stairway stairway,
       JanitorDao janitorDao,
       TransactionTemplate transactionTemplate,
-      FlightSubmissionFactory submissionFactory) {
+      FlightSubmissionFactory submissionFactory,
+      MetricsHelper metricsHelper) {
     this.stairway = stairway;
     this.janitorDao = janitorDao;
     this.transactionTemplate = transactionTemplate;
     this.submissionFactory = submissionFactory;
+    this.metricsHelper = metricsHelper;
   }
 
   /**
@@ -78,7 +81,7 @@ class FlightManager {
     // If submission fails, it will be recovered later.
     boolean submissionSuccessful = submitToStairway(flightId, resource.get());
     // Only record duration of submission if there was something to attempt to schedule.
-    MetricsHelper.recordSubmissionDuration(
+    metricsHelper.recordSubmissionDuration(
         Duration.ofNanos(stopwatch.elapsed(TimeUnit.NANOSECONDS)), submissionSuccessful);
     return Optional.of(flightId);
   }
@@ -134,7 +137,7 @@ class FlightManager {
         // not need to be recovered. There's nothing to do but wait for the flight to update it's
         // state from INITIATING.
         stairway.getFlightState(flightId);
-        MetricsHelper.incrementRecoveredSubmittedFlight();
+        metricsHelper.incrementRecoveredSubmittedFlight();
       } catch (FlightNotFoundException e) {
         // Stairway does not know about the flightId, so we must not have submitted successfully.
         // Try to resubmit.
@@ -183,7 +186,7 @@ class FlightManager {
     for (TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
       Stopwatch stopwatch = Stopwatch.createStarted();
       boolean flightCompleted = completeFlight(resourceAndFlight);
-      MetricsHelper.recordCompletionDuration(
+      metricsHelper.recordCompletionDuration(
           Duration.ofNanos(stopwatch.elapsed(TimeUnit.NANOSECONDS)), flightCompleted);
       if (flightCompleted) {
         ++completedFlights;
@@ -342,7 +345,7 @@ class FlightManager {
     for (FlightState flight : flights) {
       Stopwatch stopwatch = Stopwatch.createStarted();
       boolean flightCompleted = updateFatalFlight(flight.getFlightId());
-      MetricsHelper.recordFatalUpdateDuration(
+      metricsHelper.recordFatalUpdateDuration(
           Duration.ofNanos(stopwatch.elapsed(TimeUnit.NANOSECONDS)), flightCompleted);
       if (flightCompleted) {
         ++completedFlights;
@@ -374,7 +377,7 @@ class FlightManager {
     TrackedResourceState resourceState = trackedResource.trackedResourceState();
     if (resourceAndFlight.get().cleanupFlight().state().equals(CleanupFlightState.FATAL)) {
       // We already marked the flight as completed - this is not an error.
-      MetricsHelper.incrementFatalFlightUndeleted();
+      metricsHelper.incrementFatalFlightUndeleted();
       return true;
     }
     if (resourceState.equals(TrackedResourceState.CLEANING)) {

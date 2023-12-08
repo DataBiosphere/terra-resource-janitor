@@ -10,6 +10,8 @@ import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import com.google.common.collect.ImmutableList;
 import java.util.concurrent.TimeUnit;
+
+import io.opentelemetry.api.OpenTelemetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +58,7 @@ public class StairwayComponent {
             .applicationContext(applicationContext)
             .stairwayName(stairwayConfiguration.getName())
             .stairwayHook(new CleanupLoggingHook())
-            .stairwayHook(new MonitoringHook());
+            .stairwayHook(new MonitoringHook(applicationContext.getBean(OpenTelemetry.class)));
     try {
       stairway = builder.build();
     } catch (StairwayExecutionException e) {

@@ -8,10 +8,11 @@ import bio.terra.janitor.generated.model.*;
 import bio.terra.janitor.service.janitor.JanitorApiService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -71,7 +72,7 @@ public class JanitorApiController implements JanitorApi {
 
   @Override
   public ResponseEntity<Void> updateResource(
-      @NotNull @Valid CloudResourceUid cloudResourceUid, @NotNull @Valid ResourceState state) {
+          @NotNull @Valid CloudResourceUid cloudResourceUid, @NotNull @Valid ResourceState state) {
     janitorApiService.updateResource(cloudResourceUid, state, getAuthenticatedRequest());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
