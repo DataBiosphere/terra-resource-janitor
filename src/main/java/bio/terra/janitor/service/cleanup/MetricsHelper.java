@@ -86,13 +86,13 @@ public class MetricsHelper {
 
   /** Record the duration of an attempt to submit a cleanup flight. */
   public void recordSubmissionDuration(Duration duration, boolean flightSubmitted) {
-    Attributes attributes = Attributes.of(SUCCESS_KEY, Boolean.valueOf(flightSubmitted).toString());
+    Attributes attributes = Attributes.of(SUCCESS_KEY, Boolean.toString(flightSubmitted));
     submissionDuration.record(duration.toMillis(), attributes);
   }
 
   /** Record the duration of an attempt to complete a cleanup flight. */
   public void recordCompletionDuration(Duration duration, boolean flightCompleted) {
-    Attributes attributes = Attributes.of(SUCCESS_KEY, Boolean.valueOf(flightCompleted).toString());
+    Attributes attributes = Attributes.of(SUCCESS_KEY, Boolean.toString(flightCompleted));
     completionDuration.record(duration.toMillis(), attributes);
   }
 
@@ -100,7 +100,7 @@ public class MetricsHelper {
    * Record the duration of an attempt to update a cleanup flight that ended fatally in Stairway.
    */
   public void recordFatalUpdateDuration(Duration duration, boolean flightUpdated) {
-    Attributes attributes = Attributes.of(SUCCESS_KEY, Boolean.valueOf(flightUpdated).toString());
+    Attributes attributes = Attributes.of(SUCCESS_KEY, Boolean.toString(flightUpdated));
     fatalUpdateDuration.record(duration.toMillis(), attributes);
   }
 
