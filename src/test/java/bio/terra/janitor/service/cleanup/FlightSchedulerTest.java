@@ -125,7 +125,7 @@ public class FlightSchedulerTest extends BaseUnitTest {
   }
 
   @Test
-  public void recordResourceCount() throws Exception {
+  public void recordResourceCount() {
     TrackedResource resource = newReadyExpiredResource(JanitorDao.currentInstant());
     janitorDao.createResource(resource, ImmutableMap.of());
 
@@ -134,6 +134,7 @@ public class FlightSchedulerTest extends BaseUnitTest {
             FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap()));
 
     await()
+        .atMost(Duration.ofSeconds(30))
         .untilAsserted(
             () ->
                 verify(mockMetricsHelper)
