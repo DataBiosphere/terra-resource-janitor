@@ -44,7 +44,11 @@ public class FlightScheduler {
     this.stairwayComponent = stairwayComponent;
     this.flightManager =
         new FlightManager(
-            stairwayComponent.get(), janitorDao, transactionTemplate, submissionFactory, metricsHelper);
+            stairwayComponent.get(),
+            janitorDao,
+            transactionTemplate,
+            submissionFactory,
+            metricsHelper);
     this.metricsHelper = metricsHelper;
   }
 

@@ -1,5 +1,14 @@
 package bio.terra.janitor.app.controller;
 
+import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import bio.terra.janitor.app.Main;
 import bio.terra.janitor.db.JanitorDao;
 import bio.terra.janitor.db.TrackedResourceState;
@@ -13,6 +22,10 @@ import bio.terra.janitor.generated.model.TrackedResourceInfo;
 import bio.terra.janitor.generated.model.TrackedResourceInfoList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import java.time.OffsetDateTime;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -27,20 +40,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
-
-import java.time.OffsetDateTime;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static bio.terra.janitor.app.configuration.BeanNames.OBJECT_MAPPER;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Tag("unit")
 @ActiveProfiles({"test", "unit"})

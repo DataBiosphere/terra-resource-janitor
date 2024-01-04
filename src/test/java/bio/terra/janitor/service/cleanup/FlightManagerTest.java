@@ -52,12 +52,15 @@ public class FlightManagerTest extends BaseUnitTest {
   @Autowired StairwayComponent stairwayComponent;
   @Autowired JanitorDao janitorDao;
   @Autowired TransactionTemplate transactionTemplate;
-  @MockBean
-  private MetricsHelper mockMetricsHelper;
+  @MockBean private MetricsHelper mockMetricsHelper;
 
   private FlightManager createFlightManager(FlightSubmissionFactory submissionFactory) {
     return new FlightManager(
-        stairwayComponent.get(), janitorDao, transactionTemplate, submissionFactory, mockMetricsHelper);
+        stairwayComponent.get(),
+        janitorDao,
+        transactionTemplate,
+        submissionFactory,
+        mockMetricsHelper);
   }
 
   private static TrackedResource newResourceForCleaning() {

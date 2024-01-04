@@ -6,10 +6,9 @@ import bio.terra.janitor.generated.model.SystemStatus;
 import bio.terra.janitor.generated.model.SystemStatusSystems;
 import bio.terra.janitor.service.stairway.StairwayComponent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import java.sql.Connection;
 import java.util.Optional;
-
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

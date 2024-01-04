@@ -1,13 +1,15 @@
 package bio.terra.janitor.service.cleanup;
 
 import static bio.terra.janitor.service.cleanup.CleanupTestUtils.pollUntil;
-import static bio.terra.janitor.service.cleanup.CleanupTestUtils.sleepForMetricsExport;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.verify;
 
 import bio.terra.janitor.app.configuration.PrimaryConfiguration;
 import bio.terra.janitor.common.BaseUnitTest;
 import bio.terra.janitor.db.JanitorDao;
+import bio.terra.janitor.db.ResourceKind;
 import bio.terra.janitor.db.ResourceMetadata;
+import bio.terra.janitor.db.ResourceType;
 import bio.terra.janitor.db.TrackedResource;
 import bio.terra.janitor.db.TrackedResourceId;
 import bio.terra.janitor.db.TrackedResourceState;
@@ -21,7 +23,6 @@ import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +40,7 @@ public class FlightSchedulerTest extends BaseUnitTest {
   @Autowired JanitorDao janitorDao;
   @Autowired StairwayComponent stairwayComponent;
   @Autowired TransactionTemplate transactionTemplate;
-  @MockBean
-  private MetricsHelper mockMetricsHelper;
+  @MockBean private MetricsHelper mockMetricsHelper;
 
   private void initializeScheduler(FlightSubmissionFactory submissionFactory) {
     flightScheduler =
@@ -50,7 +50,7 @@ public class FlightSchedulerTest extends BaseUnitTest {
             janitorDao,
             transactionTemplate,
             submissionFactory,
-                mockMetricsHelper);
+            mockMetricsHelper);
     flightScheduler.initialize();
   }
 
@@ -133,15 +133,14 @@ public class FlightSchedulerTest extends BaseUnitTest {
         trackedResource ->
             FlightSubmissionFactory.FlightSubmission.create(FatalFlight.class, new FlightMap()));
 
-    sleepForMetricsExport();
-
-    // TODO
-//    assertThat(
-//        MetricsHelper.VIEW_MANAGER
-//            .getView(MetricsHelper.TRACKED_RESOURCE_COUNT_VIEW.getName())
-//            .getAggregationMap()
-//            .size(),
-//        Matchers.greaterThan(0));
+    await()
+        .untilAsserted(
+            () ->
+                verify(mockMetricsHelper)
+                    .recordResourceKindCount(
+                        ResourceKind.create("", ResourceType.GOOGLE_BUCKET),
+                        resource.trackedResourceState(),
+                        1));
   }
 
   /** A {@link Flight} that ends fatally. */

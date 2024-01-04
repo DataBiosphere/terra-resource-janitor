@@ -30,8 +30,8 @@ public class BackwardsCompatibilityTest extends BaseUnitTest {
     assertEquals(ResourceType.GOOGLE_PROJECT, ResourceType.valueOf("GOOGLE_PROJECT"));
     assertEquals(ResourceType.AZURE_PUBLIC_IP, ResourceType.valueOf("AZURE_PUBLIC_IP"));
     assertEquals(
-            ResourceType.AZURE_NETWORK_SECURITY_GROUP,
-            ResourceType.valueOf("AZURE_NETWORK_SECURITY_GROUP"));
+        ResourceType.AZURE_NETWORK_SECURITY_GROUP,
+        ResourceType.valueOf("AZURE_NETWORK_SECURITY_GROUP"));
     assertEquals(ResourceType.AZURE_NETWORK, ResourceType.valueOf("AZURE_NETWORK"));
     assertEquals(ResourceType.AZURE_DISK, ResourceType.valueOf("AZURE_DISK"));
     assertEquals(ResourceType.AZURE_VIRTUAL_MACHINE, ResourceType.valueOf("AZURE_VIRTUAL_MACHINE"));
@@ -39,7 +39,7 @@ public class BackwardsCompatibilityTest extends BaseUnitTest {
     assertEquals(
         ResourceType.AZURE_RELAY_CONNECTION, ResourceType.valueOf("AZURE_RELAY_CONNECTION"));
     assertEquals(
-            ResourceType.AZURE_CONTAINER_INSTANCE, ResourceType.valueOf("AZURE_CONTAINER_INSTANCE"));
+        ResourceType.AZURE_CONTAINER_INSTANCE, ResourceType.valueOf("AZURE_CONTAINER_INSTANCE"));
     assertEquals(ResourceType.TERRA_WORKSPACE, ResourceType.valueOf("TERRA_WORKSPACE"));
     assertEquals(ResourceType.AZURE_DATABASE, ResourceType.valueOf("AZURE_DATABASE"));
     assertEquals(

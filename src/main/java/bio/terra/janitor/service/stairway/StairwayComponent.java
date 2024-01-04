@@ -9,9 +9,8 @@ import bio.terra.stairway.StairwayBuilder;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import com.google.common.collect.ImmutableList;
-import java.util.concurrent.TimeUnit;
-
 import io.opentelemetry.api.OpenTelemetry;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

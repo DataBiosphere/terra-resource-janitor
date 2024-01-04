@@ -24,10 +24,9 @@ import com.google.api.services.cloudresourcemanager.v3.CloudResourceManagerScope
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.StorageOptions;
+import io.opentelemetry.api.OpenTelemetry;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-
-import io.opentelemetry.api.OpenTelemetry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
@@ -43,7 +42,11 @@ public class CrlConfiguration {
   @Autowired
   public CrlConfiguration(AzureConfiguration azureConfiguration, OpenTelemetry openTelemetry) {
     this.azureConfiguration = azureConfiguration;
-    this.clientConfig = ClientConfig.Builder.newBuilder().setClient("terra-crl-janitor").setOpenTelemetry(openTelemetry).build();
+    this.clientConfig =
+        ClientConfig.Builder.newBuilder()
+            .setClient("terra-crl-janitor")
+            .setOpenTelemetry(openTelemetry)
+            .build();
   }
 
   @Bean
