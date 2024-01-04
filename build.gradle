@@ -76,6 +76,7 @@ dependencies {
     // Misc. Services
     implementation group: 'org.webjars', name: 'webjars-locator-core', version: '0.52'
     implementation group: 'jakarta.validation', name: 'jakarta.validation-api'
+    implementation group: 'io.projectreactor', name: 'reactor-core', version: '3.4.34'
 
     // Google dependencies
     constraints {
