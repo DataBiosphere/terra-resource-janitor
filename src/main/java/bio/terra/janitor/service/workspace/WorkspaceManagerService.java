@@ -6,8 +6,8 @@ import bio.terra.janitor.service.iam.IamService;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
+import jakarta.ws.rs.client.Client;
 import java.util.UUID;
-import javax.ws.rs.client.Client;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

@@ -24,6 +24,7 @@ import com.google.api.services.cloudresourcemanager.v3.CloudResourceManagerScope
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.StorageOptions;
+import io.opentelemetry.api.OpenTelemetry;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,15 +37,17 @@ import org.springframework.stereotype.Component;
 public class CrlConfiguration {
 
   private final AzureConfiguration azureConfiguration;
+  private final ClientConfig clientConfig;
 
   @Autowired
-  public CrlConfiguration(AzureConfiguration azureConfiguration) {
+  public CrlConfiguration(AzureConfiguration azureConfiguration, OpenTelemetry openTelemetry) {
     this.azureConfiguration = azureConfiguration;
+    this.clientConfig =
+        ClientConfig.Builder.newBuilder()
+            .setClient("terra-crl-janitor")
+            .setOpenTelemetry(openTelemetry)
+            .build();
   }
-
-  // Janitor only uses CRL Cows to delete resources. Cleanup is not needed.
-  private final ClientConfig clientConfig =
-      ClientConfig.Builder.newBuilder().setClient("terra-crl-janitor").build();
 
   @Bean
   @Lazy

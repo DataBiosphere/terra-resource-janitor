@@ -32,3 +32,5 @@ janitor:
 terra.common:
   tracing:
     stackdriverExportEnabled: false
+  prometheus:
+    endpointEnabled: false

@@ -29,6 +29,7 @@ public class FlightScheduler {
   private final StairwayComponent stairwayComponent;
   private final JanitorDao janitorDao;
   private final FlightManager flightManager;
+  private final MetricsHelper metricsHelper;
 
   @Autowired
   public FlightScheduler(
@@ -36,13 +37,19 @@ public class FlightScheduler {
       StairwayComponent stairwayComponent,
       JanitorDao janitorDao,
       TransactionTemplate transactionTemplate,
-      FlightSubmissionFactory submissionFactory) {
+      FlightSubmissionFactory submissionFactory,
+      MetricsHelper metricsHelper) {
     this.primaryConfiguration = primaryConfiguration;
     this.janitorDao = janitorDao;
     this.stairwayComponent = stairwayComponent;
-    flightManager =
+    this.flightManager =
         new FlightManager(
-            stairwayComponent.get(), janitorDao, transactionTemplate, submissionFactory);
+            stairwayComponent.get(),
+            janitorDao,
+            transactionTemplate,
+            submissionFactory,
+            metricsHelper);
+    this.metricsHelper = metricsHelper;
   }
 
   /**
@@ -137,7 +144,7 @@ public class FlightScheduler {
         // 0 counts, we need to make sure to update metrics measurements that may have changed to 0.
         // If we don't, the last non-zero value will continue to be exported.
         int count = stateCounts.getOrDefault(state, 0);
-        MetricsHelper.recordResourceKindCount(kind, state, count);
+        metricsHelper.recordResourceKindCount(kind, state, count);
       }
     }
     logger.info("Done recording resource counts.");

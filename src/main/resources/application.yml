@@ -19,8 +19,6 @@ janitor:
       subscription: ${TRACK_RESOURCE_PUBSUB_SUBSCRIPTION}
   server:
     port: 8080
-  stackdriver:
-    enabled: true
   stairway:
     db:
       password: ${STAIRWAY_DATABASE_USER_PASSWORD}
@@ -40,6 +38,15 @@ janitor:
     managed-app-client-secret: ${AZURE_MANAGED_APP_CLIENT_SECRET}
     managed-app-tenant-id: ${AZURE_MANAGED_APP_TENANT_ID}
 
+terra.common:
+  tracing:
+    sampling-ratio: ${SAMPLING_PROBABILITY:0}
+  google:
+    metrics:
+      enabled: ${TERRA_COMMON_TRACING_STACKDRIVER_EXPORT_ENABLED:true}
+    tracing:
+      enabled: ${TRACING_ENABLED:false}
+
 server:
   compression:
     enabled: true
@@ -56,3 +63,12 @@ spring:
     static-locations: classpath:/api/
   config:
     import: optional:file:config/local-properties.yml
+
+otel:
+  sdk:
+    disabled: false # set to true to disable all open telemetry features
+  springboot:
+    resource:
+      attributes:
+        service:
+          name: ${spring.application.name}

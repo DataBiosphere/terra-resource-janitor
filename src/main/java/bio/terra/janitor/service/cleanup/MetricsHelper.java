@@ -2,189 +2,131 @@ package bio.terra.janitor.service.cleanup;
 
 import bio.terra.janitor.db.ResourceKind;
 import bio.terra.janitor.db.TrackedResourceState;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import io.opencensus.stats.*;
-import io.opencensus.tags.*;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.DoubleHistogram;
+import io.opentelemetry.api.metrics.LongCounter;
 import java.time.Duration;
-import java.util.Arrays;
+import org.springframework.stereotype.Component;
 
 /** Helper class for recording metrics associated with cleanup. */
-class MetricsHelper {
-  private MetricsHelper() {}
-
+@Component
+public class MetricsHelper {
   private static final String PREFIX = "terra/janitor/cleanup";
-  @VisibleForTesting static final ViewManager VIEW_MANAGER = Stats.getViewManager();
+  public static final String SUBMISSION_DURATION_METER_NAME = PREFIX + "/submission_duration";
+  public static final String COMPLETION_DURATION_METER_NAME = PREFIX + "/completion_duration";
+  public static final String FATAL_UPDATE_DURATION_METER_NAME = PREFIX + "/fatal_update_duration";
+  public static final String TRACKED_RESOURCE_COUNT_METER_NAME = PREFIX + "/tracked_resource_count";
+  public static final String RECOVERED_SUBMITTED_FLIGHTS_COUNT_METER_NAME =
+      PREFIX + "/recovered_submitted_flights_count";
+  public static final String FATAL_FLIGHT_UNDELETED_COUNT_METER_NAME =
+      PREFIX + "/fatal_flight_undeleted_count";
 
-  private static final Tagger TAGGER = Tags.getTagger();
-  private static final StatsRecorder STATS_RECORDER = Stats.getStatsRecorder();
-
-  private static final TagKey SUCCESS_KEY = TagKey.create("success");
-  private static final TagKey RESOURCE_STATE_KEY = TagKey.create("resource_state");
-  private static final TagKey RESOURCE_TYPE_KEY = TagKey.create("resource_type");
-  private static final TagKey CLIENT_KEY = TagKey.create("client");
+  public static final AttributeKey<String> SUCCESS_KEY = AttributeKey.stringKey("success");
+  public static final AttributeKey<String> RESOURCE_STATE_KEY =
+      AttributeKey.stringKey("resource_state");
+  public static final AttributeKey<String> RESOURCE_TYPE_KEY =
+      AttributeKey.stringKey("resource_type");
+  public static final AttributeKey<String> CLIENT_KEY = AttributeKey.stringKey("client");
 
   /** Unit string for millisecond. */
   private static final String MILLISECOND = "ms";
   /** Unit string for count. */
   private static final String COUNT = "1";
 
-  private static final Measure.MeasureDouble SUBMISSION_DURATION =
-      Measure.MeasureDouble.create(
-          PREFIX + "/submission_duration", "Duration of a cleanup flight submission.", MILLISECOND);
-  private static final Measure.MeasureDouble COMPLETION_DURATION =
-      Measure.MeasureDouble.create(
-          PREFIX + "/completion_duration", "Duration of a cleanup flight completion.", MILLISECOND);
-  private static final Measure.MeasureDouble FATAL_UPDATE_DURATION =
-      Measure.MeasureDouble.create(
-          PREFIX + "/fatal_update_duration",
-          "Duration of a cleanup flight fatal update.",
-          MILLISECOND);
-  private static final Measure.MeasureLong TRACKED_RESOURCE_COUNT =
-      Measure.MeasureLong.create(
-          PREFIX + "/tracked_resource_count", "Counts of te number of tracked resources.", COUNT);
-  private static final Measure.MeasureLong RECOVERED_SUBMITTED_FLIGHTS_COUNT =
-      Measure.MeasureLong.create(
-          PREFIX + "/recovered_submitted_flights_count.",
-          "Count of the number of recovered flights that were already submitted successfully to Stairway.",
-          COUNT);
-  private static final Measure.MeasureLong FATAL_FLIGHT_UNDELETED_COUNT =
-      Measure.MeasureLong.create(
-          PREFIX + "/fatal_flight_undeleted_count",
-          "Count of the number of fatal cleanup flights that were not deleted from Stairway when they were completed by the Janitor.",
-          COUNT);
+  private final DoubleHistogram submissionDuration;
+  private final DoubleHistogram completionDuration;
+  private final DoubleHistogram fatalUpdateDuration;
+  private final LongCounter trackedResourceCount;
+  private final LongCounter recoveredSubmittedFlightsCount;
+  private final LongCounter fatalFlightUndeletedCount;
 
-  /**
-   * This bucketing is our first pass guess at what might be interesting to see for durations. It is
-   * not backed by data.
-   */
-  private static final Aggregation DURATION_DISTRIBUTION =
-      Aggregation.Distribution.create(
-          BucketBoundaries.create(
-              Arrays.asList(
-                  0.0, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0,
-                  4096.0, 8192.0)));
-
-  private static final View SUBMISSION_DURATION_VIEW =
-      View.create(
-          View.Name.create(PREFIX + "/submission_duration"),
-          "The distribution of durations for flight submissions",
-          SUBMISSION_DURATION,
-          DURATION_DISTRIBUTION,
-          ImmutableList.of(SUCCESS_KEY));
-  private static final View COMPLETION_DURATION_VIEW =
-      View.create(
-          View.Name.create(PREFIX + "/completion_duration"),
-          "The distribution of durations for flight completions",
-          COMPLETION_DURATION,
-          DURATION_DISTRIBUTION,
-          ImmutableList.of(SUCCESS_KEY));
-  private static final View FATAL_UPDATE_DURATION_VIEW =
-      View.create(
-          View.Name.create(PREFIX + "/fatal_update_duration"),
-          "The distribution of durations for flight fatal updates",
-          FATAL_UPDATE_DURATION,
-          DURATION_DISTRIBUTION,
-          ImmutableList.of(SUCCESS_KEY));
-
-  @VisibleForTesting
-  static final View TRACKED_RESOURCE_COUNT_VIEW =
-      View.create(
-          View.Name.create(PREFIX + "/tracked_resource_count"),
-          "The count of tracked resources",
-          TRACKED_RESOURCE_COUNT,
-          Aggregation.LastValue.create(),
-          ImmutableList.of(RESOURCE_STATE_KEY, RESOURCE_TYPE_KEY, CLIENT_KEY));
-
-  static final View RECOVERED_SUBMITTED_FLIGHTS_VIEW =
-      View.create(
-          View.Name.create(PREFIX + "/recovered_submitted_flights_count"),
-          "Count of the number of recovered flights that were already submitted successfully to Stairway.",
-          RECOVERED_SUBMITTED_FLIGHTS_COUNT,
-          Aggregation.Count.create(),
-          ImmutableList.of());
-  static final View FATAL_FLIGHT_UNDELETED_VIEW =
-      View.create(
-          View.Name.create(PREFIX + "/fatal_flight_undeleted"),
-          "Count of the number of fatal cleanup flights that were not deleted from Stairway when they were completed by the Janitor.",
-          FATAL_FLIGHT_UNDELETED_COUNT,
-          Aggregation.Count.create(),
-          ImmutableList.of());
-
-  private static final ImmutableList<View> VIEWS =
-      ImmutableList.of(
-          SUBMISSION_DURATION_VIEW,
-          COMPLETION_DURATION_VIEW,
-          FATAL_UPDATE_DURATION_VIEW,
-          TRACKED_RESOURCE_COUNT_VIEW,
-          RECOVERED_SUBMITTED_FLIGHTS_VIEW,
-          FATAL_FLIGHT_UNDELETED_VIEW);
-
-  // Register all views
-  static {
-    for (View view : VIEWS) {
-      VIEW_MANAGER.registerView(view);
-    }
+  public MetricsHelper(OpenTelemetry openTelemetry) {
+    var meter = openTelemetry.getMeter(bio.terra.common.stairway.MetricsHelper.class.getName());
+    this.submissionDuration =
+        meter
+            .histogramBuilder(SUBMISSION_DURATION_METER_NAME)
+            .setDescription("Duration of a cleanup flight submission.")
+            .setUnit(MILLISECOND)
+            .build();
+    this.completionDuration =
+        meter
+            .histogramBuilder(COMPLETION_DURATION_METER_NAME)
+            .setDescription("Duration of a cleanup flight completion.")
+            .setUnit(MILLISECOND)
+            .build();
+    this.fatalUpdateDuration =
+        meter
+            .histogramBuilder(FATAL_UPDATE_DURATION_METER_NAME)
+            .setDescription("Duration of a cleanup flight fatal update.")
+            .setUnit(MILLISECOND)
+            .build();
+    this.trackedResourceCount =
+        meter
+            .counterBuilder(TRACKED_RESOURCE_COUNT_METER_NAME)
+            .setDescription("Counts of the number of tracked resources.")
+            .setUnit(COUNT)
+            .build();
+    this.recoveredSubmittedFlightsCount =
+        meter
+            .counterBuilder(RECOVERED_SUBMITTED_FLIGHTS_COUNT_METER_NAME)
+            .setDescription(
+                "Count of the number of recovered flights that were already submitted successfully to Stairway.")
+            .setUnit(COUNT)
+            .build();
+    this.fatalFlightUndeletedCount =
+        meter
+            .counterBuilder(FATAL_FLIGHT_UNDELETED_COUNT_METER_NAME)
+            .setDescription(
+                "Count of the number of fatal cleanup flights that were not deleted from Stairway when they were completed by the Janitor.")
+            .setUnit(COUNT)
+            .build();
   }
 
   /** Record the duration of an attempt to submit a cleanup flight. */
-  public static void recordSubmissionDuration(Duration duration, boolean flightSubmitted) {
-    TagContext tctx =
-        TAGGER
-            .emptyBuilder()
-            .putLocal(SUCCESS_KEY, TagValue.create(Boolean.valueOf(flightSubmitted).toString()))
-            .build();
-    STATS_RECORDER.newMeasureMap().put(SUBMISSION_DURATION, duration.toMillis()).record(tctx);
+  public void recordSubmissionDuration(Duration duration, boolean flightSubmitted) {
+    Attributes attributes = Attributes.of(SUCCESS_KEY, Boolean.toString(flightSubmitted));
+    submissionDuration.record(duration.toMillis(), attributes);
   }
 
   /** Record the duration of an attempt to complete a cleanup flight. */
-  public static void recordCompletionDuration(Duration duration, boolean flightCompleted) {
-    TagContext tctx =
-        TAGGER
-            .emptyBuilder()
-            .putLocal(SUCCESS_KEY, TagValue.create(Boolean.valueOf(flightCompleted).toString()))
-            .build();
-    STATS_RECORDER.newMeasureMap().put(COMPLETION_DURATION, duration.toMillis()).record(tctx);
+  public void recordCompletionDuration(Duration duration, boolean flightCompleted) {
+    Attributes attributes = Attributes.of(SUCCESS_KEY, Boolean.toString(flightCompleted));
+    completionDuration.record(duration.toMillis(), attributes);
   }
 
   /**
    * Record the duration of an attempt to update a cleanup flight that ended fatally in Stairway.
    */
-  public static void recordFatalUpdateDuration(Duration duration, boolean flightUpdated) {
-    TagContext tctx =
-        TAGGER
-            .emptyBuilder()
-            .putLocal(SUCCESS_KEY, TagValue.create(Boolean.valueOf(flightUpdated).toString()))
-            .build();
-    STATS_RECORDER.newMeasureMap().put(FATAL_UPDATE_DURATION, duration.toMillis()).record(tctx);
+  public void recordFatalUpdateDuration(Duration duration, boolean flightUpdated) {
+    Attributes attributes = Attributes.of(SUCCESS_KEY, Boolean.toString(flightUpdated));
+    fatalUpdateDuration.record(duration.toMillis(), attributes);
   }
 
   /** Records the latest count of {@link ResourceKind}. */
-  public static void recordResourceKindCount(
-      ResourceKind kind, TrackedResourceState state, int count) {
-    TagContext tctx =
-        TAGGER
-            .emptyBuilder()
-            .putLocal(RESOURCE_STATE_KEY, TagValue.create(state.toString()))
-            .putLocal(RESOURCE_TYPE_KEY, TagValue.create(kind.resourceType().toString()))
-            .putLocal(CLIENT_KEY, TagValue.create(kind.client()))
-            .build();
-    STATS_RECORDER.newMeasureMap().put(TRACKED_RESOURCE_COUNT, count).record(tctx);
+  public void recordResourceKindCount(ResourceKind kind, TrackedResourceState state, int count) {
+    Attributes attributes =
+        Attributes.of(
+            RESOURCE_STATE_KEY, state.toString(),
+            RESOURCE_TYPE_KEY, kind.resourceType().toString(),
+            CLIENT_KEY, kind.client());
+    trackedResourceCount.add(count, attributes);
   }
 
   /**
    * Increment the count of the cleanup flights that were already submitted to Stairway but on
    * recovery were still in the {@link bio.terra.janitor.db.CleanupFlightState#INITIATING} state.
    */
-  public static void incrementRecoveredSubmittedFlight() {
-    STATS_RECORDER.newMeasureMap().put(RECOVERED_SUBMITTED_FLIGHTS_COUNT, 1).record(TAGGER.empty());
+  public void incrementRecoveredSubmittedFlight() {
+    recoveredSubmittedFlightsCount.add(1);
   }
 
   /**
    * Increment the count of the cleanup flights that finished as {@link
    * bio.terra.janitor.db.CleanupFlightState#FATAL} but were not yet deleted from Stairway.
    */
-  public static void incrementFatalFlightUndeleted() {
-    STATS_RECORDER.newMeasureMap().put(FATAL_FLIGHT_UNDELETED_COUNT, 1).record(TAGGER.empty());
+  public void incrementFatalFlightUndeleted() {
+    fatalFlightUndeletedCount.add(1);
   }
 }

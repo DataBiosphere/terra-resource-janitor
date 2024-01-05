@@ -37,6 +37,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -51,10 +52,15 @@ public class FlightManagerTest extends BaseUnitTest {
   @Autowired StairwayComponent stairwayComponent;
   @Autowired JanitorDao janitorDao;
   @Autowired TransactionTemplate transactionTemplate;
+  @MockBean private MetricsHelper mockMetricsHelper;
 
   private FlightManager createFlightManager(FlightSubmissionFactory submissionFactory) {
     return new FlightManager(
-        stairwayComponent.get(), janitorDao, transactionTemplate, submissionFactory);
+        stairwayComponent.get(),
+        janitorDao,
+        transactionTemplate,
+        submissionFactory,
+        mockMetricsHelper);
   }
 
   private static TrackedResource newResourceForCleaning() {

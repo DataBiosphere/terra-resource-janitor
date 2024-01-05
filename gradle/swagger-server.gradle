@@ -12,6 +12,7 @@ swaggerSources {
                     '--model-package', "${artifactGroup}.generated.model",
                     '-D', 'interfaceOnly=true,' +
                             'useTags=true,' +
+                            'jakarta=true,' +
                             'dateLibrary=java8'
             ]
         }
