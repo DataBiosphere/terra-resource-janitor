@@ -19,11 +19,6 @@ janitor:
       subscription: ${TRACK_RESOURCE_PUBSUB_SUBSCRIPTION}
   server:
     port: 8080
-  google:
-    monitoring:
-      enabled: ${TERRA_COMMON_TRACING_STACKDRIVER_EXPORT_ENABLED:true}
-    tracing:
-      enabled: ${TRACING_ENABLED:false}
   stairway:
     db:
       password: ${STAIRWAY_DATABASE_USER_PASSWORD}
@@ -42,6 +37,15 @@ janitor:
     managed-app-client-id: ${AZURE_MANAGED_APP_CLIENT_ID}
     managed-app-client-secret: ${AZURE_MANAGED_APP_CLIENT_SECRET}
     managed-app-tenant-id: ${AZURE_MANAGED_APP_TENANT_ID}
+
+terra.common:
+  tracing:
+    sampling-ratio: ${SAMPLING_PROBABILITY:0}
+  google:
+    metrics:
+      enabled: ${TERRA_COMMON_TRACING_STACKDRIVER_EXPORT_ENABLED:true}
+    tracing:
+      enabled: ${TRACING_ENABLED:false}
 
 server:
   compression:
@@ -63,10 +67,6 @@ spring:
 otel:
   sdk:
     disabled: false # set to true to disable all open telemetry features
-  traces:
-    sampler:
-      probability: ${SAMPLING_PROBABILITY:0}
-
   springboot:
     resource:
       attributes:

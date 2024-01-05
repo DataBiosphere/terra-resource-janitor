@@ -10,5 +10,5 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Tag("unit")
 @ActiveProfiles({"test", "unit"})
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = Main.class, properties = "terra.common.prometheus.endpointEnabled=false")
+@SpringBootTest(classes = Main.class)
 public class BaseUnitTest {}

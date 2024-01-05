@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @Tag("unit")
 @ActiveProfiles({"test", "unit"})
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = Main.class, properties = "terra.common.prometheus.endpointEnabled=false")
+@SpringBootTest(classes = Main.class)
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class UnauthenticatedApiControllerTest {
