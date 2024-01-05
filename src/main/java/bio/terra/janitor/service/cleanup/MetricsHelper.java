@@ -141,13 +141,16 @@ public class MetricsHelper implements AutoCloseable {
     completionDuration.record(duration.toMillis(), attributes);
   }
 
-  public void incrementCompletion(ResourceType resourceType, boolean flightCompleted) {
+  public void incrementCompletion(
+      ResourceType resourceType, TrackedResourceState state, boolean flightCompleted) {
     Attributes attributes =
         Attributes.of(
             SUCCESS_KEY,
             Boolean.toString(flightCompleted),
             RESOURCE_TYPE_KEY,
-            resourceType.toString());
+            resourceType.toString(),
+            RESOURCE_STATE_KEY,
+            state.toString());
     completionCount.add(1, attributes);
   }
 

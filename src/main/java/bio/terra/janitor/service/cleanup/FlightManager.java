@@ -190,6 +190,7 @@ class FlightManager {
       boolean flightCompleted = completeFlight(resourceAndFlight);
       metricsHelper.incrementCompletion(
           new ResourceTypeVisitor().accept(resourceAndFlight.trackedResource().cloudResourceUid()),
+          resourceAndFlight.trackedResource().trackedResourceState(),
           flightCompleted);
       metricsHelper.recordCompletionDuration(
           Duration.ofNanos(stopwatch.elapsed(TimeUnit.NANOSECONDS)), flightCompleted);
