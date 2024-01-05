@@ -138,7 +138,7 @@ public class FlightSchedulerTest extends BaseUnitTest {
         .untilAsserted(
             () ->
                 verify(mockMetricsHelper)
-                    .recordResourceKindCount(
+                    .recordResourceKindGauge(
                         ResourceKind.create("", ResourceType.GOOGLE_BUCKET),
                         resource.trackedResourceState(),
                         1));
