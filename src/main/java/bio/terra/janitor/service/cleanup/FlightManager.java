@@ -78,6 +78,8 @@ class FlightManager {
       // No resource to schedule.
       return Optional.empty();
     }
+    metricsHelper.incrementSubmission(
+        new ResourceTypeVisitor().accept(resource.get().cloudResourceUid()));
     // If submission fails, it will be recovered later.
     boolean submissionSuccessful = submitToStairway(flightId, resource.get());
     // Only record duration of submission if there was something to attempt to schedule.
@@ -186,6 +188,10 @@ class FlightManager {
     for (TrackedResourceAndFlight resourceAndFlight : resourceAndFlights) {
       Stopwatch stopwatch = Stopwatch.createStarted();
       boolean flightCompleted = completeFlight(resourceAndFlight);
+      metricsHelper.incrementCompletion(
+          new ResourceTypeVisitor().accept(resourceAndFlight.trackedResource().cloudResourceUid()),
+          resourceAndFlight.trackedResource().trackedResourceState(),
+          flightCompleted);
       metricsHelper.recordCompletionDuration(
           Duration.ofNanos(stopwatch.elapsed(TimeUnit.NANOSECONDS)), flightCompleted);
       if (flightCompleted) {

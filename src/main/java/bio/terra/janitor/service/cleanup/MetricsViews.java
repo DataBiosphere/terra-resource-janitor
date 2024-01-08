@@ -25,6 +25,20 @@ public class MetricsViews {
             .build());
   }
 
+  @Bean(name = MetricsHelper.SUBMISSION_COUNT_METER_NAME)
+  public Pair<InstrumentSelector, View> submissionCountView() {
+    return Pair.of(
+        InstrumentSelector.builder()
+            .setMeterName(MetricsHelper.SUBMISSION_COUNT_METER_NAME)
+            .build(),
+        View.builder()
+            .setName(MetricsHelper.SUBMISSION_COUNT_METER_NAME)
+            .setDescription("Counter of cleanup flight submissions")
+            .setAggregation(Aggregation.sum())
+            .setAttributeFilter(Set.of(MetricsHelper.SUCCESS_KEY.getKey()))
+            .build());
+  }
+
   @Bean(name = MetricsHelper.COMPLETION_DURATION_METER_NAME)
   public Pair<InstrumentSelector, View> completionDurationView() {
     return Pair.of(
@@ -35,6 +49,20 @@ public class MetricsViews {
             .setName(MetricsHelper.COMPLETION_DURATION_METER_NAME)
             .setDescription("Duration of a cleanup flight completion")
             .setAggregation(Aggregation.base2ExponentialBucketHistogram())
+            .setAttributeFilter(Set.of(MetricsHelper.SUCCESS_KEY.getKey()))
+            .build());
+  }
+
+  @Bean(name = MetricsHelper.COMPLETION_COUNT_METER_NAME)
+  public Pair<InstrumentSelector, View> completionCountView() {
+    return Pair.of(
+        InstrumentSelector.builder()
+            .setMeterName(MetricsHelper.COMPLETION_COUNT_METER_NAME)
+            .build(),
+        View.builder()
+            .setName(MetricsHelper.COMPLETION_COUNT_METER_NAME)
+            .setDescription("Counter of cleanup flight completions")
+            .setAggregation(Aggregation.sum())
             .setAttributeFilter(Set.of(MetricsHelper.SUCCESS_KEY.getKey()))
             .build());
   }
@@ -53,16 +81,16 @@ public class MetricsViews {
             .build());
   }
 
-  @Bean(name = MetricsHelper.TRACKED_RESOURCE_COUNT_METER_NAME)
-  public Pair<InstrumentSelector, View> trackedResourceCountView() {
+  @Bean(name = MetricsHelper.TRACKED_RESOURCE_GAUGE_METER_NAME)
+  public Pair<InstrumentSelector, View> trackedResourceGaugeView() {
     return Pair.of(
         InstrumentSelector.builder()
-            .setMeterName(MetricsHelper.TRACKED_RESOURCE_COUNT_METER_NAME)
+            .setMeterName(MetricsHelper.TRACKED_RESOURCE_GAUGE_METER_NAME)
             .build(),
         View.builder()
-            .setName(MetricsHelper.TRACKED_RESOURCE_COUNT_METER_NAME)
-            .setDescription("Counts of the number of tracked resources")
-            .setAggregation(Aggregation.sum())
+            .setName(MetricsHelper.TRACKED_RESOURCE_GAUGE_METER_NAME)
+            .setDescription("Gauge of the current number of tracked resources")
+            .setAggregation(Aggregation.lastValue())
             .setAttributeFilter(
                 Set.of(
                     MetricsHelper.RESOURCE_STATE_KEY.getKey(),

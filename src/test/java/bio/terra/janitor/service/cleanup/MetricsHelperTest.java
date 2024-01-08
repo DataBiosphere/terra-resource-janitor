@@ -1,14 +1,16 @@
 package bio.terra.janitor.service.cleanup;
 
 import static bio.terra.janitor.service.cleanup.MetricsHelper.CLIENT_KEY;
+import static bio.terra.janitor.service.cleanup.MetricsHelper.COMPLETION_COUNT_METER_NAME;
 import static bio.terra.janitor.service.cleanup.MetricsHelper.COMPLETION_DURATION_METER_NAME;
 import static bio.terra.janitor.service.cleanup.MetricsHelper.FATAL_FLIGHT_UNDELETED_COUNT_METER_NAME;
 import static bio.terra.janitor.service.cleanup.MetricsHelper.FATAL_UPDATE_DURATION_METER_NAME;
 import static bio.terra.janitor.service.cleanup.MetricsHelper.RECOVERED_SUBMITTED_FLIGHTS_COUNT_METER_NAME;
 import static bio.terra.janitor.service.cleanup.MetricsHelper.RESOURCE_STATE_KEY;
 import static bio.terra.janitor.service.cleanup.MetricsHelper.RESOURCE_TYPE_KEY;
+import static bio.terra.janitor.service.cleanup.MetricsHelper.SUBMISSION_COUNT_METER_NAME;
 import static bio.terra.janitor.service.cleanup.MetricsHelper.SUBMISSION_DURATION_METER_NAME;
-import static bio.terra.janitor.service.cleanup.MetricsHelper.TRACKED_RESOURCE_COUNT_METER_NAME;
+import static bio.terra.janitor.service.cleanup.MetricsHelper.TRACKED_RESOURCE_GAUGE_METER_NAME;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -17,6 +19,7 @@ import bio.terra.janitor.db.ResourceKind;
 import bio.terra.janitor.db.ResourceType;
 import bio.terra.janitor.db.TrackedResourceState;
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.metrics.data.MetricData;
@@ -49,9 +52,30 @@ public class MetricsHelperTest extends BaseUnitTest {
   }
 
   @Test
+  public void testIncrementSubmission() {
+    var resourceType = ResourceType.AZURE_MANAGED_IDENTITY;
+    var attributes =
+        testCounter(
+            () -> metricsHelper.incrementSubmission(resourceType), SUBMISSION_COUNT_METER_NAME);
+    assertEquals(resourceType.toString(), attributes.get(RESOURCE_TYPE_KEY));
+  }
+
+  @Test
   public void testRecordCompletionDuration() {
     testHistogram(
         d -> metricsHelper.recordCompletionDuration(d, true), COMPLETION_DURATION_METER_NAME);
+  }
+
+  @Test
+  public void testIncrementCompletion() {
+    var resourceType = ResourceType.AZURE_BATCH_POOL;
+    var state = TrackedResourceState.DONE;
+    var attributes =
+        testCounter(
+            () -> metricsHelper.incrementCompletion(resourceType, state, true),
+            COMPLETION_COUNT_METER_NAME);
+    assertEquals(resourceType.toString(), attributes.get(RESOURCE_TYPE_KEY));
+    assertEquals(state.toString(), attributes.get(RESOURCE_STATE_KEY));
   }
 
   @Test
@@ -61,42 +85,32 @@ public class MetricsHelperTest extends BaseUnitTest {
   }
 
   @Test
-  public void testRecordResourceKindCount() {
+  public void testRecordResourceKindGauge() {
     var resourceKind = ResourceKind.create("client", ResourceType.GOOGLE_BUCKET);
     var trackedResourceState = TrackedResourceState.READY;
-    metricsHelper.recordResourceKindCount(resourceKind, trackedResourceState, 100);
-    var metricData = waitForMetrics(testMetricExporter, METRICS_COLLECTION_INTERVAL);
-    assertEquals(TRACKED_RESOURCE_COUNT_METER_NAME, metricData.getName());
-    assertEquals(1, metricData.getLongSumData().getPoints().size());
-    var point = metricData.getLongSumData().getPoints().iterator().next();
-    assertEquals(100, point.getValue());
-    assertEquals(trackedResourceState.toString(), point.getAttributes().get(RESOURCE_STATE_KEY));
-    assertEquals(
-        resourceKind.resourceType().toString(), point.getAttributes().get(RESOURCE_TYPE_KEY));
-    assertEquals(resourceKind.client(), point.getAttributes().get(CLIENT_KEY));
+    var attributes =
+        testGauge(
+            l -> metricsHelper.recordResourceKindGauge(resourceKind, trackedResourceState, l),
+            TRACKED_RESOURCE_GAUGE_METER_NAME);
+    assertEquals(trackedResourceState.toString(), attributes.get(RESOURCE_STATE_KEY));
+    assertEquals(resourceKind.resourceType().toString(), attributes.get(RESOURCE_TYPE_KEY));
+    assertEquals(resourceKind.client(), attributes.get(CLIENT_KEY));
   }
 
   @Test
   public void testIncrementRecoveredSubmittedFlight() {
-    metricsHelper.incrementRecoveredSubmittedFlight();
-    var metricData = waitForMetrics(testMetricExporter, METRICS_COLLECTION_INTERVAL);
-    assertEquals(RECOVERED_SUBMITTED_FLIGHTS_COUNT_METER_NAME, metricData.getName());
-    assertEquals(1, metricData.getLongSumData().getPoints().size());
-    var point = metricData.getLongSumData().getPoints().iterator().next();
-    assertEquals(1, point.getValue());
+    testCounter(
+        metricsHelper::incrementRecoveredSubmittedFlight,
+        RECOVERED_SUBMITTED_FLIGHTS_COUNT_METER_NAME);
   }
 
   @Test
   public void testIncrementFatalFlightUndeleted() {
-    metricsHelper.incrementFatalFlightUndeleted();
-    var metricData = waitForMetrics(testMetricExporter, METRICS_COLLECTION_INTERVAL);
-    assertEquals(FATAL_FLIGHT_UNDELETED_COUNT_METER_NAME, metricData.getName());
-    assertEquals(1, metricData.getLongSumData().getPoints().size());
-    var point = metricData.getLongSumData().getPoints().iterator().next();
-    assertEquals(1, point.getValue());
+    testCounter(
+        metricsHelper::incrementFatalFlightUndeleted, FATAL_FLIGHT_UNDELETED_COUNT_METER_NAME);
   }
 
-  private void testHistogram(Consumer<Duration> recordMetric, String name) {
+  private Attributes testHistogram(Consumer<Duration> recordMetric, String name) {
     var duration = Duration.of(5, ChronoUnit.MINUTES);
     recordMetric.accept(duration);
     var metricData = waitForMetrics(testMetricExporter, METRICS_COLLECTION_INTERVAL);
@@ -104,8 +118,31 @@ public class MetricsHelperTest extends BaseUnitTest {
     assertEquals(name, metricData.getName());
 
     assertEquals(1, metricData.getHistogramData().getPoints().size());
-    assertEquals(
-        duration.toMillis(), metricData.getHistogramData().getPoints().iterator().next().getSum());
+    var point = metricData.getHistogramData().getPoints().iterator().next();
+    assertEquals(duration.toMillis(), point.getSum());
+    return point.getAttributes();
+  }
+
+  private Attributes testGauge(Consumer<Long> recordMetric, String name) {
+    var amount = 100L;
+    recordMetric.accept(amount);
+    var metricData = waitForMetrics(testMetricExporter, METRICS_COLLECTION_INTERVAL);
+    assertEquals(name, metricData.getName());
+    assertEquals(1, metricData.getLongGaugeData().getPoints().size());
+    var point = metricData.getLongGaugeData().getPoints().iterator().next();
+    assertEquals(amount, point.getValue());
+    return point.getAttributes();
+  }
+
+  private Attributes testCounter(Runnable recordMetric, String name) {
+    var resourceType = ResourceType.AZURE_MANAGED_IDENTITY;
+    recordMetric.run();
+    var metricData = waitForMetrics(testMetricExporter, METRICS_COLLECTION_INTERVAL);
+    assertEquals(name, metricData.getName());
+    assertEquals(1, metricData.getLongSumData().getPoints().size());
+    var point = metricData.getLongSumData().getPoints().iterator().next();
+    assertEquals(1, point.getValue());
+    return point.getAttributes();
   }
 
   private static MetricData waitForMetrics(
