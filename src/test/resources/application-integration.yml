@@ -20,11 +20,11 @@ janitor:
     # Reusing static MRG from https://github.com/broadinstitute/terra-github-workflows/blob/main/.github/workflows/attach-billing-project-to-landing-zone.yaml
     azure-tenant-id: fad90753-2022-4456-9b0a-c7e5b934e408
     azure-subscription-id: f557c728-871d-408c-a28b-eb6b2141a087
-    azure-managed-resource-group-name: e2e-n6bgy8
-    azure-storage-account-name: lzd4ab4e59ce35d5d5b988f7
-    azure-relay-namespace: lzf92823655bd35f0bf39777f212911b2a6a8330ac6b5fbdb6
-    azure-postgres-server-name: lz9e0e12fdd38ebd3ea6f83948f8fe3e60411bf0add6460b18ddb8ec727a1a0
-    azure-vnet-name: lz836e668039ec8ddd2b2e15bf8db6a3a36d3efa89b3df5124562291bb4939f1
-    aks-cluster-name: lz1d44e6be869b466b
-    azure-batch-account-name: lz4bd93d11fc4c23ae230177
+    azure-managed-resource-group-name: e2e-xmx74y
+    azure-storage-account-name: lzf0301a3ce26548178e8ace
+    azure-relay-namespace: lze8caf1818ef66aab01cae5e6cd01bef374ad0c9777d8acbe
+    azure-postgres-server-name: lz435678d1acd5183be2b80d5cb902a805d21891b7bfda7c22377c6e7b04f4a
+    azure-vnet-name: lz7b9e527a5ca64fbc0cb8fa30d73dc47a6b32e147077937cee7db1192e2673a
+    aks-cluster-name: lz188fbab0f65ce4cd
+    azure-batch-account-name: lz1f4f29a3a6389d8dd7db48
 
