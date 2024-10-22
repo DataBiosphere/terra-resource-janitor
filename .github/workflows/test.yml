@@ -71,8 +71,8 @@ jobs:
 
           AZURE_PUBLISHER_CLIENT_ID=${{ secrets.AZURE_PUBLISHER_CLIENT_ID }}
           echo ::add-mask::$AZURE_PUBLISHER_CLIENT_ID
-          AZURE_PUBLISHER_CLIENT_SECRET_ID=${{ secrets.AZURE_PUBLISHER_CLIENT_SECRET_ID }}
-          echo ::add-mask::$AZURE_PUBLISHER_CLIENT_SECRET_ID
+          AZURE_PUBLISHER_CLIENT_SECRET=${{ secrets.AZURE_PUBLISHER_CLIENT_SECRET }}
+          echo ::add-mask::$AZURE_PUBLISHER_CLIENT_SECRET
           AZURE_PUBLISHER_TENANT_ID=${{ secrets.AZURE_PUBLISHER_TENANT_ID }}
           echo ::add-mask::$AZURE_PUBLISHER_TENANT_ID
 
@@ -81,7 +81,7 @@ jobs:
           janitor:
             azure:
               managed-app-client-id: ${AZURE_PUBLISHER_CLIENT_ID}
-              managed-app-client-secret: ${AZURE_PUBLISHER_CLIENT_SECRET_ID}
+              managed-app-client-secret: ${AZURE_PUBLISHER_CLIENT_SECRET}
               managed-app-tenant-id: ${AZURE_PUBLISHER_TENANT_ID}
           EOF
       - name: Initialize Postgres DB
