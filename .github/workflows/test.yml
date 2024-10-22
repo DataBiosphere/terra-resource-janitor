@@ -13,14 +13,10 @@ on:
     branches: [ master ]
 
 env:
-  VAULT_ADDR: https://clotho.broadinstitute.org:8200
-  VAULT_SERVICE_ACCOUNT_PATH: secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/app-sa
-  VAULT_CLIENT_SERVICE_ACCOUNT_PATH: secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/client-sa
-  VAULT_CLOUD_ACCESS_ACCOUNT_PATH: secret/dsde/terra/janitor-test/default/cloud-access-sa
-  # Where to store the retrieved service accounts credentials for Google integration tests.
-  SERVICE_ACCOUNT_FILE: src/test/resources/rendered/sa-account.json
-  SERVICE_ACCOUNT_CLIENT_FILE: src/test/resources/rendered/client-sa-account.json
-  SERVICE_ACCOUNT_CLOUD_ACCESS_FILE: src/test/resources/rendered/cloud-access-sa-account.json
+  JANITOR_CLIENT_SA_FILE: src/test/resources/rendered/client-sa-account.json
+  JANITOR_CLIENT_SA_TOOLS_FILE: src/test/resources/rendered/tools-client-sa-account.json
+  JANITOR_CLOUD_ACCESS_SA_FILE: src/test/resources/rendered/cloud-access-sa-account.json
+  LOCAL_PROPERTIES_DIR: config
 
 jobs:
   unit-test:
@@ -45,28 +41,41 @@ jobs:
         uses: ./.github/actions/bump-skip
         with:
           event-name: ${{ github.event_name }}
-      - name: Pull Vault image
+      - name: Render secrets for tests
         if: steps.skiptest.outputs.is-bump == 'no'
-        run: docker pull vault:1.1.0
-      # Currently, there's no way to add capabilities to Docker actions on Git, and Vault needs IPC_LOCK to run.
-      - name: Get Vault token
-        if: steps.skiptest.outputs.is-bump == 'no'
-        id: vault-token-step
         run: |
-          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
-            -e "VAULT_ADDR=${VAULT_ADDR}" \
-            vault:1.1.0 \
-            vault write -field token \
-              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
-          echo ::add-mask::$VAULT_TOKEN
-          echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
-      - name: Grant execute permission for render-config
-        if: steps.skiptest.outputs.is-bump == 'no'
-        run: chmod +x local-dev/render-config.sh
-      - name: Render configuration for tests
-        if: steps.skiptest.outputs.is-bump == 'no'
-        run: local-dev/render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          JANITOR_CLIENT_SA_B64=${{ secrets.JANITOR_CLIENT_SA }}
+          echo ::add-mask::$JANITOR_CLIENT_SA_B64
+          JANITOR_CLIENT_SA=$(echo $JANITOR_CLIENT_SA_B64 | base64 --decode)
+          echo ::add-mask::$JANITOR_CLIENT_SA
+          echo $JANITOR_CLIENT_SA > $JANITOR_CLIENT_SA_FILE
+
+          JANITOR_CLIENT_SA_TOOLS_B64=${{ secrets.JANITOR_CLIENT_SA_TOOLS }}
+          echo ::add-mask::$JANITOR_CLIENT_SA_TOOLS_B64
+          JANITOR_CLIENT_SA_TOOLS=$(echo $JANITOR_CLIENT_SA_TOOLS_B64 | base64 --decode)
+          echo ::add-mask::$JANITOR_CLIENT_SA_TOOLS
+          echo $JANITOR_CLIENT_SA_TOOLS > $JANITOR_CLIENT_SA_TOOLS_FILE
+
+          JANITOR_CLOUD_ACCESS_SA_B64=${{ secrets.JANITOR_CLOUD_ACCESS_SA }}
+          echo ::add-mask::JANITOR_CLOUD_ACCESS_SA_B64
+          JANITOR_CLOUD_ACCESS_SA=$(echo $JANITOR_CLOUD_ACCESS_SA_B64 | base64 --decode)
+          echo ::add-mask::$JANITOR_CLOUD_ACCESS_SA
+          echo $JANITOR_CLOUD_ACCESS_SA > $JANITOR_CLOUD_ACCESS_SA_FILE
+
+          AZURE_PUBLISHER_CLIENT_ID=${{ secrets.AZURE_PUBLISHER_CLIENT_ID }}
+          echo ::add-mask::$AZURE_PUBLISHER_CLIENT_ID
+          AZURE_PUBLISHER_CLIENT_SECRET_ID=${{ secrets.AZURE_PUBLISHER_CLIENT_SECRET_ID }}
+          echo ::add-mask::$AZURE_PUBLISHER_CLIENT_SECRET_ID
+          AZURE_PUBLISHER_TENANT_ID=${{ secrets.AZURE_PUBLISHER_TENANT_ID }}
+          echo ::add-mask::$AZURE_PUBLISHER_TENANT_ID
+
+          cat << EOF > ${LOCAL_PROPERTIES_DIR}/local-properties.yml
+          janitor:
+            azure:
+              managed-app-client-id: ${AZURE_PUBLISHER_CLIENT_ID}
+              managed-app-client-secret: ${AZURE_PUBLISHER_CLIENT_SECRET_ID}
+              managed-app-tenant-id: ${AZURE_PUBLISHER_TENANT_ID}
+          EOF
       - name: Initialize Postgres DB
         if: steps.skiptest.outputs.is-bump == 'no'
         env:
