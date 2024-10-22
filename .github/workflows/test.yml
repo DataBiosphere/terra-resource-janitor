@@ -13,6 +13,7 @@ on:
     branches: [ master ]
 
 env:
+  JANITOR_APP_SA_FILE: src/test/resources/rendered/sa-account.json
   JANITOR_CLIENT_SA_FILE: src/test/resources/rendered/client-sa-account.json
   JANITOR_CLIENT_SA_TOOLS_FILE: src/test/resources/rendered/tools-client-sa-account.json
   JANITOR_CLOUD_ACCESS_SA_FILE: src/test/resources/rendered/cloud-access-sa-account.json
@@ -44,6 +45,12 @@ jobs:
       - name: Render secrets for tests
         if: steps.skiptest.outputs.is-bump == 'no'
         run: |
+          JANITOR_APP_SA_B64=${{ secrets.JANITOR_APP_SA }}
+          echo ::add-mask::$JANITOR_APP_SA_B64
+          JANITOR_APP_SA=$(echo $JANITOR_APP_SA_B64 | base64 --decode)
+          echo ::add-mask::$JANITOR_APP_SA
+          echo $JANITOR_APP_SA > $JANITOR_APP_SA_FILE
+
           JANITOR_CLIENT_SA_B64=${{ secrets.JANITOR_CLIENT_SA }}
           echo ::add-mask::$JANITOR_CLIENT_SA_B64
           JANITOR_CLIENT_SA=$(echo $JANITOR_CLIENT_SA_B64 | base64 --decode)
