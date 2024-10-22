@@ -13,8 +13,11 @@ import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.CreateResourceRequestBody;
 import bio.terra.janitor.generated.model.GoogleBucketUid;
+import bio.terra.janitor.generated.model.GoogleProjectUid;
 import bio.terra.janitor.service.janitor.TrackedResourceService;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
@@ -99,5 +102,57 @@ public class TrackedResourceSubscriberTest extends BaseUnitTest {
             resourceReceiver.receiveMessage(
                 PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8("bad json")).build(),
                 consumer));
+  }
+
+  // See https://broadworkbench.atlassian.net/browse/CORE-104
+  @Test
+  public void receiveMessage_unknownFields() throws Exception {
+    // Set up base project message
+    OffsetDateTime publishTime = JanitorDao.currentOffsetDateTime();
+    CloudResourceUid resource =
+        new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId("project"));
+
+    // "Extend" the mapper for CloudResourceUid by adding a few extra fields to the JSON with null
+    // values.
+    @JsonAppend(
+        attrs = {
+          @JsonAppend.Attr(value = "azurePublicIp", include = JsonInclude.Include.ALWAYS),
+          @JsonAppend.Attr(value = "unknownField", include = JsonInclude.Include.ALWAYS),
+          @JsonAppend.Attr(value = "someOtherUnknownField", include = JsonInclude.Include.ALWAYS),
+        })
+    abstract class AzurePublicIpMixin {}
+    objectMapper.addMixIn(CloudResourceUid.class, AzurePublicIpMixin.class);
+    ByteString data =
+        ByteString.copyFromUtf8(
+            objectMapper.writeValueAsString(
+                new CreateResourceRequestBody()
+                    .resourceUid(resource)
+                    .creation(publishTime)
+                    .expiration(publishTime)));
+
+    // Send the extended JSON to the TrackedResourceSubscriber
+    AckReplyConsumer consumer =
+        new AckReplyConsumer() {
+          @Override
+          public void ack() {}
+
+          @Override
+          public void nack() {}
+        };
+    TrackedResourceSubscriber.ResourceReceiver resourceReceiver =
+        new TrackedResourceSubscriber.ResourceReceiver(objectMapper, trackedResourceService);
+    resourceReceiver.receiveMessage(PubsubMessage.newBuilder().setData(data).build(), consumer);
+
+    // The bucket message should have been processed
+    List<TrackedResourceAndLabels> resources =
+        janitorDao.retrieveResourcesAndLabels(
+            TrackedResourceFilter.builder().cloudResourceUid(resource).build());
+    assertEquals(1, resources.size());
+    TrackedResourceAndLabels trackedResourceAndLabels = resources.get(0);
+    TrackedResource trackedResource = trackedResourceAndLabels.trackedResource();
+    assertEquals(resource, trackedResource.cloudResourceUid());
+    assertEquals(publishTime.toInstant(), trackedResource.creation());
+    assertEquals(publishTime.toInstant(), trackedResource.expiration());
+    assertEquals(TrackedResourceState.READY, trackedResource.trackedResourceState());
   }
 }
