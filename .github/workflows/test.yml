@@ -69,6 +69,7 @@ jobs:
           AZURE_PUBLISHER_TENANT_ID=${{ secrets.AZURE_PUBLISHER_TENANT_ID }}
           echo ::add-mask::$AZURE_PUBLISHER_TENANT_ID
 
+          mkdir -p "${LOCAL_PROPERTIES_DIR}"
           cat << EOF > ${LOCAL_PROPERTIES_DIR}/local-properties.yml
           janitor:
             azure:
