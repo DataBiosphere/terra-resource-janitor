@@ -13,6 +13,7 @@ import bio.terra.janitor.db.TrackedResourceState;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.CreateResourceRequestBody;
 import bio.terra.janitor.generated.model.GoogleBucketUid;
+import bio.terra.janitor.generated.model.GoogleProjectUid;
 import bio.terra.janitor.service.janitor.TrackedResourceService;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -106,11 +107,10 @@ public class TrackedResourceSubscriberTest extends BaseUnitTest {
   // See https://broadworkbench.atlassian.net/browse/CORE-104
   @Test
   public void receiveMessage_unknownFields() throws Exception {
-    // Set up base bucket message
+    // Set up base project message
     OffsetDateTime publishTime = JanitorDao.currentOffsetDateTime();
     CloudResourceUid resource =
-        new CloudResourceUid().googleBucketUid(new GoogleBucketUid().bucketName("bucket"));
-    Map<String, String> labels = ImmutableMap.of("key1", "value1", "key2", "value2");
+        new CloudResourceUid().googleProjectUid(new GoogleProjectUid().projectId("project"));
 
     // "Extend" the mapper for CloudResourceUid by adding a few extra fields to the JSON with null
     // values.
@@ -128,8 +128,7 @@ public class TrackedResourceSubscriberTest extends BaseUnitTest {
                 new CreateResourceRequestBody()
                     .resourceUid(resource)
                     .creation(publishTime)
-                    .expiration(publishTime)
-                    .labels(labels)));
+                    .expiration(publishTime)));
 
     // Send the extended JSON to the TrackedResourceSubscriber
     AckReplyConsumer consumer =
@@ -154,7 +153,6 @@ public class TrackedResourceSubscriberTest extends BaseUnitTest {
     assertEquals(resource, trackedResource.cloudResourceUid());
     assertEquals(publishTime.toInstant(), trackedResource.creation());
     assertEquals(publishTime.toInstant(), trackedResource.expiration());
-    assertEquals(labels, trackedResourceAndLabels.labels());
     assertEquals(TrackedResourceState.READY, trackedResource.trackedResourceState());
   }
 }
