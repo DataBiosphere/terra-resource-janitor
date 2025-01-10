@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-POSTGRES_VERSION=12.3
+POSTGRES_VERSION=14.15
 start() {
 
 
