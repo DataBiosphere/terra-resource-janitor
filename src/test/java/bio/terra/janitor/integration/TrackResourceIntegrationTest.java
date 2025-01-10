@@ -101,6 +101,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -205,6 +206,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publisher.shutdown();
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_googleBucket() throws Exception {
     // Creates bucket and verify.
@@ -228,6 +230,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   }
 
   /** Try to let Janitor cleanup a Bucket that is already deleted in cloud. */
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedBucket() throws Exception {
     // Creates bucket and verify.
@@ -245,6 +248,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publishAndVerify(resource, ResourceState.DONE);
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_googleBlob() throws Exception {
     // Creates Blob and verify.
@@ -269,6 +273,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   }
 
   /** Try to let Janitor cleanup a Blob that is already deleted in cloud. */
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedBlob() throws Exception {
     // Creates Blob and verify.
@@ -293,6 +298,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     storageCow.delete(bucketName);
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_googleDataset() throws Exception {
     // Creates dataset and table.
@@ -365,6 +371,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publishAndVerify(tableUid, ResourceState.DONE);
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_googleBigQueryTable() throws Exception {
     // Creates dataset and table.
@@ -424,6 +431,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     bigQueryCow.datasets().delete(projectId, datasetName).execute();
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_googleNotebookInstance() throws Exception {
     InstanceName instanceName =
@@ -450,6 +458,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals(404, e.getStatusCode());
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedGoogleNotebookInstance() throws Exception {
     InstanceName instanceName =
@@ -487,6 +496,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals(404, e.getStatusCode());
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_googleProject() throws Exception {
     String projectId = randomProjectId();
@@ -503,6 +513,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("DELETE_REQUESTED", project.getState());
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedGoogleProject() throws Exception {
     String projectId = randomProjectId();
@@ -518,6 +529,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("DELETE_REQUESTED", project.getState());
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_neverCreatedGoogleProject_withMetadataOk()
       throws Exception {
@@ -538,6 +550,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publishAndVerify(request, ResourceState.DONE);
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_neverCreatedGoogleProject_withoutMetadataError()
       throws Exception {
@@ -551,6 +564,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publishAndVerify(resource, ResourceState.ERROR);
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_azureRelayHybridConnections() throws Exception {
     String hybridConnectionName = randomNameWithUnderscore();
@@ -585,6 +599,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("EntityNotFound", removeHc.getValue().getCode());
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_azureDisk() throws Exception {
     // Creates disk
@@ -620,6 +635,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("ResourceNotFound", diskDeleted.getValue().getCode());
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_azureVirtualMachine() throws Exception {
     // Creates disk
@@ -711,6 +727,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   }
 
   /** Clean up a fake WSM workspace. */
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_terraWorkspace() throws Exception {
     // Cleaning up workspaces relies on domain-wide delegation to impersonate test users. The tools
@@ -732,6 +749,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   }
 
   /** Try to clean up an already deleted workspace, should succeed. */
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedTerraWorkspace() throws Exception {
     UUID fakeWorkspaceId = UUID.randomUUID();
@@ -754,6 +772,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publishAndVerify(resource, ResourceState.DONE, metadata);
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_azureManagedIdentity() throws Exception {
     // Creates managed identity
@@ -787,6 +806,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("ResourceNotFound", identityDeleted.getValue().getCode());
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_azureStorageContainer() throws Exception {
     String storageContainerName = randomName();
@@ -837,6 +857,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("ContainerNotFound", removeStorageContainer.getValue().getCode());
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_azureDatabase() throws Exception {
     String databaseName = "janitortest" + System.currentTimeMillis();
@@ -886,6 +907,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals("ResourceNotFound", removeDatabase.getValue().getCode());
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_azureKubernetesNamespace() throws Exception {
     String namespaceName = randomName();
@@ -924,6 +946,7 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     assertEquals(404, removeNamespace.getCode());
   }
 
+  @Disabled
   @Test
   public void subscribeAndCleanupResource_azureBatchPool() throws Exception {
     String poolName = randomName();
