@@ -9,7 +9,7 @@ janitor:
       project-id: terra-kernel-k8s
       subscription: crljanitor-tools-pubsub-sub
   test:
-    janitor-client-service-account-path: rendered/client-sa-account.json
+    janitor-client-service-account-path: rendered/tools-client-sa-account.json
     parent-resource-id: folders/1074206284898
     prod-janitor-client-credential-file-path: rendered/tools-client-sa-account.json
     prod-track-resource-project-id: terra-kernel-k8s

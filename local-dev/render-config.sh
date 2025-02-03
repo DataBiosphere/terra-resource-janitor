@@ -8,7 +8,7 @@
 VAULT_TOKEN=${1:-$(cat $HOME/.vault-token)}
 DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:dev
 VAULT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/tools/crl_janitor/app-sa
-VAULT_CLIENT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa
+VAULT_CLIENT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/client-sa
 VAULT_CLOUD_ACCESS_SERVICE_ACCOUNT_PATH=secret/dsde/terra/janitor-test/default/cloud-access-sa
 VAULT_AZURE_MANAGED_APP_PUBLISHER_PATH=secret/dsde/terra/azure/common/managed-app-publisher
 
