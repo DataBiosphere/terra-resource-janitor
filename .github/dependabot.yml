@@ -16,7 +16,7 @@ updates:
       timezone: "America/New_York"
     target-branch: "master"
     reviewers:
-      - "@DataBiosphere/broad-core-services"
+      - "@DataBiosphere/broad-devops"
     labels:
       - "dependency"
       - "gradle"
