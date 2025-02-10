@@ -132,7 +132,7 @@ dependencies {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
     // Allows us to mock final classes
-    testImplementation 'org.mockito:mockito-inline:2.13.0'
+    testImplementation 'org.mockito:mockito-inline:5.2.0'
 
     // Transitive dependency constraints due to security vulnerabilities in prior versions.
     // These are not directly included, they are just constrained if they are pulled in as
