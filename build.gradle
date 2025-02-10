@@ -101,7 +101,7 @@ dependencies {
     implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2'
 
     // Kubernetes client
-    implementation group: 'io.kubernetes', name: 'client-java', version: '18.0.0'
+    implementation group: 'io.kubernetes', name: 'client-java', version: '22.0.0-legacy'
 
     // OpenTelemetry
     var openTelemetryVersion = '1.32.0'
