@@ -7,13 +7,13 @@
 # TODO: migrate vault secrets to GSM as needed
 VAULT_TOKEN=${1:-$(cat $HOME/.vault-token)}
 DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:dev
-VAULT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/app-sa
-VAULT_CLIENT_SERVICE_ACCOUNT_PATH=secret/dsde/terra/kernel/integration/toolsalpha/crl_janitor/client-sa
 VAULT_CLOUD_ACCESS_SERVICE_ACCOUNT_PATH=secret/dsde/terra/janitor-test/default/cloud-access-sa
 VAULT_AZURE_MANAGED_APP_PUBLISHER_PATH=secret/dsde/terra/azure/common/managed-app-publisher
 
 # GSM secrets
 GSM_CLIENT_SERVICE_ACCOUNT_SECRET=crljanitor-client-sa
+GSM_QA_APP_SERVICE_ACCOUNT_SECRET=crljanitor-qa-sa
+GSM_QA_CLIENT_SERVICE_ACCOUNT_SECRET=crljanitor-client-qa-sa
 GSM_CLIENT_SERVICE_ACCOUNT_PROJECT=broad-dsde-qa
 
 # Rendered paths
@@ -25,13 +25,6 @@ AZURE_MANAGED_APP_PUBLISHER_OUTPUT_FILE_PATH="$(dirname $0)"/../src/test/resourc
 LOCAL_PROPERTIES_DIR="$(dirname $0)"/../config
 
 # Pull secrets from vault
-docker run --rm -e VAULT_TOKEN=$VAULT_TOKEN ${DSDE_TOOLBOX_DOCKER_IMAGE} \
-            vault read -format json ${VAULT_SERVICE_ACCOUNT_PATH} \
-            | jq -r .data.key | base64 -d > ${SERVICE_ACCOUNT_OUTPUT_FILE_PATH}
-docker run --rm --cap-add IPC_LOCK \
-            -e VAULT_TOKEN=$VAULT_TOKEN ${DSDE_TOOLBOX_DOCKER_IMAGE} \
-            vault read -format json ${VAULT_CLIENT_SERVICE_ACCOUNT_PATH} \
-            | jq -r .data.key | base64 -d > ${CLIENT_SERVICE_ACCOUNT_OUTPUT_FILE_PATH}
 docker run --rm --cap-add IPC_LOCK \
             -e VAULT_TOKEN=$VAULT_TOKEN ${DSDE_TOOLBOX_DOCKER_IMAGE} \
             vault read -format json ${VAULT_CLOUD_ACCESS_SERVICE_ACCOUNT_PATH} \
@@ -44,6 +37,12 @@ docker run --rm --cap-add IPC_LOCK \
 # Pull secrets from GSM
 gcloud secrets versions access latest --project $GSM_CLIENT_SERVICE_ACCOUNT_PROJECT --secret $GSM_CLIENT_SERVICE_ACCOUNT_SECRET \
   | jq -r '.key' | base64 -d > "$TOOLS_CLIENT_SERVICE_ACCOUNT_OUTPUT_FILE_PATH"
+
+gcloud secrets versions access latest --project $GSM_CLIENT_SERVICE_ACCOUNT_PROJECT --secret GSM_QA_APP_SERVICE_ACCOUNT_SECRET \
+  | jq -r '.key' | base64 -d > "$SERVICE_ACCOUNT_OUTPUT_FILE_PATH"
+
+gcloud secrets versions access latest --project $GSM_CLIENT_SERVICE_ACCOUNT_PROJECT --secret $GSM_QA_CLIENT_SERVICE_ACCOUNT_SECRET \
+  | jq -r '.key' | base64 -d > "$CLIENT_SERVICE_ACCOUNT_OUTPUT_FILE_PATH"
 
 # Write the Azure configuration into the local-properties.yml file
 mkdir -p "${LOCAL_PROPERTIES_DIR}"
