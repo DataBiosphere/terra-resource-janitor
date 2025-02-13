@@ -19,22 +19,22 @@ public class TestConfiguration {
   /** How long to keep the resource before the 'prod' Janitor do the cleanup. */
   public static Duration RESOURCE_TIME_TO_LIVE_PROD = Duration.ofMinutes(30);
 
-  /** pubsub project id to publish track resource to Janitor test env(tools) */
+  /** pubsub project id to publish track resource to Janitor test env(qa) */
   private String resourceProjectId;
 
-  /** pubsub project id to publish track resource to Janitor prod env(tools) */
+  /** pubsub project id to publish track resource to Janitor prod env(qa) */
   private String prodTrackResourceProjectId;
 
-  /** pubsub topic id to publish track resource to Janitor test env(tools) */
+  /** pubsub topic id to publish track resource to Janitor test env(qa) */
   private String trackResourceTopicId;
 
-  /** pubsub topic id to publish track resource to Janitor prod env(tools) */
+  /** pubsub topic id to publish track resource to Janitor prod env(qa) */
   private String prodTrackResourceTopicId;
 
-  /** Credential file path to be able to publish message to Janitor test env (tools). */
+  /** Credential file path to be able to publish message to Janitor test env (qa). */
   private String janitorClientServiceAccountPath;
 
-  /** Credential file path to be able to publish message to Janitor prod env (tools). */
+  /** Credential file path to be able to publish message to Janitor prod env (qa). */
   private String prodJanitorClientCredentialFilePath;
 
   /** Credential file path for accessing cloud resources. */
