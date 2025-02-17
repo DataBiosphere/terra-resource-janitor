@@ -715,7 +715,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   }
 
   /** Clean up a fake WSM workspace. */
-  @Disabled
   @Test
   public void subscribeAndCleanupResource_terraWorkspace() throws Exception {
     // Cleaning up workspaces relies on domain-wide delegation to impersonate test users. The tools
@@ -737,7 +736,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   }
 
   /** Try to clean up an already deleted workspace, should succeed. */
-  @Disabled
   @Test
   public void subscribeAndCleanupResource_alreadyDeletedTerraWorkspace() throws Exception {
     UUID fakeWorkspaceId = UUID.randomUUID();

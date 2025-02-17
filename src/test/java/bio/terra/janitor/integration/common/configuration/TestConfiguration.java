@@ -22,19 +22,19 @@ public class TestConfiguration {
   /** pubsub project id to publish track resource to Janitor test env(qa) */
   private String resourceProjectId;
 
-  /** pubsub project id to publish track resource to Janitor prod env(qa) */
+  /** pubsub project id to publish track resource to Janitor prod env(tools) */
   private String prodTrackResourceProjectId;
 
   /** pubsub topic id to publish track resource to Janitor test env(qa) */
   private String trackResourceTopicId;
 
-  /** pubsub topic id to publish track resource to Janitor prod env(qa) */
+  /** pubsub topic id to publish track resource to Janitor prod env(tools) */
   private String prodTrackResourceTopicId;
 
   /** Credential file path to be able to publish message to Janitor test env (qa). */
   private String janitorClientServiceAccountPath;
 
-  /** Credential file path to be able to publish message to Janitor prod env (qa). */
+  /** Credential file path to be able to publish message to Janitor prod env (tools). */
   private String prodJanitorClientCredentialFilePath;
 
   /** Credential file path for accessing cloud resources. */
