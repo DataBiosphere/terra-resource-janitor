@@ -38,7 +38,7 @@ docker run --rm --cap-add IPC_LOCK \
 gcloud secrets versions access latest --project $GSM_CLIENT_SERVICE_ACCOUNT_PROJECT --secret $GSM_CLIENT_SERVICE_ACCOUNT_SECRET \
   | jq -r '.key' | base64 -d > "$TOOLS_CLIENT_SERVICE_ACCOUNT_OUTPUT_FILE_PATH"
 
-gcloud secrets versions access latest --project $GSM_CLIENT_SERVICE_ACCOUNT_PROJECT --secret GSM_QA_APP_SERVICE_ACCOUNT_SECRET \
+gcloud secrets versions access latest --project $GSM_CLIENT_SERVICE_ACCOUNT_PROJECT --secret $GSM_QA_APP_SERVICE_ACCOUNT_SECRET \
   | jq -r '.key' | base64 -d > "$SERVICE_ACCOUNT_OUTPUT_FILE_PATH"
 
 gcloud secrets versions access latest --project $GSM_CLIENT_SERVICE_ACCOUNT_PROJECT --secret $GSM_QA_CLIENT_SERVICE_ACCOUNT_SECRET \

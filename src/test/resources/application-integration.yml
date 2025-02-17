@@ -6,7 +6,7 @@ janitor:
   pubsub:
     track-resource:
       enabled: true
-      project-id: terra-kernel-k8s
+      project-id: broad-dsde-qa
       subscription: crljanitor-qa-pubsub-sub
   test:
     janitor-client-service-account-path: rendered/client-sa-account.json
