@@ -4,7 +4,6 @@ import static bio.terra.janitor.common.CredentialUtils.getGoogleCredentialsOrDie
 
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
-import bio.terra.janitor.generated.model.AzureResourceGroup;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -42,33 +41,6 @@ public class TestConfiguration {
 
   /** ID of the parent folder to create projects within. */
   private String parentResourceId;
-
-  /** ID of the Azure tenant to create resources within. */
-  private String azureTenantId;
-
-  /** ID of the Azure subscription to create resources within. */
-  private String azureSubscriptionId;
-
-  /** Name of the Azure managed resource group to create resources within. */
-  private String azureManagedResourceGroupName;
-
-  /** Name of the static Azure storage account. */
-  private String azureStorageAccountName;
-
-  /** Name of the static Azure Relay namespace. */
-  private String azureRelayNamespace;
-
-  /** Name of the status Azure postgres flex server. */
-  private String azurePostgresServerName;
-
-  /** Name of the static Azure vnet. */
-  private String azureVnetName;
-
-  /** Name of the static AKS cluster. */
-  private String aksClusterName;
-
-  /** Name of the static Azure batch account. */
-  private String azureBatchAccountName;
 
   public String getTrackResourceTopicId() {
     return trackResourceTopicId;
@@ -122,78 +94,6 @@ public class TestConfiguration {
     this.parentResourceId = parentResourceId;
   }
 
-  public String getAzureTenantId() {
-    return azureTenantId;
-  }
-
-  public void setAzureTenantId(String azureTenantId) {
-    this.azureTenantId = azureTenantId;
-  }
-
-  public String getAzureSubscriptionId() {
-    return azureSubscriptionId;
-  }
-
-  public void setAzureSubscriptionId(String azureSubscriptionId) {
-    this.azureSubscriptionId = azureSubscriptionId;
-  }
-
-  public String getAzureManagedResourceGroupName() {
-    return azureManagedResourceGroupName;
-  }
-
-  public void setAzureManagedResourceGroupName(String azureManagedResourceGroupName) {
-    this.azureManagedResourceGroupName = azureManagedResourceGroupName;
-  }
-
-  public String getAzureStorageAccountName() {
-    return azureStorageAccountName;
-  }
-
-  public void setAzureStorageAccountName(String azureStorageAccountName) {
-    this.azureStorageAccountName = azureStorageAccountName;
-  }
-
-  public String getAzureRelayNamespace() {
-    return azureRelayNamespace;
-  }
-
-  public void setAzureRelayNamespace(String azureRelayNamespace) {
-    this.azureRelayNamespace = azureRelayNamespace;
-  }
-
-  public String getAzurePostgresServerName() {
-    return azurePostgresServerName;
-  }
-
-  public void setAzurePostgresServerName(String azurePostgresServerName) {
-    this.azurePostgresServerName = azurePostgresServerName;
-  }
-
-  public String getAzureVnetName() {
-    return azureVnetName;
-  }
-
-  public void setAzureVnetName(String azureVnetName) {
-    this.azureVnetName = azureVnetName;
-  }
-
-  public String getAksClusterName() {
-    return aksClusterName;
-  }
-
-  public void setAksClusterName(String aksClusterName) {
-    this.aksClusterName = aksClusterName;
-  }
-
-  public String getAzureBatchAccountName() {
-    return azureBatchAccountName;
-  }
-
-  public void setAzureBatchAccountName(String azureBatchAccountName) {
-    this.azureBatchAccountName = azureBatchAccountName;
-  }
-
   /**
    * Janitor Client {@link ServiceAccountCredentials} which has permission to publish message to
    * Janitor.
@@ -229,10 +129,4 @@ public class TestConfiguration {
     return getGoogleCredentialsOrDie(resourceCredentialFilePath);
   }
 
-  public AzureResourceGroup getAzureResourceGroup() {
-    return new AzureResourceGroup()
-        .tenantId(azureTenantId)
-        .subscriptionId(azureSubscriptionId)
-        .resourceGroupName(azureManagedResourceGroupName);
-  }
 }

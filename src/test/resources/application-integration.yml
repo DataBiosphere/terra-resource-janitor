@@ -17,14 +17,3 @@ janitor:
     resource-credential-file-path: rendered/cloud-access-sa-account.json
     resource-project-id: terra-janitor-test
     track-resource-topic-id: crljanitor-qa-pubsub-topic
-    # Reusing static MRG from https://github.com/broadinstitute/terra-github-workflows/blob/main/.github/workflows/attach-billing-project-to-landing-zone.yaml
-    azure-tenant-id: fad90753-2022-4456-9b0a-c7e5b934e408
-    azure-subscription-id: f557c728-871d-408c-a28b-eb6b2141a087
-    azure-managed-resource-group-name: e2e-xmx74y
-    azure-storage-account-name: lzf0301a3ce26548178e8ace
-    azure-relay-namespace: lze8caf1818ef66aab01cae5e6cd01bef374ad0c9777d8acbe
-    azure-postgres-server-name: lz435678d1acd5183be2b80d5cb902a805d21891b7bfda7c22377c6e7b04f4a
-    azure-vnet-name: lz7b9e527a5ca64fbc0cb8fa30d73dc47a6b32e147077937cee7db1192e2673a
-    aks-cluster-name: lz188fbab0f65ce4cd
-    azure-batch-account-name: lz1f4f29a3a6389d8dd7db48
-
