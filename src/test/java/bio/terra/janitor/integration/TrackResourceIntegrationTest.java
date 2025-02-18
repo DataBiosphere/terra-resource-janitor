@@ -21,14 +21,6 @@ import bio.terra.janitor.app.configuration.CrlConfiguration;
 import bio.terra.janitor.app.configuration.TrackResourcePubsubConfiguration;
 import bio.terra.janitor.common.BaseIntegrationTest;
 import bio.terra.janitor.db.JanitorDao;
-import bio.terra.janitor.generated.model.AzureBatchPool;
-import bio.terra.janitor.generated.model.AzureDatabase;
-import bio.terra.janitor.generated.model.AzureDisk;
-import bio.terra.janitor.generated.model.AzureKubernetesNamespace;
-import bio.terra.janitor.generated.model.AzureManagedIdentity;
-import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
-import bio.terra.janitor.generated.model.AzureStorageContainer;
-import bio.terra.janitor.generated.model.AzureVirtualMachine;
 import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.janitor.generated.model.CreateResourceRequestBody;
 import bio.terra.janitor.generated.model.GoogleAiNotebookInstanceUid;
@@ -46,29 +38,6 @@ import bio.terra.janitor.integration.common.configuration.TestConfiguration;
 import bio.terra.janitor.service.cleanup.flight.KubernetesClientProvider;
 import bio.terra.janitor.service.workspace.WorkspaceManagerService;
 import bio.terra.workspace.client.ApiException;
-import com.azure.core.management.Region;
-import com.azure.core.management.exception.ManagementException;
-import com.azure.resourcemanager.batch.BatchManager;
-import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
-import com.azure.resourcemanager.batch.models.ImageReference;
-import com.azure.resourcemanager.batch.models.Pool;
-import com.azure.resourcemanager.batch.models.VirtualMachineConfiguration;
-import com.azure.resourcemanager.compute.ComputeManager;
-import com.azure.resourcemanager.compute.models.Disk;
-import com.azure.resourcemanager.compute.models.KnownLinuxVirtualMachineImage;
-import com.azure.resourcemanager.compute.models.VirtualMachine;
-import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
-import com.azure.resourcemanager.msi.MsiManager;
-import com.azure.resourcemanager.msi.models.Identity;
-import com.azure.resourcemanager.network.models.Network;
-import com.azure.resourcemanager.network.models.NetworkInterface;
-import com.azure.resourcemanager.postgresqlflexibleserver.PostgreSqlManager;
-import com.azure.resourcemanager.postgresqlflexibleserver.models.Database;
-import com.azure.resourcemanager.relay.RelayManager;
-import com.azure.resourcemanager.relay.models.HybridConnection;
-import com.azure.resourcemanager.storage.StorageManager;
-import com.azure.resourcemanager.storage.models.BlobContainer;
-import com.azure.resourcemanager.storage.models.PublicAccess;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -89,9 +58,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.V1Namespace;
-import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -101,7 +67,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,23 +86,13 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   @Autowired
   @Qualifier(OBJECT_MAPPER)
   private ObjectMapper objectMapper;
-
-  @Autowired private CrlConfiguration crlConfiguration;
-  @Autowired private KubernetesClientProvider kubernetesClientProvider;
-
   private Publisher publisher;
-
   private AIPlatformNotebooksCow notebooksCow;
   private StorageCow storageCow;
   private BigQueryCow bigQueryCow;
   private CloudResourceManagerCow resourceManagerCow;
   private String projectId;
-  private ComputeManager computeManager;
-  private RelayManager relayManager;
-  private MsiManager msiManager;
-  private StorageManager storageManager;
-  private PostgreSqlManager postgreSqlManager;
-  private BatchManager batchManager;
+
   @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
 
   private static final Map<String, String> DEFAULT_LABELS =
@@ -184,21 +139,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
         CloudResourceManagerCow.create(
             testConfiguration.createClientConfig(),
             testConfiguration.getResourceAccessGoogleCredentialsOrDie());
-
-    computeManager =
-        crlConfiguration.buildComputeManager(testConfiguration.getAzureResourceGroup());
-
-    relayManager = crlConfiguration.buildRelayManager(testConfiguration.getAzureResourceGroup());
-
-    msiManager = crlConfiguration.buildMsiManager(testConfiguration.getAzureResourceGroup());
-
-    storageManager =
-        crlConfiguration.buildStorageManager(testConfiguration.getAzureResourceGroup());
-
-    postgreSqlManager =
-        crlConfiguration.buildPostgreSqlManager(testConfiguration.getAzureResourceGroup());
-
-    batchManager = crlConfiguration.buildBatchManager(testConfiguration.getAzureResourceGroup());
   }
 
   @AfterEach
@@ -552,168 +492,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     publishAndVerify(resource, ResourceState.ERROR);
   }
 
-  @Disabled
-  @Test
-  public void subscribeAndCleanupResource_azureRelayHybridConnections() throws Exception {
-    String hybridConnectionName = randomNameWithUnderscore();
-    HybridConnection createdHc =
-        relayManager
-            .hybridConnections()
-            .define(hybridConnectionName)
-            .withExistingNamespace(
-                testConfiguration.getAzureManagedResourceGroupName(),
-                testConfiguration.getAzureRelayNamespace())
-            .create();
-
-    assertEquals(
-        hybridConnectionName, relayManager.hybridConnections().getById(createdHc.id()).name());
-
-    CloudResourceUid hcUid =
-        new CloudResourceUid()
-            .azureRelayHybridConnection(
-                new AzureRelayHybridConnection()
-                    .hybridConnectionName(hybridConnectionName)
-                    .namespace(testConfiguration.getAzureRelayNamespace())
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
-
-    // Publish a message to cleanup the hybrid connection.
-    publishAndVerify(hcUid, ResourceState.DONE);
-
-    // Resource is removed
-    ManagementException removeHc =
-        assertThrows(
-            ManagementException.class,
-            () -> relayManager.hybridConnections().getById(createdHc.id()));
-    assertEquals("EntityNotFound", removeHc.getValue().getCode());
-  }
-
-  @Disabled
-  @Test
-  public void subscribeAndCleanupResource_azureDisk() throws Exception {
-    // Creates disk
-    String diskName = randomNameWithUnderscore();
-    Disk createdDisk =
-        computeManager
-            .disks()
-            .define(diskName)
-            .withRegion(Region.US_SOUTH_CENTRAL)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withData()
-            .withSizeInGB(500)
-            .withTag("janitor.integration.test", "true")
-            .create();
-
-    // Verify resources are created in Azure
-    assertEquals(diskName, computeManager.disks().getById(createdDisk.id()).name());
-
-    CloudResourceUid diskUid =
-        new CloudResourceUid()
-            .azureDisk(
-                new AzureDisk()
-                    .diskName(diskName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
-
-    // Publish a message to cleanup the network.
-    publishAndVerify(diskUid, ResourceState.DONE);
-
-    // Resource is removed
-    ManagementException diskDeleted =
-        assertThrows(
-            ManagementException.class, () -> computeManager.disks().getById(createdDisk.id()));
-    assertEquals("ResourceNotFound", diskDeleted.getValue().getCode());
-  }
-
-  @Disabled
-  @Test
-  public void subscribeAndCleanupResource_azureVirtualMachine() throws Exception {
-    // Creates disk
-    String diskName = randomNameWithUnderscore();
-    Disk createdDisk =
-        computeManager
-            .disks()
-            .define(diskName)
-            .withRegion(Region.US_SOUTH_CENTRAL)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withData()
-            .withSizeInGB(500)
-            .withTag("janitor.integration.test", "true")
-            .create();
-
-    // Resolve network
-    Network network =
-        computeManager
-            .networkManager()
-            .networks()
-            .getByResourceGroup(
-                testConfiguration.getAzureManagedResourceGroupName(),
-                testConfiguration.getAzureVnetName());
-
-    // Create nic
-    String nicName = randomNameWithUnderscore();
-    NetworkInterface createdNetworkInterface =
-        computeManager
-            .networkManager()
-            .networkInterfaces()
-            .define(nicName)
-            .withRegion(Region.US_SOUTH_CENTRAL)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withExistingPrimaryNetwork(network)
-            .withSubnet("COMPUTE_SUBNET")
-            .withPrimaryPrivateIPAddressDynamic()
-            .withTag("janitor.integration.test", "true")
-            .create();
-
-    // Creates vm
-    String vmName = randomNameWithUnderscore();
-    VirtualMachine createdVm =
-        computeManager
-            .virtualMachines()
-            .define(vmName)
-            .withRegion(Region.US_SOUTH_CENTRAL)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withExistingPrimaryNetworkInterface(createdNetworkInterface)
-            .withPopularLinuxImage(KnownLinuxVirtualMachineImage.CENTOS_8_3)
-            .withRootUsername("crljanitor")
-            .withRootPassword("cr!j4nitor")
-            .withExistingDataDisk(createdDisk)
-            .withSize(VirtualMachineSizeTypes.STANDARD_D11_V2)
-            .withTag("janitor.integration.test", "true")
-            .create();
-
-    // Verify resources are created in Azure
-    assertEquals(diskName, computeManager.disks().getById(createdDisk.id()).name());
-    assertEquals(vmName, computeManager.virtualMachines().getById(createdVm.id()).name());
-
-    CloudResourceUid diskUid =
-        new CloudResourceUid()
-            .azureDisk(
-                new AzureDisk()
-                    .diskName(diskName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
-    CloudResourceUid vmUid =
-        new CloudResourceUid()
-            .azureVirtualMachine(
-                new AzureVirtualMachine()
-                    .vmName(vmName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
-
-    // Publish messages to cleanup the vm and disk.
-    publishAndVerify(vmUid, ResourceState.DONE);
-    publishAndVerify(diskUid, ResourceState.DONE);
-
-    // All resources are removed
-    ManagementException diskDeleted =
-        assertThrows(
-            ManagementException.class, () -> computeManager.disks().getById(createdDisk.id()));
-    assertEquals("ResourceNotFound", diskDeleted.getValue().getCode());
-
-    ManagementException vmDeleted =
-        assertThrows(
-            ManagementException.class,
-            () -> computeManager.virtualMachines().getById(createdVm.id()));
-    assertEquals("ResourceNotFound", vmDeleted.getValue().getCode());
-  }
-
   /** Clean up a fake WSM workspace. */
   @Test
   public void subscribeAndCleanupResource_terraWorkspace() throws Exception {
@@ -756,241 +534,6 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
     ResourceMetadata metadata = new ResourceMetadata().workspaceOwner(fakeWorkspaceOwner);
     // This should succeed despite the 404 response from mock WSM.
     publishAndVerify(resource, ResourceState.DONE, metadata);
-  }
-
-  @Disabled
-  @Test
-  public void subscribeAndCleanupResource_azureManagedIdentity() throws Exception {
-    // Creates managed identity
-    String identityName = randomNameWithUnderscore();
-    Identity createdIdentity =
-        msiManager
-            .identities()
-            .define(identityName)
-            .withRegion(Region.US_SOUTH_CENTRAL)
-            .withExistingResourceGroup(testConfiguration.getAzureManagedResourceGroupName())
-            .withTag("janitor.integration.test", "true")
-            .create();
-
-    // Verify resources are created in Azure
-    assertEquals(identityName, msiManager.identities().getById(createdIdentity.id()).name());
-
-    CloudResourceUid identityUid =
-        new CloudResourceUid()
-            .azureManagedIdentity(
-                new AzureManagedIdentity()
-                    .identityName(identityName)
-                    .resourceGroup(testConfiguration.getAzureResourceGroup()));
-
-    // Publish a message to cleanup the managed identity.
-    publishAndVerify(identityUid, ResourceState.DONE);
-
-    // Resource is removed
-    ManagementException identityDeleted =
-        assertThrows(
-            ManagementException.class, () -> msiManager.identities().getById(createdIdentity.id()));
-    assertEquals("ResourceNotFound", identityDeleted.getValue().getCode());
-  }
-
-  @Disabled
-  @Test
-  public void subscribeAndCleanupResource_azureStorageContainer() throws Exception {
-    String storageContainerName = randomName();
-
-    // create storage container
-    BlobContainer createdStorageContainer =
-        storageManager
-            .blobContainers()
-            .defineContainer(storageContainerName)
-            .withExistingStorageAccount(
-                testConfiguration.getAzureManagedResourceGroupName(),
-                testConfiguration.getAzureStorageAccountName())
-            .withPublicAccess(PublicAccess.NONE)
-            .create();
-
-    // verify container is created in Azure
-    assertEquals(
-        storageContainerName,
-        storageManager
-            .blobContainers()
-            .get(
-                testConfiguration.getAzureManagedResourceGroupName(),
-                testConfiguration.getAzureStorageAccountName(),
-                createdStorageContainer.name())
-            .name());
-
-    // publish and verify cleanup of storage container by Janitor
-    publishAndVerify(
-        new CloudResourceUid()
-            .azureStorageContainer(
-                new AzureStorageContainer()
-                    .storageContainerName(storageContainerName)
-                    .storageAccountName(testConfiguration.getAzureStorageAccountName())
-                    .resourceGroup(testConfiguration.getAzureResourceGroup())),
-        ResourceState.DONE);
-
-    // verify storage container is no longer present in Azure
-    ManagementException removeStorageContainer =
-        assertThrows(
-            ManagementException.class,
-            () ->
-                storageManager
-                    .blobContainers()
-                    .get(
-                        testConfiguration.getAzureManagedResourceGroupName(),
-                        testConfiguration.getAzureStorageAccountName(),
-                        createdStorageContainer.name()));
-    assertEquals("ContainerNotFound", removeStorageContainer.getValue().getCode());
-  }
-
-  @Disabled
-  @Test
-  public void subscribeAndCleanupResource_azureDatabase() throws Exception {
-    String databaseName = "janitortest" + System.currentTimeMillis();
-
-    // create postgres database
-    Database createdDatabase =
-        postgreSqlManager
-            .databases()
-            .define(databaseName)
-            .withExistingFlexibleServer(
-                testConfiguration.getAzureManagedResourceGroupName(),
-                testConfiguration.getAzurePostgresServerName())
-            .create();
-
-    // verify database is created in Azure
-    assertEquals(
-        databaseName,
-        postgreSqlManager
-            .databases()
-            .get(
-                testConfiguration.getAzureManagedResourceGroupName(),
-                testConfiguration.getAzurePostgresServerName(),
-                createdDatabase.name())
-            .name());
-
-    // publish and verify cleanup of the database by Janitor
-    publishAndVerify(
-        new CloudResourceUid()
-            .azureDatabase(
-                new AzureDatabase()
-                    .databaseName(databaseName)
-                    .serverName(testConfiguration.getAzurePostgresServerName())
-                    .resourceGroup(testConfiguration.getAzureResourceGroup())),
-        ResourceState.DONE);
-
-    // verify database is no longer present in Azure
-    ManagementException removeDatabase =
-        assertThrows(
-            ManagementException.class,
-            () ->
-                postgreSqlManager
-                    .databases()
-                    .get(
-                        testConfiguration.getAzureManagedResourceGroupName(),
-                        testConfiguration.getAzurePostgresServerName(),
-                        createdDatabase.name()));
-    assertEquals("ResourceNotFound", removeDatabase.getValue().getCode());
-  }
-
-  @Disabled
-  @Test
-  public void subscribeAndCleanupResource_azureKubernetesNamespace() throws Exception {
-    String namespaceName = randomName();
-
-    // create kubernetes namespace
-    CoreV1Api coreApiClient =
-        kubernetesClientProvider.createCoreApiClient(
-            testConfiguration.getAzureResourceGroup(), testConfiguration.getAksClusterName());
-    V1Namespace createdNamespace =
-        coreApiClient.createNamespace(
-            new V1Namespace().metadata(new V1ObjectMeta().name(namespaceName)),
-            null,
-            null,
-            null,
-            null);
-
-    // verify namespace is created
-    assertEquals(
-        namespaceName, coreApiClient.readNamespace(namespaceName, null).getMetadata().getName());
-
-    // publish and verify cleanup of the namespace by Janitor
-    publishAndVerify(
-        new CloudResourceUid()
-            .azureKubernetesNamespace(
-                new AzureKubernetesNamespace()
-                    .namespaceName(namespaceName)
-                    .clusterName(testConfiguration.getAksClusterName())
-                    .resourceGroup(testConfiguration.getAzureResourceGroup())),
-        ResourceState.DONE);
-
-    // verify namespace is no longer present in Azure
-    io.kubernetes.client.openapi.ApiException removeNamespace =
-        assertThrows(
-            io.kubernetes.client.openapi.ApiException.class,
-            () -> coreApiClient.readNamespace(namespaceName, null));
-    assertEquals(404, removeNamespace.getCode());
-  }
-
-  @Disabled
-  @Test
-  public void subscribeAndCleanupResource_azureBatchPool() throws Exception {
-    String poolName = randomName();
-
-    // create batch pool database
-    Pool createdBatchPool =
-        batchManager
-            .pools()
-            .define(poolName)
-            .withExistingBatchAccount(
-                testConfiguration.getAzureResourceGroup().getResourceGroupName(),
-                testConfiguration.getAzureBatchAccountName())
-            .withDeploymentConfiguration(
-                new DeploymentConfiguration()
-                    .withVirtualMachineConfiguration(
-                        new VirtualMachineConfiguration()
-                            .withImageReference(
-                                new ImageReference()
-                                    .withOffer("ubuntuserver")
-                                    .withPublisher("canonical")
-                                    .withSku("18.04-lts"))
-                            .withNodeAgentSkuId("batch.node.ubuntu 18.04")))
-            .withVmSize("Standard_D2s_v3")
-            .create();
-
-    // verify pool is created in Azure
-    assertEquals(
-        poolName,
-        batchManager
-            .pools()
-            .get(
-                testConfiguration.getAzureManagedResourceGroupName(),
-                testConfiguration.getAzureBatchAccountName(),
-                createdBatchPool.name())
-            .name());
-
-    // publish and verify cleanup of the pool by Janitor
-    publishAndVerify(
-        new CloudResourceUid()
-            .azureBatchPool(
-                new AzureBatchPool()
-                    .id(createdBatchPool.id())
-                    .batchAccountName(testConfiguration.getAzureBatchAccountName())
-                    .resourceGroup(testConfiguration.getAzureResourceGroup())),
-        ResourceState.DONE);
-
-    // verify pool is no longer present in Azure
-    ManagementException removePool =
-        assertThrows(
-            ManagementException.class,
-            () ->
-                batchManager
-                    .pools()
-                    .get(
-                        testConfiguration.getAzureManagedResourceGroupName(),
-                        testConfiguration.getAzureBatchAccountName(),
-                        createdBatchPool.name()));
-    assertEquals("PoolNotFound", removePool.getValue().getCode());
   }
 
   private void publishAndVerify(CloudResourceUid resource, ResourceState expectedState)
