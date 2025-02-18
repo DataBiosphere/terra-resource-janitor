@@ -6,8 +6,8 @@ janitor:
   pubsub:
     track-resource:
       enabled: true
-      project-id: terra-kernel-k8s
-      subscription: crljanitor-toolsalpha-pubsub-sub
+      project-id: broad-dsde-qa
+      subscription: crljanitor-qa-pubsub-sub
   test:
     janitor-client-service-account-path: rendered/client-sa-account.json
     parent-resource-id: folders/1074206284898
@@ -16,7 +16,7 @@ janitor:
     prod-track-resource-topic-id: crljanitor-tools-pubsub-topic
     resource-credential-file-path: rendered/cloud-access-sa-account.json
     resource-project-id: terra-janitor-test
-    track-resource-topic-id: crljanitor-toolsalpha-pubsub-topic
+    track-resource-topic-id: crljanitor-qa-pubsub-topic
     # Reusing static MRG from https://github.com/broadinstitute/terra-github-workflows/blob/main/.github/workflows/attach-billing-project-to-landing-zone.yaml
     azure-tenant-id: fad90753-2022-4456-9b0a-c7e5b934e408
     azure-subscription-id: f557c728-871d-408c-a28b-eb6b2141a087

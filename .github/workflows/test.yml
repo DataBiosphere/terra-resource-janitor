@@ -17,8 +17,7 @@ env:
   JANITOR_CLIENT_SA_FILE: src/test/resources/rendered/client-sa-account.json
   JANITOR_CLIENT_SA_TOOLS_FILE: src/test/resources/rendered/tools-client-sa-account.json
   JANITOR_CLOUD_ACCESS_SA_FILE: src/test/resources/rendered/cloud-access-sa-account.json
-  LOCAL_PROPERTIES_DIR: config
-
+  LOCAL_PROPERTIES_DIRECTORY: config
 jobs:
   unit-test:
     runs-on: ubuntu-latest
@@ -68,16 +67,16 @@ jobs:
           JANITOR_CLOUD_ACCESS_SA=$(echo $JANITOR_CLOUD_ACCESS_SA_B64 | base64 --decode)
           echo ::add-mask::$JANITOR_CLOUD_ACCESS_SA
           echo $JANITOR_CLOUD_ACCESS_SA > $JANITOR_CLOUD_ACCESS_SA_FILE
-
+          
           AZURE_PUBLISHER_CLIENT_ID=${{ secrets.AZURE_PUBLISHER_CLIENT_ID }}
           echo ::add-mask::$AZURE_PUBLISHER_CLIENT_ID
           AZURE_PUBLISHER_CLIENT_SECRET=${{ secrets.AZURE_PUBLISHER_CLIENT_SECRET }}
           echo ::add-mask::$AZURE_PUBLISHER_CLIENT_SECRET
           AZURE_PUBLISHER_TENANT_ID=${{ secrets.AZURE_PUBLISHER_TENANT_ID }}
           echo ::add-mask::$AZURE_PUBLISHER_TENANT_ID
-
-          mkdir -p "${LOCAL_PROPERTIES_DIR}"
-          cat << EOF > ${LOCAL_PROPERTIES_DIR}/local-properties.yml
+          
+          mkdir -p "${LOCAL_PROPERTIES_DIRECTORY}"
+          cat << EOF > ${LOCAL_PROPERTIES_DIRECTORY}/local-properties.yml
           janitor:
             azure:
               managed-app-client-id: ${AZURE_PUBLISHER_CLIENT_ID}
