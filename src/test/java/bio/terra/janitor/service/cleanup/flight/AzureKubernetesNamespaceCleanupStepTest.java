@@ -43,7 +43,7 @@ public class AzureKubernetesNamespaceCleanupStepTest extends BaseUnitTest {
     when(mockKubernetesClientProvider.createCoreApiClient(
             resourceGroup, namespace.getClusterName()))
         .thenReturn(mockCoreV1Api);
-    when(mockCoreV1Api.readNamespace(namespace.getNamespaceName(), null))
+    when(mockCoreV1Api.readNamespaceStatus(namespace.getNamespaceName()))
         .thenThrow(new ApiException(HttpStatus.NOT_FOUND.value(), "Not found"));
 
     var result =
@@ -55,6 +55,6 @@ public class AzureKubernetesNamespaceCleanupStepTest extends BaseUnitTest {
 
     verify(mockKubernetesClientProvider)
         .createCoreApiClient(resourceGroup, namespace.getClusterName());
-    verify(mockCoreV1Api).readNamespace(namespace.getNamespaceName(), null);
+    verify(mockCoreV1Api).readNamespaceStatus(namespace.getNamespaceName());
   }
 }
