@@ -103,19 +103,6 @@ dependencies {
     // Kubernetes client - should match terra-common-lib
     implementation group: 'io.kubernetes', name: 'client-java', version: '22.0.0'
 
-    // OpenTelemetry
-//    var openTelemetryVersion = '1.32.0'
-//    implementation "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
-//    implementation "io.opentelemetry:opentelemetry-sdk:${openTelemetryVersion}"
-//    implementation "io.opentelemetry:opentelemetry-sdk-common:${openTelemetryVersion}"
-//    implementation "io.opentelemetry:opentelemetry-sdk-metrics:${openTelemetryVersion}"
-//    implementation "io.opentelemetry:opentelemetry-exporter-logging:${openTelemetryVersion}"
-//    implementation "io.opentelemetry:opentelemetry-semconv:1.30.1-alpha"
-//    implementation "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-6.0:${openTelemetryVersion}-alpha"
-//    implementation "io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:${openTelemetryVersion}"
-//    implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot:${openTelemetryVersion}-alpha"
-//    implementation "io.opentelemetry:opentelemetry-exporter-prometheus:${openTelemetryVersion}-alpha"
-
     // Google cloud open telemetry exporters
     var gcpOpenTelemetryExporterVersion = '0.33.0'
     implementation "com.google.cloud.opentelemetry:exporter-trace:${gcpOpenTelemetryExporterVersion}"
