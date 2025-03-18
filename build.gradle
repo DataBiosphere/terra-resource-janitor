@@ -117,7 +117,7 @@ dependencies {
 //    implementation "io.opentelemetry:opentelemetry-exporter-prometheus:${openTelemetryVersion}-alpha"
 
     // Google cloud open telemetry exporters
-    var gcpOpenTelemetryExporterVersion = '0.25.2'
+    var gcpOpenTelemetryExporterVersion = '0.33.0'
     implementation "com.google.cloud.opentelemetry:exporter-trace:${gcpOpenTelemetryExporterVersion}"
     implementation "com.google.cloud.opentelemetry:exporter-metrics:${gcpOpenTelemetryExporterVersion}"
 
