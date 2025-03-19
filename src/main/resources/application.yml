@@ -72,3 +72,6 @@ otel:
       attributes:
         service:
           name: ${spring.application.name}
+  instrumentation:
+    logback-appender:
+      enabled: false
