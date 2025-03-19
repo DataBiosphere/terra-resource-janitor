@@ -2,6 +2,7 @@ package bio.terra.janitor.service.cleanup.flight;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import bio.terra.janitor.generated.model.CloudResourceUid;
 import bio.terra.stairway.StepStatus;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1Status;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,11 +42,20 @@ public class AzureKubernetesNamespaceCleanupStepTest extends BaseUnitTest {
             .clusterName("cluster");
     var resource = new CloudResourceUid().azureKubernetesNamespace(namespace);
 
+    var mockNamespaceStatusRequest = mock(CoreV1Api.APIreadNamespaceStatusRequest.class);
+    when(mockNamespaceStatusRequest.execute())
+        .thenThrow(new ApiException(HttpStatus.NOT_FOUND.value(), "Not found"));
+
+    var mockDeleteNamespaceRequest = mock(CoreV1Api.APIdeleteNamespaceRequest.class);
+    when(mockDeleteNamespaceRequest.execute()).thenReturn(new V1Status());
+
     when(mockKubernetesClientProvider.createCoreApiClient(
             resourceGroup, namespace.getClusterName()))
         .thenReturn(mockCoreV1Api);
-    when(mockCoreV1Api.readNamespace(namespace.getNamespaceName(), null))
-        .thenThrow(new ApiException(HttpStatus.NOT_FOUND.value(), "Not found"));
+    when(mockCoreV1Api.deleteNamespace(namespace.getNamespaceName()))
+            .thenReturn(mockDeleteNamespaceRequest);
+    when(mockCoreV1Api.readNamespaceStatus(namespace.getNamespaceName()))
+        .thenReturn(mockNamespaceStatusRequest);
 
     var result =
         new AzureKubernetesNamespaceCleanupStep(
@@ -55,6 +66,6 @@ public class AzureKubernetesNamespaceCleanupStepTest extends BaseUnitTest {
 
     verify(mockKubernetesClientProvider)
         .createCoreApiClient(resourceGroup, namespace.getClusterName());
-    verify(mockCoreV1Api).readNamespace(namespace.getNamespaceName(), null);
+    verify(mockCoreV1Api).readNamespaceStatus(namespace.getNamespaceName());
   }
 }

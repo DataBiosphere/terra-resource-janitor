@@ -44,7 +44,7 @@ public class AzureKubernetesNamespaceCleanupStep extends ResourceCleanupStep {
 
     try {
       logger.info("Deleting namespace {}", namespace);
-      api.deleteNamespace(namespace.getNamespaceName(), null, null, null, null, null, null);
+      api.deleteNamespace(namespace.getNamespaceName()).execute();
     } catch (ApiException e) {
       return kubernetesClientProvider.stepResultFromException(e, HttpStatus.NOT_FOUND);
     }
@@ -74,7 +74,7 @@ public class AzureKubernetesNamespaceCleanupStep extends ResourceCleanupStep {
 
   private Optional<String> getNamespaceStatus(CoreV1Api coreApiClient, String namespaceName) {
     try {
-      var namespace = coreApiClient.readNamespace(namespaceName, null);
+      var namespace = coreApiClient.readNamespaceStatus(namespaceName).execute();
       var phase = Optional.ofNullable(namespace.getStatus()).map(V1NamespaceStatus::getPhase);
       logger.info("Status = {} for azure namespace = {}", phase, namespaceName);
       return phase;
