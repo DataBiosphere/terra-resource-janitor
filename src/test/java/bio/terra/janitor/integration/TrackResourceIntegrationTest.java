@@ -72,7 +72,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
@@ -93,7 +93,8 @@ public class TrackResourceIntegrationTest extends BaseIntegrationTest {
   private CloudResourceManagerCow resourceManagerCow;
   private String projectId;
 
-  @MockBean private WorkspaceManagerService mockWorkspaceManagerService;
+  @MockitoBean
+  private WorkspaceManagerService mockWorkspaceManagerService;
 
   private static final Map<String, String> DEFAULT_LABELS =
       ImmutableMap.of("key1", "value1", "key2", "value2");
