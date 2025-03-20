@@ -25,7 +25,7 @@ import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @AutoConfigureMockMvc
 public class IamServiceTest extends BaseUnitTest {
@@ -33,7 +33,7 @@ public class IamServiceTest extends BaseUnitTest {
   @Autowired IamService iamService;
   @Autowired IamConfiguration iamConfiguration;
 
-  @MockBean(answer = Answers.RETURNS_DEEP_STUBS)
+  @MockitoBean(answers = Answers.RETURNS_DEEP_STUBS)
   CrlConfiguration crlConfiguration;
 
   HttpClient mockGcpTokenClient = mock(HttpClient.class, Mockito.RETURNS_DEEP_STUBS);

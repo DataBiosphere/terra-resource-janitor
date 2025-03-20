@@ -27,8 +27,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @AutoConfigureMockMvc
@@ -40,7 +40,8 @@ public class FlightSchedulerTest extends BaseUnitTest {
   @Autowired JanitorDao janitorDao;
   @Autowired StairwayComponent stairwayComponent;
   @Autowired TransactionTemplate transactionTemplate;
-  @MockBean private MetricsHelper mockMetricsHelper;
+  @MockitoBean
+  private MetricsHelper mockMetricsHelper;
 
   private void initializeScheduler(FlightSubmissionFactory submissionFactory) {
     flightScheduler =
