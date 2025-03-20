@@ -37,9 +37,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @AutoConfigureMockMvc
@@ -52,7 +52,7 @@ public class FlightManagerTest extends BaseUnitTest {
   @Autowired StairwayComponent stairwayComponent;
   @Autowired JanitorDao janitorDao;
   @Autowired TransactionTemplate transactionTemplate;
-  @MockBean private MetricsHelper mockMetricsHelper;
+  @MockitoBean private MetricsHelper mockMetricsHelper;
 
   private FlightManager createFlightManager(FlightSubmissionFactory submissionFactory) {
     return new FlightManager(
