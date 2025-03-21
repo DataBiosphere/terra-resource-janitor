@@ -93,7 +93,7 @@ dependencies {
     runtimeOnly group: 'org.postgresql', name: 'postgresql', version: '42.7.3'
 
     // Terra libraries
-    implementation group: 'bio.terra', name: 'terra-common-lib', version: '1.1.38-SNAPSHOT'
+    implementation group: 'bio.terra', name: 'terra-common-lib', version: '1.1.39-SNAPSHOT'
     implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: '1.2.34-SNAPSHOT'
     implementation group: 'bio.terra', name: 'workspace-manager-client', version: '0.254.1181-SNAPSHOT'
 
