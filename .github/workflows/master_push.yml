@@ -85,13 +85,13 @@ jobs:
       - name: Grant execute permission for gradlew
         if: steps.skiptest.outputs.is-bump == 'no'
         run: chmod +x gradlew
-      - name: "Publish client to Artifactory"
+      - name: Publish client to Google Artifact Registry
         if: steps.skiptest.outputs.is-bump == 'no'
-        run: ./gradlew artifactoryPublish
+        run: ./gradlew publish
         env:
-          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
+          GOOGLE_CLOUD_PROJECT: "dsp-artifact-registry"
+          GAR_LOCATION: "us-central1"
+          GAR_REPOSITORY_ID: "libs-snapshot-standard"
       - name: Build and push GCR image using Jib
         if: steps.skiptest.outputs.is-bump == 'no'
         run: "./gradlew jib --image=gcr.io/broad-dsp-gcr-public/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"
