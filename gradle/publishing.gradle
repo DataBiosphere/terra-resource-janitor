@@ -2,6 +2,7 @@ def artifactory_repo_key = System.getenv('ARTIFACTORY_REPO_KEY') != null ? Syste
 def artifactory_username = System.getenv('ARTIFACTORY_USERNAME')
 def artifactory_password = System.getenv('ARTIFACTORY_PASSWORD')
 
+
 gradle.taskGraph.whenReady { taskGraph ->
     if (taskGraph.hasTask(artifactoryPublish) &&
             (artifactory_username == null || artifactory_password == null)) {
