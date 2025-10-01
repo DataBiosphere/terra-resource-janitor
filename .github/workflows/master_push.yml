@@ -82,6 +82,12 @@ jobs:
       - name: Setup gcloud
         if: steps.skiptest.outputs.is-bump == 'no'
         uses: google-github-actions/setup-gcloud@v2
+      - name: Explicitly auth Docker for GCR
+        if: steps.skiptest.outputs.is-bump == 'no'
+        run: |
+          gcloud auth configure-docker gcr.io --quiet
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+        #run: gcloud auth configure-docker --quiet
       - name: Set up JDK 17
         if: steps.skiptest.outputs.is-bump == 'no'
         uses: actions/setup-java@v4
@@ -99,9 +105,6 @@ jobs:
           GOOGLE_CLOUD_PROJECT: "dsp-artifact-registry"
           GAR_LOCATION: "us-central1"
           GAR_REPOSITORY_ID: "libs-snapshot-standard"
-      - name: Explicitly auth Docker for GCR
-        if: steps.skiptest.outputs.is-bump == 'no'
-        run: gcloud auth configure-docker --quiet
       - name: Build and push GCR image using Jib
         if: steps.skiptest.outputs.is-bump == 'no'
         run: "./gradlew jib --image=gcr.io/broad-dsp-gcr-public/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"
