@@ -71,6 +71,14 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
+      - name: Auth to GCP
+        if: steps.skiptest.outputs.is-bump == 'no'
+        id: 'auth'
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: 'access_token'
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: 'dsp-artifact-registry-push@dsp-artifact-registry.iam.gserviceaccount.com'
       - name: Setup gcloud
         if: steps.skiptest.outputs.is-bump == 'no'
         uses: google-github-actions/setup-gcloud@v2
