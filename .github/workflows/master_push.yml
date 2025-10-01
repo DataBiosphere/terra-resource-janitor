@@ -2,7 +2,7 @@ name: Tag, Build, and Push Image
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, un-ddo-4338 ]
     paths-ignore: [ '**.md' ]
   workflow_dispatch:
     inputs:

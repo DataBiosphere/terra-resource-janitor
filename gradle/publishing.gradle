@@ -30,20 +30,3 @@ publishing {
     }
 
 }
-
-//// Upload Maven artifacts to Artifactory using the Artifactory plugin.
-//artifactory {
-//    publish {
-//        contextUrl = 'https://broadinstitute.jfrog.io/broadinstitute/'
-//        repository {
-//            repoKey = "${artifactory_repo_key}"
-//            username = "${artifactory_username}"
-//            password = "${artifactory_password}"
-//        }
-//        defaults {
-//            publications('janitorClientLibrary')
-//            publishArtifacts = true
-//            publishPom = true
-//        }
-//    }
-//}
