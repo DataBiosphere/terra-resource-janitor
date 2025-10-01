@@ -74,20 +74,9 @@ jobs:
           token_format: 'access_token'
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: 'dsp-artifact-registry-push@dsp-artifact-registry.iam.gserviceaccount.com'
-#      - name: Auth to GCR
-#        if: steps.skiptest.outputs.is-bump == 'no'
-#        uses: google-github-actions/auth@v2
-#        with:
-#          credentials_json: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
       - name: Setup gcloud
         if: steps.skiptest.outputs.is-bump == 'no'
         uses: google-github-actions/setup-gcloud@v2
-      - name: Explicitly auth Docker for GCR
-        if: steps.skiptest.outputs.is-bump == 'no'
-        run: |
-          gcloud auth configure-docker gcr.io --quiet
-          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
-        #run: gcloud auth configure-docker --quiet
       - name: Set up JDK 17
         if: steps.skiptest.outputs.is-bump == 'no'
         uses: actions/setup-java@v4
@@ -105,6 +94,14 @@ jobs:
           GOOGLE_CLOUD_PROJECT: "dsp-artifact-registry"
           GAR_LOCATION: "us-central1"
           GAR_REPOSITORY_ID: "libs-snapshot-standard"
+      - name: Auth to GCR
+        if: steps.skiptest.outputs.is-bump == 'no'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
+      - name: Explicitly auth Docker for GCR
+        if: steps.skiptest.outputs.is-bump == 'no'
+        run: gcloud auth configure-docker --quiet
       - name: Build and push GCR image using Jib
         if: steps.skiptest.outputs.is-bump == 'no'
         run: "./gradlew jib --image=gcr.io/broad-dsp-gcr-public/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"
