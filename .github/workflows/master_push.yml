@@ -66,11 +66,6 @@ jobs:
           VERSION_FILE_PATH: settings.gradle
           VERSION_LINE_MATCH: "^\\s*gradle.ext.janitorVersion\\s*=\\s*'.*'"
           VERSION_SUFFIX: SNAPSHOT
-      - name: Auth to GCR
-        if: steps.skiptest.outputs.is-bump == 'no'
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
       - name: Auth to GCP
         if: steps.skiptest.outputs.is-bump == 'no'
         id: 'auth'
@@ -79,6 +74,11 @@ jobs:
           token_format: 'access_token'
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: 'dsp-artifact-registry-push@dsp-artifact-registry.iam.gserviceaccount.com'
+      - name: Auth to GCR
+        if: steps.skiptest.outputs.is-bump == 'no'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
       - name: Setup gcloud
         if: steps.skiptest.outputs.is-bump == 'no'
         uses: google-github-actions/setup-gcloud@v2
