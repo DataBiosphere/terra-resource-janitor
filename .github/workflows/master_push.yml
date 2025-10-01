@@ -24,6 +24,8 @@ env:
 jobs:
   tag-build-push:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: 'write'
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
       is-bump: ${{ steps.skiptest.outputs.is-bump }}
