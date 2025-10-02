@@ -24,6 +24,8 @@ env:
 jobs:
   tag-build-push:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: 'write'
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
       is-bump: ${{ steps.skiptest.outputs.is-bump }}
@@ -64,17 +66,17 @@ jobs:
           VERSION_FILE_PATH: settings.gradle
           VERSION_LINE_MATCH: "^\\s*gradle.ext.janitorVersion\\s*=\\s*'.*'"
           VERSION_SUFFIX: SNAPSHOT
-      - name: Auth to GCR
+      - name: Auth to GCP
         if: steps.skiptest.outputs.is-bump == 'no'
+        id: 'auth'
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
+          token_format: 'access_token'
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: 'dsp-artifact-registry-push@dsp-artifact-registry.iam.gserviceaccount.com'
       - name: Setup gcloud
         if: steps.skiptest.outputs.is-bump == 'no'
         uses: google-github-actions/setup-gcloud@v2
-      - name: Explicitly auth Docker for GCR
-        if: steps.skiptest.outputs.is-bump == 'no'
-        run: gcloud auth configure-docker --quiet
       - name: Set up JDK 17
         if: steps.skiptest.outputs.is-bump == 'no'
         uses: actions/setup-java@v4
@@ -85,13 +87,21 @@ jobs:
       - name: Grant execute permission for gradlew
         if: steps.skiptest.outputs.is-bump == 'no'
         run: chmod +x gradlew
-      - name: "Publish client to Artifactory"
+      - name: Publish client to Google Artifact Registry
         if: steps.skiptest.outputs.is-bump == 'no'
-        run: ./gradlew artifactoryPublish
+        run: ./gradlew publish
         env:
-          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
+          GOOGLE_CLOUD_PROJECT: "dsp-artifact-registry"
+          GAR_LOCATION: "us-central1"
+          GAR_REPOSITORY_ID: "libs-snapshot-standard"
+      - name: Auth to GCR
+        if: steps.skiptest.outputs.is-bump == 'no'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
+      - name: Explicitly auth Docker for GCR
+        if: steps.skiptest.outputs.is-bump == 'no'
+        run: gcloud auth configure-docker --quiet
       - name: Build and push GCR image using Jib
         if: steps.skiptest.outputs.is-bump == 'no'
         run: "./gradlew jib --image=gcr.io/broad-dsp-gcr-public/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"

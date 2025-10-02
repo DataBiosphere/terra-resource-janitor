@@ -2,8 +2,15 @@ plugins {
     id 'java-library'
     id 'maven-publish'
 
-    id 'com.jfrog.artifactory' version '4.29.0'
+    id 'com.google.cloud.artifactregistry.gradle-plugin' version '2.2.5' apply false
     id 'org.hidetake.swagger.generator' version '2.19.2'
+}
+
+// Only apply the Artifact Registry plugin if a publish task is being run. This avoids requiring gcloud to be
+// installed and authenticated in CI jobs that don't publish (e.g., linter, tests, static analysis).
+def isPublishing = gradle.startParameter.taskNames.any { it.toLowerCase().contains('publish') }
+if (isPublishing) {
+    apply plugin: 'com.google.cloud.artifactregistry.gradle-plugin'
 }
 
 repositories {
