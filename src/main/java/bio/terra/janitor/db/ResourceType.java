@@ -13,7 +13,7 @@ public enum ResourceType {
   GOOGLE_BIGQUERY_DATASET,
   GOOGLE_BLOB,
   GOOGLE_BUCKET,
-  GOOGLE_NOTEBOOK_INSTANCE,
+  GOOGLE_NOTEBOOK_INSTANCE, // Deprecated: Google AI Notebooks service has been shut down
   GOOGLE_PROJECT,
   AZURE_PUBLIC_IP,
   AZURE_NETWORK,
