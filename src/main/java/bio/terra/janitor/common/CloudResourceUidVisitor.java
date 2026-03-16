@@ -9,7 +9,6 @@ import bio.terra.janitor.generated.model.AzureRelayHybridConnection;
 import bio.terra.janitor.generated.model.AzureStorageContainer;
 import bio.terra.janitor.generated.model.AzureVirtualMachine;
 import bio.terra.janitor.generated.model.CloudResourceUid;
-import bio.terra.janitor.generated.model.GoogleAiNotebookInstanceUid;
 import bio.terra.janitor.generated.model.GoogleBigQueryDatasetUid;
 import bio.terra.janitor.generated.model.GoogleBigQueryTableUid;
 import bio.terra.janitor.generated.model.GoogleBlobUid;
@@ -28,8 +27,6 @@ public interface CloudResourceUidVisitor<R> {
   R visit(GoogleBigQueryTableUid resource);
 
   R visit(GoogleBigQueryDatasetUid resource);
-
-  R visit(GoogleAiNotebookInstanceUid resource);
 
   R visit(AzureDisk resource);
 
@@ -62,8 +59,6 @@ public interface CloudResourceUidVisitor<R> {
       return visitor.visit(resource.getGoogleBigQueryDatasetUid());
     } else if (resource.getGoogleBigQueryTableUid() != null) {
       return visitor.visit(resource.getGoogleBigQueryTableUid());
-    } else if (resource.getGoogleAiNotebookInstanceUid() != null) {
-      return visitor.visit(resource.getGoogleAiNotebookInstanceUid());
     } else if (resource.getAzureDisk() != null) {
       return visitor.visit(resource.getAzureDisk());
     } else if (resource.getAzureVirtualMachine() != null) {

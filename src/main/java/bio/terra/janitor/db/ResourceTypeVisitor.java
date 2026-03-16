@@ -34,11 +34,6 @@ public class ResourceTypeVisitor implements CloudResourceUidVisitor<ResourceType
   }
 
   @Override
-  public ResourceType visit(GoogleAiNotebookInstanceUid resource) {
-    return GOOGLE_NOTEBOOK_INSTANCE;
-  }
-
-  @Override
   public ResourceType visit(AzureDisk resource) {
     return AZURE_DISK;
   }

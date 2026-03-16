@@ -65,19 +65,6 @@ public class ResourceTypeVisitorTest extends BaseUnitTest {
   }
 
   @Test
-  public void acceptGoogleNotebookInstance() {
-    assertEquals(
-        GOOGLE_NOTEBOOK_INSTANCE,
-        visitor.accept(
-            new CloudResourceUid()
-                .googleAiNotebookInstanceUid(
-                    new GoogleAiNotebookInstanceUid()
-                        .projectId("my-project")
-                        .location("my-location")
-                        .instanceId("my-instance"))));
-  }
-
-  @Test
   public void acceptTerraWorkspace() {
     assertEquals(
         TERRA_WORKSPACE,

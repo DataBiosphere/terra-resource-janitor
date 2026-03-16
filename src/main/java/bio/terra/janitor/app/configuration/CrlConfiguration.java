@@ -4,7 +4,6 @@ import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.google.api.services.common.Defaults;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
-import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.janitor.generated.model.AzureResourceGroup;
 import com.azure.core.credential.TokenCredential;
@@ -47,12 +46,6 @@ public class CrlConfiguration {
             .setClient("terra-crl-janitor")
             .setOpenTelemetry(openTelemetry)
             .build();
-  }
-
-  @Bean
-  @Lazy
-  public AIPlatformNotebooksCow notebooksCow() throws IOException, GeneralSecurityException {
-    return AIPlatformNotebooksCow.create(clientConfig, getApplicationDefaultCredentials());
   }
 
   @Bean
