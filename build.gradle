@@ -62,6 +62,10 @@ repositories {
     }
 }
 
+configurations.all {
+    exclude group: 'commons-logging', module: 'commons-logging' // spring-jcl replaces this
+}
+
 dependencies {
     // Common utils
     implementation group: 'org.apache.commons', name: 'commons-dbcp2'
