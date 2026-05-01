@@ -64,6 +64,9 @@ repositories {
 
 configurations.all {
     exclude group: 'commons-logging', module: 'commons-logging' // spring-jcl replaces this
+    resolutionStrategy {
+        force 'io.netty:netty-codec-http:4.1.132.Final'
+    }
 }
 
 dependencies {
