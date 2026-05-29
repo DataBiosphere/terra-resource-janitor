@@ -71,7 +71,8 @@ configurations.all {
         all { DependencySubstitution dep ->
             if (dep.requested instanceof ModuleComponentSelector
                     && dep.requested.group == 'io.netty'
-                    && !dep.requested.module.startsWith('netty-tcnative')) {
+                    && !dep.requested.module.startsWith('netty-tcnative')
+                    && dep.requested.module != 'netty-bom') {
                 dep.useTarget("io.netty:${dep.requested.module}:4.1.133.Final",
                         'CVE-2026-42587: netty-codec-http requires >= 4.1.133.Final')
             }
