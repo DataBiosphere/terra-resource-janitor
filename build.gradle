@@ -64,8 +64,18 @@ repositories {
 
 configurations.all {
     exclude group: 'commons-logging', module: 'commons-logging' // spring-jcl replaces this
-    resolutionStrategy {
-        force 'io.netty:netty-codec-http:4.1.132.Final'
+    resolutionStrategy.dependencySubstitution {
+        // Substitute all io.netty artifacts to address CVE-2026-42587 (requires >= 4.1.133.Final).
+        // azure-core-http-netty pins netty to 4.1.118.Final via {strictly} in its Gradle module
+        // metadata; dependencySubstitution overrides {strictly} constraints, unlike resolutionStrategy.force.
+        all { DependencySubstitution dep ->
+            if (dep.requested instanceof ModuleComponentSelector
+                    && dep.requested.group == 'io.netty'
+                    && !dep.requested.module.startsWith('netty-tcnative')) {
+                dep.useTarget("io.netty:${dep.requested.module}:4.1.133.Final",
+                        'CVE-2026-42587: netty-codec-http requires >= 4.1.133.Final')
+            }
+        }
     }
 }
 
