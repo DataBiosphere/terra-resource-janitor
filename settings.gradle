@@ -11,4 +11,4 @@ rootProject.name = 'terra-resource-janitor'
 include 'terra-resource-janitor-client'
 
 gradle.ext.projectGroup = 'bio.terra'
-gradle.ext.janitorVersion = '0.113.53-SNAPSHOT'
+gradle.ext.janitorVersion = '0.113.54-SNAPSHOT'
