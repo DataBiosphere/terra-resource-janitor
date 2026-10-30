@@ -144,6 +144,10 @@ dependencies {
     // transitive dependencies.
     constraints {
         spotbugs('org.apache.bcel:bcel:6.6.1')
+        // CTM-660: bcprov < 1.85 allows certificate validation bypass. Keep the bouncycastle modules aligned.
+        implementation('org.bouncycastle:bcprov-jdk18on:1.85')
+        implementation('org.bouncycastle:bcpkix-jdk18on:1.85')
+        implementation('org.bouncycastle:bcutil-jdk18on:1.85')
     }
 }
 
